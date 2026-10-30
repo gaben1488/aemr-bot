@@ -10,7 +10,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.ext.compiler import compiles
 
-from aemr_bot.db.models import Event, InboxEvent
+from aemr_bot.db.models import Event, InboxEvent, ResidentDataCopy
 from aemr_bot.handlers import IdempotencyMiddleware
 from aemr_bot.services import idempotency, inbox
 
@@ -26,6 +26,7 @@ async def receipt_db(monkeypatch):
     async with engine.begin() as conn:
         await conn.run_sync(lambda c: InboxEvent.__table__.create(c))
         await conn.run_sync(lambda c: Event.__table__.create(c))
+        await conn.run_sync(lambda c: ResidentDataCopy.__table__.create(c))
     factory = async_sessionmaker(engine, expire_on_commit=False)
     @asynccontextmanager
     async def scope():
@@ -167,20 +168,32 @@ async def test_failed_completion_commit_is_quarantined_without_replay(receipt_db
 
 
 @pytest.mark.asyncio
-async def test_failure_notice_retries_only_until_successful_delivery(receipt_db, monkeypatch):
+@pytest.mark.parametrize("result", [None, "synthetic-mid"])
+async def test_failure_notice_is_claimed_once_even_when_delivery_is_unknown(
+    receipt_db, monkeypatch, caplog, result,
+):
     from aemr_bot.services import admin_bus
     await inbox.accept([payload()])
     await inbox.take_next()
     await inbox.recover_interrupted()
-    send = AsyncMock(return_value=None)
+    send = AsyncMock(return_value=result)
     monkeypatch.setattr(admin_bus, 'send', send)
     await inbox.maintenance(object())
-    assert not (await stored(receipt_db))[0].notified
-    send.return_value = 'synthetic-mid'
+    row = (await stored(receipt_db))[0]
+    # notified is a durable attempt claim, not a MAX delivery receipt.
+    assert row.notified
+    assert row.state == "failed"
+    assert row.reason == "interrupted_unknown_result"
+    assert row.payload == {}
+    text = send.call_args.kwargs["text"]
+    assert f"#{row.id}" in text
+    assert "sensitive synthetic text" not in text
+    assert send.call_args.kwargs["critical"] is True
+    if result is None:
+        assert "delivery of failed-event alert was not confirmed" in caplog.text
+    await inbox.recover_interrupted()
     await inbox.maintenance(object())
-    assert (await stored(receipt_db))[0].notified
-    await inbox.maintenance(object())
-    assert send.await_count == 2
+    send.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -266,7 +279,7 @@ async def test_bulk_receipts_preserve_order_dedup_and_bound_sql(receipt_db, monk
             yield session
     monkeypatch.setattr(inbox, "session_scope", counted_scope)
     await inbox.accept([payload(str(i)) for i in range(501)] + [payload("0")])
-    assert len(counts) == 3
+    assert len(counts) == 9  # three bounded batches: inventory insert/read + receipt insert
     rows = await stored(receipt_db)
     assert [r.payload["message"]["body"]["mid"] for r in rows] == [str(i) for i in range(501)]
 

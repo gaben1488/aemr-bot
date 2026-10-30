@@ -78,6 +78,7 @@ EXACT_ROUTES: tuple[CallbackRoute, ...] = (
     CallbackRoute("op:stats_half_year", CallbackGroup.OPERATOR_ADMIN, True, "статистика за полугодие"),
     CallbackRoute("op:stats_year", CallbackGroup.OPERATOR_ADMIN, True, "статистика за год"),
     CallbackRoute("op:stats_all", CallbackGroup.OPERATOR_ADMIN, True, "статистика за всё время"),
+    CallbackRoute("op:queue_view", CallbackGroup.OPERATOR_ADMIN, True, "открыть очередь в отдельном экране"),
     CallbackRoute("op:open_tickets", CallbackGroup.OPERATOR_ADMIN, True, "открытые обращения"),
     CallbackRoute("op:diag", CallbackGroup.OPERATOR_ADMIN, True, "диагностика"),
     CallbackRoute("op:backup", CallbackGroup.OPERATOR_ADMIN, True, "бэкап"),
@@ -92,6 +93,8 @@ EXACT_ROUTES: tuple[CallbackRoute, ...] = (
 )
 
 PREFIX_ROUTES: tuple[CallbackRoute, ...] = (
+    CallbackRoute("op:replydraft:", CallbackGroup.OPERATOR_ADMIN, True, "многочастный черновик ответа"),
+    CallbackRoute("op:reply_cancel:", CallbackGroup.OPERATOR_ADMIN, True, "отмена выбранного ответа"),
     # ── Citizen воронка ──
     CallbackRoute("locality:", CallbackGroup.CITIZEN_FLOW, False, "выбор населённого пункта"),
     CallbackRoute("topic:", CallbackGroup.CITIZEN_FLOW, False, "выбор темы"),
@@ -100,7 +103,10 @@ PREFIX_ROUTES: tuple[CallbackRoute, ...] = (
     CallbackRoute("appeal:followup:", CallbackGroup.CITIZEN_FLOW, False, "дополнить обращение"),
     CallbackRoute("appeal:repeat:", CallbackGroup.CITIZEN_FLOW, False, "подать похожее обращение"),
     CallbackRoute("appeal:atts:", CallbackGroup.CITIZEN_FLOW, False, "посмотреть свои вложения"),
+    CallbackRoute("appeal:history:", CallbackGroup.CITIZEN_FLOW, False, "история обращения жителя"),
+    CallbackRoute("appeal:record_atts:", CallbackGroup.CITIZEN_FLOW, False, "вложения записи обращения"),
     CallbackRoute("appeals:page:", CallbackGroup.CITIZEN_FLOW, False, "пагинация списка обращений"),
+    CallbackRoute("draft:", CallbackGroup.CITIZEN_FLOW, False, "черновик обращения"),
     # ── Admin: broadcast история / wizard ──
     CallbackRoute("broadcast:stop:", CallbackGroup.BROADCAST_ADMIN, True, "остановить рассылку"),
     CallbackRoute("broadcast:cancel-cooldown:", CallbackGroup.BROADCAST_ADMIN, True, "отменить рассылку до отправки"),
@@ -113,7 +119,19 @@ PREFIX_ROUTES: tuple[CallbackRoute, ...] = (
     CallbackRoute("op:block:", CallbackGroup.OPERATOR_ADMIN, True, "заблокировать жителя"),
     CallbackRoute("op:unblock:", CallbackGroup.OPERATOR_ADMIN, True, "разблокировать жителя"),
     CallbackRoute("op:atts:", CallbackGroup.OPERATOR_ADMIN, True, "показать вложения обращения"),
+    CallbackRoute("op:queue_recreate:", CallbackGroup.OPERATOR_ADMIN, True, "восстановить панель после проверки MAX"),
     CallbackRoute("op:open_card:", CallbackGroup.OPERATOR_ADMIN, True, "открыть полную карточку с историей"),
+    CallbackRoute("op:open_page:", CallbackGroup.OPERATOR_ADMIN, True, "страница открытых обращений"),
+    CallbackRoute("op:delivery_issues:", CallbackGroup.OPERATOR_ADMIN, True, "неподтверждённая доставка дополнений"),
+    CallbackRoute("op:reply_issues:", CallbackGroup.OPERATOR_ADMIN, True, "неподтверждённые ответы"),
+    CallbackRoute("op:reply_attempt:", CallbackGroup.OPERATOR_ADMIN, True, "сохранённый ответ"),
+    CallbackRoute("op:reply_resolve:", CallbackGroup.OPERATOR_ADMIN, True, "проверить исход ответа"),
+    CallbackRoute("op:reply_confirm:", CallbackGroup.OPERATOR_ADMIN, True, "подтвердить исход ответа"),
+    CallbackRoute("op:reply_attempt_atts:", CallbackGroup.OPERATOR_ADMIN, True, "вложения сохранённого ответа"),
+    CallbackRoute("op:history:", CallbackGroup.OPERATOR_ADMIN, True, "история обращения оператора"),
+    CallbackRoute("op:word:", CallbackGroup.OPERATOR_ADMIN, True, "история обращения в Word"),
+    CallbackRoute("op:consent:", CallbackGroup.OPERATOR_ADMIN, True, "редакции согласия жителя"),
+    CallbackRoute("op:record_atts:", CallbackGroup.OPERATOR_ADMIN, True, "вложения записи обращения"),
     CallbackRoute("op:opadd:", CallbackGroup.OPERATOR_ADMIN, True, "мастер операторов: добавление"),
     CallbackRoute("op:opcard:", CallbackGroup.OPERATOR_ADMIN, True, "карточка оператора"),
     CallbackRoute("op:oprole:", CallbackGroup.OPERATOR_ADMIN, True, "смена роли — открыть picker"),

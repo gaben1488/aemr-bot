@@ -79,9 +79,9 @@ async def _set_first_card_state(appeal_id: int, state: str) -> None:
 
 
 async def _warn_uncertain_first_card(bot, appeal_id: int) -> None:
-    # The caller holds the shared per-appeal lock. A failed warning remains
-    # eligible for retry; a crash after delivery but before commit can repeat
-    # the warning, but never replays the original card.
+    # Reserve the warning before contacting MAX. A timeout or crash has an
+    # unknown outcome; replay could duplicate it. Diagnostics still exposes
+    # every uncertain original card regardless of the warning outcome.
     async with session_scope() as session:
         result = await session.execute(
             update(Appeal)
@@ -91,7 +91,7 @@ async def _warn_uncertain_first_card(bot, appeal_id: int) -> None:
                 Appeal.initial_card_state.in_(["sending", "uncertain"]),
                 Appeal.initial_card_notified.is_(False),
             )
-            .values(initial_card_state="uncertain")
+            .values(initial_card_state="uncertain", initial_card_notified=True)
         )
         eligible = bool(result.rowcount)
     if not eligible:
@@ -114,11 +114,6 @@ async def _warn_uncertain_first_card(bot, appeal_id: int) -> None:
     if not extract_message_id(sent):
         log.error("Uncertain first-card warning #%s returned no message id", appeal_id)
         return
-    async with session_scope() as session:
-        await session.execute(
-            update(Appeal).where(Appeal.id == appeal_id)
-            .values(initial_card_notified=True)
-        )
 
 
 async def recover_first_publication(bot, appeal_id: int) -> bool:
@@ -283,7 +278,8 @@ async def _render(
     if is_first_publication and not await _claim_first_publication(appeal.id):
         return None
     try:
-        sent = await bot.send_message(
+        from aemr_bot.services.data_erasure import tracked_send
+        sent = await tracked_send(bot, kind="admin_card", appeal_id=appeal.id,
             chat_id=cfg.admin_group_id,
             text=text_for_send,
             attachments=attachments,
@@ -329,16 +325,22 @@ async def _render(
                 )
         if is_first_publication:
             appeal.admin_message_id = new_mid
+    if new_mid:
+        try:
+            from aemr_bot.services import queue_panel
+            await queue_panel.refresh(bot)
+        except Exception:
+            log.warning("Queue refresh failed after confirmed appeal card", exc_info=True)
     return new_mid
 
 
 def _count_attachments(appeal: Appeal) -> int:
-    """Сколько вложений у обращения (исходные + дополнения жителя).
+    """Сколько вложений у обращения и переписки обеих сторон.
     Устойчиво к detached state (lazy-fail → fallback на scalar)."""
     try:
-        from aemr_bot.services.admin_relay import _collect_all_user_attachments
+        from aemr_bot.services.admin_relay import collect_appeal_attachments
 
-        return len(_collect_all_user_attachments(appeal))
+        return len(collect_appeal_attachments(appeal))
     except Exception:
         log.debug(
             "admin_card._count_attachments: lazy-load fail for appeal #%s",

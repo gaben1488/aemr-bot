@@ -138,13 +138,26 @@ def _clean_tracker():
 # ============================================================================
 
 
+@pytest.fixture
+def admin_card_boundaries(monkeypatch):
+    """Freshness tests exercise MAX/tracker ordering; inventory and queue use PG tests."""
+    async def tracked(bot, *, kind, appeal_id, **kwargs):
+        assert kind == "admin_card" and appeal_id > 0
+        return await bot.send_message(**kwargs)
+
+    transport = AsyncMock(side_effect=tracked)
+    monkeypatch.setattr("aemr_bot.services.data_erasure.tracked_send", transport)
+    monkeypatch.setattr("aemr_bot.services.queue_panel.refresh", AsyncMock())
+    return transport
+
+
 class TestA_AdminCardRender:
     """Базовый контракт admin_card.render. Дублирует ключевые случаи из
     test_admin_card_render.py для self-containedness — но более явно
     разделяет «что мы проверяем» (один тест = одно правило)."""
 
     @pytest.mark.asyncio
-    async def test_force_new_clears_tracker_after_send(self) -> None:
+    async def test_force_new_clears_tracker_after_send(self, admin_card_boundaries) -> None:
         """force_new=True → send_new → tracker должен стать None.
 
         Это SACRED-фикс 2026-05-26: без clear'а следующий callback
@@ -199,7 +212,7 @@ class TestB_MenuAfterAdminCard:
     sacred-карточка превращалась в меню при тапе любой кнопки op:menu."""
 
     @pytest.mark.asyncio
-    async def test_menu_callback_on_card_sends_new_menu(self) -> None:
+    async def test_menu_callback_on_card_sends_new_menu(self, admin_card_boundaries) -> None:
         """force_new render → clear → menu callback с card_mid → send_new
         menu (НЕ edit карточки).
         """
@@ -285,7 +298,7 @@ class TestC_ListingOpenCardMenu:
     """
 
     @pytest.mark.asyncio
-    async def test_full_listing_open_card_flow_no_card_edit(self) -> None:
+    async def test_full_listing_open_card_flow_no_card_edit(self, admin_card_boundaries) -> None:
         from aemr_bot.services import admin_card
         from aemr_bot.utils import menu_tracker
         from aemr_bot.utils.event import send_or_edit_screen
@@ -367,7 +380,7 @@ class TestD_OpActionAfterOpenCard:
     → can_edit=False → send_new card."""
 
     @pytest.mark.asyncio
-    async def test_reply_action_after_open_card_sends_new_card(self) -> None:
+    async def test_reply_action_after_open_card_sends_new_card(self, admin_card_boundaries) -> None:
         from aemr_bot.services import admin_card
         from aemr_bot.utils import menu_tracker
 
@@ -396,7 +409,7 @@ class TestD_OpActionAfterOpenCard:
         assert bot.send_message.await_count == 2
 
     @pytest.mark.asyncio
-    async def test_render_never_edits_after_dual_tracker(self) -> None:
+    async def test_render_never_edits_after_dual_tracker(self, admin_card_boundaries) -> None:
         """2026-05-27 dual-tracker: edit-ветка из admin_card.render
         удалена полностью. Карточка обращения = sacred event log,
         всегда send_new. Раньше этот тест закреплял edit-поведение —
@@ -505,7 +518,7 @@ class TestF_MultipleOpenCard:
     отдельная sacred-запись в чате."""
 
     @pytest.mark.asyncio
-    async def test_two_open_cards_both_send_new(self) -> None:
+    async def test_two_open_cards_both_send_new(self, admin_card_boundaries) -> None:
         from aemr_bot.services import admin_card
         from aemr_bot.utils import menu_tracker
 
@@ -555,7 +568,7 @@ class TestG_TwoActionsBothPublishNewCards:
     """
 
     @pytest.mark.asyncio
-    async def test_two_closes_both_publish_new_cards(self) -> None:
+    async def test_two_closes_both_publish_new_cards(self, admin_card_boundaries) -> None:
         from aemr_bot.services import admin_card
         from aemr_bot.utils import menu_tracker
 

@@ -12,8 +12,8 @@ from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator
 from aemr_bot.services import card_format
-from aemr_bot.services import stats as stats_service
-from aemr_bot.utils.event import get_chat_id, send_or_edit_screen
+from aemr_bot.services import complete_stats as stats_service
+from aemr_bot.utils.event import extract_message_id, get_chat_id, send_or_edit_screen
 
 
 async def _send_stats_xlsx(
@@ -43,12 +43,12 @@ async def _send_stats_xlsx(
 
     if typing_cm is not None:
         async with typing_cm, session_scope() as session:
-            content, title, count = await stats_service.build_xlsx(
+            content, title, count, epoch = await stats_service.build_xlsx_with_epoch(
                 session, period
             )
     else:
         async with session_scope() as session:
-            content, title, count = await stats_service.build_xlsx(session, period)
+            content, title, count, epoch = await stats_service.build_xlsx_with_epoch(session, period)
     if count == 0:
         await send_or_edit_screen(
             event,
@@ -64,24 +64,40 @@ async def _send_stats_xlsx(
     # (`services/card_format.TZ` ← settings.timezone).
     local_date = datetime.now(card_format.TZ)
     filename = f"appeals_{period}_{local_date:%Y-%m-%d}.xlsx"
-    token = await uploads.upload_bytes(event.bot, content, suffix=".xlsx")
-    if token is None:
-        await send_or_edit_screen(
-            event,
-            chat_id=chat_id,
-            text=(
-                f"Сформирован XLSX за {title} ({count} обращений), "
-                "но загрузить файл не удалось. См. логи бота."
-            ),
-            attachments=[kbds.op_back_to_menu_keyboard()],
-        )
-        return False
-    await event.bot.send_message(
-        chat_id=chat_id,
-        text=f"📊 Статистика {title} ({count} обращений). Файл: {filename}",
-        attachments=[uploads.file_attachment(token)],
-    )
-    return True
+    from aemr_bot.services import privacy_epoch
+    async with session_scope() as guard_session:
+        if not await privacy_epoch.hold_export_if_current(guard_session, epoch):
+            await send_or_edit_screen(
+                event, chat_id=chat_id,
+                text="Во время подготовки отчёта данные были удалены. Отчёт не отправлен; сформируйте его заново.",
+                attachments=[kbds.op_back_to_menu_keyboard()],
+            )
+            return False
+        token = await uploads.upload_bytes(event.bot, content, suffix=".xlsx")
+        if token is None:
+            await send_or_edit_screen(
+                event, chat_id=chat_id,
+                text=f"Не удалось загрузить XLSX за {title} ({count} обращений). Попробуйте позже.",
+                attachments=[kbds.op_back_to_menu_keyboard()],
+            )
+            return False
+        try:
+            from aemr_bot.services import data_erasure
+            sent = await data_erasure.tracked_send(event.bot, kind="bulk_export",
+                chat_id=chat_id,
+                text=f"📊 Статистика {title} ({count} обращений). Файл: {filename}",
+                attachments=[uploads.file_attachment(token)],
+            )
+        except Exception:
+            sent = None
+        if not extract_message_id(sent):
+            await send_or_edit_screen(
+                event, chat_id=chat_id,
+                text="Не удалось подтвердить отправку отчёта. Проверьте чат перед повтором.",
+                attachments=[kbds.op_back_to_menu_keyboard()],
+            )
+            return False
+        return True
 
 
 async def run_stats_today(event) -> bool:

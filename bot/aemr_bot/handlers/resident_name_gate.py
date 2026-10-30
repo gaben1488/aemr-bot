@@ -11,7 +11,11 @@ from aemr_bot.handlers import callback_router
 from aemr_bot.handlers._common import current_user
 from aemr_bot.services import settings_store
 from aemr_bot.services import users as users_service
-from aemr_bot.utils.attachments import collect_attachments, extract_location
+from aemr_bot.utils.attachments import (
+    collect_attachments,
+    extract_location,
+    has_unsupported_appeal_attachments,
+)
 from aemr_bot.utils.event import send_or_edit_screen
 from aemr_bot.utils.resident_names import normalize_resident_name
 
@@ -25,7 +29,7 @@ _replaying: ContextVar[bool] = ContextVar("resident_name_replaying", default=Fal
 _SAFE_EXACT = {"menu:new_appeal", "menu:my_appeals", "addr:reuse", "addr:new",
                "geo:confirm", "geo:edit_address", "geo:other_locality", "appeal:submit"}
 _SAFE_PREFIXES = ("locality:", "topic:", "appeal:followup:", "appeal:repeat:",
-                  "appeal:show:", "appeal:atts:", "appeals:page:")
+                  "appeal:show:", "appeal:atts:", "appeal:history:", "appeal:record_atts:", "appeals:page:")
 _CHOICE_SETTINGS = {"locality": "localities", "topic": "topics"}
 
 
@@ -63,6 +67,27 @@ async def require_name(event, max_user_id: int, *, payload: str | None = None,
             if text is not None:
                 return False
         else:
+            if text is not None and user.dialog_state in {
+                DialogState.AWAITING_SUMMARY.value, DialogState.AWAITING_FOLLOWUP_TEXT.value,
+            }:
+                if len(text) > cfg.summary_max_chars:
+                    await event.message.answer(
+                        f"Сообщение не отправлено: сейчас можно до {cfg.summary_max_chars} символов. "
+                        "Сократите текст и отправьте его снова или приложите документ."
+                    )
+                    return True
+                if has_unsupported_appeal_attachments(body):
+                    await event.message.answer(
+                        "Сообщение не отправлено: можно приложить фото, видео или файл. "
+                        "Удалите остальные вложения и отправьте сообщение снова."
+                    )
+                    return True
+                if len(collect_attachments(body)) > cfg.attachments_max_per_appeal:
+                    await event.message.answer(
+                        f"Сообщение не отправлено: сейчас можно до {cfg.attachments_max_per_appeal} "
+                        "вложений. Уменьшите их число и отправьте сообщение снова."
+                    )
+                    return True
             pending = {"state": user.dialog_state, "data": data}
             if payload is not None and gates_callback(payload):
                 pending["payload"] = payload
@@ -76,8 +101,8 @@ async def require_name(event, max_user_id: int, *, payload: str | None = None,
                         options[index] if index is not None and 0 <= index < len(options) else None
                     )
             if text is not None:
-                pending["text"] = text[:cfg.summary_max_chars]
-                pending["attachments"] = collect_attachments(body)[:cfg.attachments_max_per_appeal]
+                pending["text"] = text
+                pending["attachments"] = collect_attachments(body)
                 location = extract_location(body)
                 if location is not None:
                     pending["location"] = list(location)
@@ -104,8 +129,6 @@ async def require_name(event, max_user_id: int, *, payload: str | None = None,
     notice = NAME_PROMPT
     if text is not None:
         notice += "\n\nВаше сообщение сохранено. После ввода имени продолжим с него."
-        if len(text) > cfg.summary_max_chars:
-            notice += f" Сохранены первые {cfg.summary_max_chars} символов."
     await send_or_edit_screen(event, text=notice, attachments=[keyboards.cancel_keyboard()],
                               force_new_message=text is not None)
     return True
@@ -167,7 +190,7 @@ async def _resume(event, max_user_id: int, pending: dict) -> bool:
         return True
     state = DialogState(pending["state"])
     if state == DialogState.AWAITING_SUMMARY and pending.get("applied"):
-        await appeal_funnel.finalize_appeal(event, max_user_id)
+        await appeal_funnel.show_summary_draft(event, max_user_id)
         return True
     if "text" in pending:
         if pending.get("location") and state == DialogState.AWAITING_LOCALITY:
@@ -184,7 +207,7 @@ async def _resume(event, max_user_id: int, pending: dict) -> bool:
     if state == DialogState.AWAITING_SUMMARY and (
         pending["data"].get("summary_chunks") or pending["data"].get("attachments")
     ):
-        await appeal_funnel.finalize_appeal(event, max_user_id)
+        await appeal_funnel.show_summary_draft(event, max_user_id)
         return True
     prompts = {
         DialogState.AWAITING_LOCALITY: appeal_funnel.ask_locality,

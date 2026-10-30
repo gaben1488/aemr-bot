@@ -60,7 +60,7 @@ async def test_hydrated_operator_registration_stays_deleted_after_restart(
 
     class HydrationSession:
         async def execute(self, _statement):
-            return SimpleNamespace(rowcount=0)
+            return SimpleNamespace(rowcount=0, all=list)
 
         async def scalars(self, _statement):
             rows = [SimpleNamespace(

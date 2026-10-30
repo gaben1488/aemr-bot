@@ -560,4 +560,27 @@ class TestAdminCardThreatWarningScansFollowups:
         )
         result = cf.admin_card(appeal, _user())
         assert "⛔" not in result
-        assert "⚠️" not in result
+        # The SLA header can warn independently of the URL classification.
+        assert "Текст содержит ссылку" not in result
+
+
+def test_long_admin_card_preserves_latest_update_in_compact_preview():
+    messages = [_msg(direction=MessageDirection.FROM_USER.value,
+                     text=('Деталь ' * 110) + f' СООБЩЕНИЕ_{i}') for i in range(10)]
+    messages[-1].text = 'ПОСЛЕДНЕЕ_СОБЫТИЕ'
+    appeal = _appeal(summary='Проблема ' * 800, messages=messages)
+    rendered = cf.admin_card(appeal, _user())
+    assert len(rendered.encode('utf-16-le')) // 2 < 4000
+    assert 'ПОСЛЕДНЕЕ_СОБЫТИЕ' in rendered
+    assert 'истори' in rendered.lower()
+
+
+def test_long_citizen_card_preserves_latest_answer_in_compact_preview():
+    messages = [_msg(direction=MessageDirection.FROM_OPERATOR.value,
+                     text=('Ответ ' * 150) + f' СООБЩЕНИЕ_{i}') for i in range(10)]
+    messages[-1].text = 'ПОСЛЕДНИЙ_ОТВЕТ'
+    appeal = _appeal(summary='Проблема ' * 800, messages=messages)
+    rendered = cf.user_card(appeal)
+    assert len(rendered.encode('utf-16-le')) // 2 < 4000
+    assert 'ПОСЛЕДНИЙ_ОТВЕТ' in rendered
+    assert 'истори' in rendered.lower()

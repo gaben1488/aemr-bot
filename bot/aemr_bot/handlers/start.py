@@ -9,7 +9,6 @@ from aemr_bot.db.session import session_scope
 from aemr_bot.handlers import resident_name_gate
 from aemr_bot.handlers._common import current_user
 from aemr_bot.services import admin_events, card_format, settings_store, uploads
-from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as ops_service
 from aemr_bot.services import policy as policy_service
@@ -50,12 +49,15 @@ async def _build_main_menu(max_user_id: int | None = None):
     Без идентификации показываем приглашение подписаться по умолчанию.
     """
     subscribed = False
+    has_draft = False
     if max_user_id is not None:
         async with session_scope() as session:
             subscribed = await broadcasts_service.is_subscribed(
                 session, max_user_id
             )
-    return keyboards.main_menu(subscribed=subscribed)
+            user = await users_service.find_by_max_id(session, max_user_id)
+            has_draft = bool(user and user.appeal_draft)
+    return keyboards.main_menu(subscribed=subscribed, has_draft=has_draft)
 
 
 async def _reset_funnel_if_stuck(max_user_id: int | None) -> None:
@@ -69,9 +71,12 @@ async def _reset_funnel_if_stuck(max_user_id: int | None) -> None:
         return
     from aemr_bot.db.models import DialogState
 
-    async with current_user(max_user_id) as (session, user):
-        if user.dialog_state and user.dialog_state != DialogState.IDLE.value:
-            await users_service.reset_state(session, max_user_id)
+    async with current_user(max_user_id) as (session, current):
+        if current.dialog_state and current.dialog_state != DialogState.IDLE.value:
+            from aemr_bot.services import resident_drafts
+            user = await users_service.find_by_max_id(session, max_user_id, for_update=True)
+            if user is not None and not await resident_drafts.pause(session, user):
+                await users_service.reset_state(session, max_user_id)
 
 
 async def _welcome_text() -> str:
@@ -160,11 +165,21 @@ async def cmd_policy(event):
         except Exception:
             log.exception("on-demand policy upload failed")
 
+    district_pdf = "https://elizovomr.ru/storage/attachments/2024/08/15/U9XfgiWRETCF0KKT.pdf"
+    label = ("Политика администрации Елизовского муниципального района "
+             "(до опубликования политики округа)" if policy_url == district_pdf
+             else "Политика обработки персональных данных")
     if token and bot is not None:
         try:
+            policy_text = texts.POLICY_DELIVERED
+            if policy_url:
+                policy_text += (
+                    f"\n\n🏛 {label}:\n"
+                    f"{policy_url}"
+                )
             await send_or_edit_screen(
                 event,
-                text=texts.POLICY_DELIVERED,
+                text=policy_text,
                 attachments=[
                     policy_service.build_file_attachment(token),
                     keyboards.back_to_settings_keyboard(),
@@ -177,7 +192,7 @@ async def cmd_policy(event):
     if policy_url:
         await send_or_edit_screen(
             event,
-            text=texts.POLICY_FALLBACK_URL.format(policy_url=policy_url),
+            text=f"📄 Политика конфиденциальности чат-бота сейчас недоступна.\n\n🏛 {label}:\n{policy_url}",
             attachments=[keyboards.back_to_settings_keyboard()],
         )
     else:
@@ -219,16 +234,13 @@ async def cmd_forget(event):
     max_user_id = get_user_id(event)
     if max_user_id is None:
         return
-    # Аудит ставим ДО erase, потому что после удаления записи user
-    # пропадает max_user_id из таблицы users — но в audit_log
-    # operator_max_user_id остаётся как метка «было такое действие
-    # от такого человека».
+    # Оставляем факт операции без повторного сохранения ID жителя.
     async with session_scope() as session:
         await ops_service.write_audit(
             session,
-            operator_max_user_id=max_user_id,
+            operator_max_user_id=None,
             action="self_erase",
-            target=f"user max_id={max_user_id}",
+            target=None,
         )
         # erase_pdn_detailed возвращает список id закрытых обращений
         # (NEW/IN_PROGRESS до erase). Передаём в уведомление оператору
@@ -242,7 +254,10 @@ async def cmd_forget(event):
         max_user_id=max_user_id,
         closed_appeal_ids=closed_ids or [],
     )
-    await reply(event, texts.ERASE_REQUESTED)
+    from aemr_bot.services import data_erasure
+    await data_erasure.tracked_send(event.bot, kind="erasure_confirmation",
+        max_user_ids=[max_user_id], allow_erased_recipient=True,
+        chat_id=get_chat_id(event), text=texts.ERASE_REQUESTED)
 
 
 # Порог разбивки выгрузки на сообщения. У MAX предел около 4000
@@ -326,8 +341,10 @@ def _render_export_for_human(user, appeals) -> str:
     L.append(f"  Согласие на обработку данных дано: {_export_dt(user.consent_pdn_at)}")
     if user.consent_revoked_at:
         L.append(f"  Согласие отозвано: {_export_dt(user.consent_revoked_at)}")
-    else:
+    elif user.consent_pdn_at:
         L.append("  Согласие отозвано: нет, действует")
+    else:
+        L.append("  Согласие не зафиксировано")
     if user.subscribed_broadcast:
         L.append(
             "  Подписка на оповещения: оформлена "
@@ -335,12 +352,18 @@ def _render_export_for_human(user, appeals) -> str:
         )
     else:
         L.append("  Подписка на оповещения: не оформлена")
-    if user.consent_pdn_text_sha256:
-        L.append(
-            "  Служебная отметка (отпечаток текста согласия): "
-            f"{user.consent_pdn_text_sha256[:16]}… — по ней видно, "
-            "какую именно редакцию согласия вы принимали"
-        )
+    records = getattr(user, "consent_records", None) or []
+    if records:
+        for record in records:
+            if not isinstance(record, dict) or not isinstance(record.get("text"), str):
+                continue
+            try:
+                accepted = _export_dt(datetime.fromisoformat(record["accepted_at"]))
+            except (KeyError, TypeError, ValueError):
+                accepted = "дата не сохранилась"
+            L.extend(["", f"  Текст согласия, подтверждённого {accepted}:", record["text"]])
+    elif user.consent_pdn_at or user.consent_pdn_text_sha256:
+        L.append("  Текст ранее данного согласия не сохранился.")
     L.append("")
 
     if not appeals:
@@ -354,6 +377,8 @@ def _render_export_for_human(user, appeals) -> str:
         )
         L.append("")
         L.append(f"── Обращение № {ap.id} " + "─" * 30)
+        if getattr(ap, "related_appeal_id", None):
+            L.append(f"  Связано с обращением № {ap.related_appeal_id}")
         L.append(f"  Подано: {_export_dt(ap.created_at)}")
         L.append(f"  Состояние: {status_label}")
         L.append(f"  Тема: {ap.topic or '—'}")
@@ -368,17 +393,16 @@ def _render_export_for_human(user, appeals) -> str:
             L.append(f"  Закрыто: {_export_dt(ap.closed_at)}")
         L.append("")
         L.append("  Текст обращения:")
-        for line in (ap.summary or "—").splitlines() or ["—"]:
-            L.append(f"    {line}")
-        messages = list(ap.messages or [])
+        L.append(ap.summary if ap.summary else "—")
+        messages = [m for m in (ap.messages or []) if m.direction in {"from_user", "from_operator"}]
         if messages:
             L.append("")
             L.append("  Переписка:")
             for m in messages:
-                who = "Оператор" if m.direction == "from_operator" else "Вы"
+                from aemr_bot.services.message_labels import response_label
+                who = response_label(m, citizen=True) if m.direction == "from_operator" else "Вы"
                 L.append(f"    [{_export_dt(m.created_at)}] {who}:")
-                for line in (m.text or "—").splitlines() or ["—"]:
-                    L.append(f"      {line}")
+                L.append(m.text if m.text else "—")
                 m_attach = len(m.attachments or [])
                 if m_attach:
                     L.append(f"      (приложено файлов: {m_attach})")
@@ -396,7 +420,7 @@ def _render_export_for_human(user, appeals) -> str:
     return "\n".join(L)
 
 
-async def _send_export_as_file(event, body: str) -> bool:
+async def _send_export_as_file(event, body: str | None = None, *, prepared_path=None) -> bool:
     """Отправить выгрузку файлом. True — ушло, False — нужен запасной путь.
 
     Имя файла берётся из basename загружаемого файла, поэтому пишем во
@@ -411,55 +435,160 @@ async def _send_export_as_file(event, body: str) -> bool:
     if bot is None:
         return False
 
-    tmp_dir = Path(tempfile.mkdtemp(prefix="export_"))
-    path = tmp_dir / EXPORT_FILE_NAME
+    own_dir = Path(tempfile.mkdtemp(prefix="export_")) if prepared_path is None else None
+    path = own_dir / EXPORT_FILE_NAME if own_dir else prepared_path
     try:
-        path.write_text(body, encoding="utf-8")
+        if own_dir is not None:
+            path.write_text(body or "", encoding="utf-8")
         token = await uploads.upload_path(bot, path)
         if token is None:
             log.warning("export: загрузка файла не удалась, уходим в текст")
             return False
-        await reply(
-            event,
-            "Ваши данные — во вложении. Файл можно сохранить и открыть "
-            "на телефоне или компьютере.",
-            attachments=[uploads.file_attachment(token)],
-        )
+        try:
+            from aemr_bot.utils.event import extract_message_id
+            sent = await reply(
+                event,
+                "Ваши данные — во вложении. Файл можно сохранить и открыть "
+                "на телефоне или компьютере.",
+                attachments=[uploads.file_attachment(token)],
+            )
+            confirmed = bool(extract_message_id(sent))
+        except Exception:
+            confirmed = False
+        if not confirmed:
+            # MAX may have accepted the file before the response was lost.
+            # Do not automatically send the same data again in text chunks.
+            try:
+                await reply(event, "Не удалось подтвердить отправку файла. Проверьте чат перед повтором или обратитесь в администрацию.")
+            except Exception:
+                log.warning("export: delivery and warning outcomes not confirmed")
         return True
     except Exception:
         log.exception("export: отправка файлом не удалась, уходим в текст")
         return False
     finally:
         try:
-            path.unlink(missing_ok=True)
-            tmp_dir.rmdir()
+            if own_dir is not None:
+                path.unlink(missing_ok=True)
+                own_dir.rmdir()
         except Exception:
             log.debug("export: временный файл не удалён", exc_info=True)
 
 
+async def _write_user_export(session, user, path) -> None:
+    """Write a bounded-memory copy of all still stored resident records."""
+    from sqlalchemy import func, select
+
+    from aemr_bot.db.models import Appeal, Message
+
+    count = await session.scalar(select(func.count(Appeal.id)).where(Appeal.user_id == user.id))
+    # Reuse the same profile and consent presentation as the legacy renderer.
+    header = _render_export_for_human(user, []).split("ВАШИ ОБРАЩЕНИЯ\n", 1)[0]
+    with path.open("w", encoding="utf-8") as output:
+        output.write(header)
+        output.write(f"ВАШИ ОБРАЩЕНИЯ: {count}\n" if count else "ВАШИ ОБРАЩЕНИЯ\n  Обращений пока нет.\n")
+        after_id = 0
+        while True:
+            batch = list(await session.scalars(
+                select(Appeal).where(Appeal.user_id == user.id, Appeal.id > after_id)
+                .order_by(Appeal.id).limit(100)
+            ))
+            if not batch:
+                break
+            after_id = batch[-1].id
+            for appeal in batch:
+                _, status_label = texts.STATUS_LABELS.get(appeal.status, ("", appeal.status or "—"))
+                lines = ["", f"── Обращение № {appeal.id} " + "─" * 30]
+                if appeal.related_appeal_id:
+                    lines.append(f"  Связано с обращением № {appeal.related_appeal_id}")
+                lines.extend([f"  Подано: {_export_dt(appeal.created_at)}", f"  Состояние: {status_label}",
+                              f"  Тема: {appeal.topic or '—'}", f"  Населённый пункт: {appeal.locality or '—'}",
+                              f"  Адрес: {appeal.address or '—'}"])
+                if appeal.attachments:
+                    lines.append(f"  Вы приложили файлов: {len(appeal.attachments)}")
+                if appeal.answered_at:
+                    lines.append(f"  Ответ дан: {_export_dt(appeal.answered_at)}")
+                if appeal.closed_at:
+                    lines.append(f"  Закрыто: {_export_dt(appeal.closed_at)}")
+                lines.extend(["", "  Текст обращения:", appeal.summary or "—"])
+                output.write("\n".join(lines) + "\n")
+                rows = await session.stream_scalars(
+                    select(Message).where(Message.appeal_id == appeal.id,
+                                          Message.direction.in_(["from_user", "from_operator"]))
+                    .order_by(Message.created_at, Message.id).execution_options(yield_per=250)
+                )
+                first = True
+                async for message in rows:
+                    if first:
+                        output.write("\n  Переписка:\n")
+                        first = False
+                    from aemr_bot.services.message_labels import response_label
+                    who = response_label(message, citizen=True) if message.direction == "from_operator" else "Вы"
+                    output.write(f"    [{_export_dt(message.created_at)}] {who}:\n")
+                    output.write((message.text or "—") + "\n")
+                    if message.attachments:
+                        output.write(f"      (приложено файлов: {len(message.attachments)})\n")
+        output.write("\n" + "─" * 46 + "\n")
+        output.write("Сами файлы и фотографии хранятся в мессенджере MAX — в этой выгрузке указано только их количество.\n")
+        output.write("Изменить данные, потребовать их удаления или обжаловать наши действия можно письмом в Администрацию.\n")
+
+
 async def cmd_export(event):
-    """Скрытая команда: житель получает свои данные файлом
-    (право субъекта по 152-ФЗ ст. 14). Не публикуется в /-меню MAX.
+    """Hidden access command; generate a file without loading all history into RAM."""
+    import tempfile
+    from pathlib import Path
 
-    Состав: профиль (имя, телефон, отметки согласий), обращения и ВСЯ
-    переписка по каждому — уточнения жителя и ответы оператора, плюс
-    количество вложений. Без admin-пометок и системных полей.
+    from sqlalchemy import text as sql_text
 
-    Формат — ЧЕЛОВЕКОЧИТАЕМЫЙ текст, а не JSON: выгрузку читает житель,
-    в том числе пожилой, а не программа. Машинный формат право на доступ
-    формально закрывал, но фактически оставлял человека наедине с
-    латинскими ключами и скобками.
-    """
+    from aemr_bot.services import privacy_epoch
+
     max_user_id = get_user_id(event)
     if max_user_id is None:
         return
-    async with current_user(max_user_id) as (session, user):
-        # ВСЯ переписка, а не только последний ответ оператора: статья 14
-        # даёт право на доступ к обрабатываемым данным, а уточнения жителя
-        # и его вложения — такие же его данные, как текст обращения.
-        appeals = await appeals_service.list_for_user(session, user.id, limit=500)
-        body = _render_export_for_human(user, appeals)
+    with tempfile.TemporaryDirectory(prefix="export_") as tmp_dir:
+        path = Path(tmp_dir) / EXPORT_FILE_NAME
+        async with session_scope() as session:
+            if session.bind.dialect.name == "postgresql":
+                await session.execute(sql_text("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY"))
+            epoch = await privacy_epoch.read(session)
+            user = await users_service.find_by_max_id(session, max_user_id)
+            if user is None:
+                await reply(event, "Сохранённые данные не найдены.")
+                return
+            await _write_user_export(session, user, path)
+        # The shared lock lasts through all sends. An intervening erasure
+        # invalidates the snapshot before any personal data is delivered.
+        async with session_scope() as guard_session:
+            if not await privacy_epoch.hold_export_if_current(guard_session, epoch):
+                await reply(event, "Данные изменились во время подготовки. Запросите их ещё раз.")
+                return
+            if await _send_export_as_file(event, prepared_path=path):
+                return
+            await _deliver_user_export_file(event, path)
 
+
+async def _deliver_user_export_file(event, path) -> None:
+    """Fallback in bounded chunks; never retry a part with an unknown outcome."""
+    from aemr_bot.utils.event import extract_message_id
+
+    with path.open(encoding="utf-8") as source:
+        index = 0
+        while chunk := source.read(1200):
+            index += 1
+            try:
+                sent = await reply(event, f"Ваши данные — часть {index}:\n\n{chunk}")
+                if not extract_message_id(sent):
+                    raise RuntimeError("MAX did not confirm the message")
+            except Exception:
+                log.warning("export: результат части %d не подтверждён", index)
+                try:
+                    await reply(event, "Не удалось подтвердить отправку всех частей. Проверьте чат или обратитесь в администрацию.")
+                except Exception:
+                    log.warning("export: warning delivery not confirmed")
+                return
+
+
+async def _deliver_user_export(event, body: str) -> None:
     # Основной путь — ФАЙЛ: он не упирается ни в лимит длины сообщения,
     # ни в разметку (на этом выгрузка молча срывалась). Текстовая нарезка
     # остаётся запасным путём — право по статье 14 закона № 152-ФЗ не
@@ -467,7 +596,9 @@ async def cmd_export(event):
     if await _send_export_as_file(event, body):
         return
 
-    parts = _chunk_for_messenger(body, limit=EXPORT_CHUNK_CHARS)
+    from aemr_bot.utils.event import extract_message_id
+    from aemr_bot.utils.text_pages import split_text_units
+    parts = split_text_units(body, limit=2600)
     total = len(parts)
     delivered = False
     for index, part in enumerate(parts, start=1):
@@ -477,10 +608,17 @@ async def cmd_export(event):
             else f"Ваши данные — часть {index} из {total}:"
         )
         try:
-            await reply(event, f"{header}\n\n```\n{part}\n```")
+            sent = await reply(event, f"{header}\n\n{part}")
+            if not extract_message_id(sent):
+                raise RuntimeError("MAX did not confirm the message")
             delivered = True
         except Exception:
-            log.exception("export: часть %d из %d не ушла жителю", index, total)
+            log.warning("export: результат части %d из %d не подтверждён", index, total)
+            try:
+                await reply(event, "Не удалось подтвердить отправку всех частей. Проверьте чат или обратитесь в администрацию.")
+            except Exception:
+                log.warning("export: warning delivery not confirmed")
+            return
 
     if not delivered:
         # Молчать нельзя: житель ждёт свои данные и не понимает, почему
@@ -506,6 +644,9 @@ async def cmd_cancel(event):
         return
     async with session_scope() as session:
         await users_service.reset_state(session, max_user_id)
+        user = await users_service.find_by_max_id(session, max_user_id, for_update=True)
+        if user is not None:
+            user.appeal_draft = None
     await reply(event, texts.CANCELLED, attachments=[keyboards.back_to_menu_keyboard()])
 
 

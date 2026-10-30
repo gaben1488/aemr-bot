@@ -100,7 +100,10 @@ async def recover_unpublished_appeals(bot) -> int:
     from aemr_bot.services import admin_card as admin_card_service
 
     if not cfg.admin_group_id:
-        return 0
+        # Confirmed replies can be restored locally even if group delivery
+        # is disabled. Recovery does not make a new MAX request.
+        from aemr_bot.services import operator_reply_attempts
+        return await operator_reply_attempts.recover_confirmed()
     async with session_scope() as session:
         result = await session.scalars(
             select(Appeal.id)
@@ -134,73 +137,19 @@ async def recover_unpublished_appeals(bot) -> int:
                 log.exception("first admin-card recovery failed for appeal #%s", appeal_id)
                 return False
 
-    return sum(await asyncio.gather(*(recover(appeal_id) for appeal_id in ids)))
+    published = sum(await asyncio.gather(*(recover(appeal_id) for appeal_id in ids)))
+    from aemr_bot.services import followup_delivery, operator_reply_attempts
+    return (published + await followup_delivery.recover_pending(bot)
+            + await operator_reply_attempts.recover_confirmed())
 
 
 async def recover_stuck_funnels(bot) -> int:
-    """Завершает воронки, оставшиеся в состоянии AWAITING_SUMMARY после
-    перезапуска. Запускается один раз при старте бота.
-    """
-    async with session_scope() as session:
-        ids = await users_service.find_stuck_in_summary(
-            session, idle_seconds=cfg.appeal_collect_timeout_seconds
-        )
-    if not ids:
-        return 0
-
-    # Bounded fan-out (P2-2): не больше _RECOVERY_CONCURRENCY одновременных
-    # финализаций, чтобы пул БД (15) и rate-limit MAX (2 RPS) не легли при
-    # большой пачке застрявших воронок. gather сохраняет порядок результатов,
-    # поэтому zip(ids, results) ниже остаётся корректным.
-    sem = asyncio.Semaphore(_RECOVERY_CONCURRENCY)
-
-    async def _bounded(uid: int) -> bool | str | None:
-        async with sem:
-            return await persist_and_dispatch_appeal(bot, uid, reset_empty=True)
-
-    results = await asyncio.gather(
-        *(_bounded(uid) for uid in ids),
-        return_exceptions=True,
-    )
-
-    finalized = sum(1 for r in results if r is True)
-    failed = sum(1 for r in results if isinstance(r, BaseException))
-    if failed:
-        log.warning("восстановление: %d/%d воронок завершились с ошибкой", failed, len(ids))
-    if finalized:
-        log.info("восстановлено %d застрявших воронок", finalized)
-    return finalized
-
-
-def _apply_repeat_context(
-    *,
-    topic: str,
-    summary: str,
-    data: dict[str, Any],
-) -> tuple[str, str]:
-    source_id = data.get("repeat_source_appeal_id")
-    source_status = data.get("repeat_source_status")
-    if not source_id or source_status not in {
-        AppealStatus.ANSWERED.value,
-        AppealStatus.CLOSED.value,
-    }:
-        return topic, summary
-
-    if source_status == AppealStatus.ANSWERED.value:
-        label = "обратная связь по отвеченному вопросу"
-    else:
-        label = "обратная связь по закрытому вопросу"
-
-    base_topic = (data.get("repeat_source_topic") or topic or "без темы").strip()
-    marked_topic = f"{label.capitalize()}: {base_topic}"[:120]
-    marked_summary = (
-        f"Связано с обращением #{source_id}: {label}.\n\n{summary}"
-    )[: cfg.summary_max_chars]
-    return marked_topic, marked_summary
+    """Keep the startup hook without sending unfinished resident drafts."""
+    return 0
 
 
 async def persist_and_dispatch_appeal(
-    bot, max_user_id: int, *, reset_empty: bool = False
+    bot, max_user_id: int, *, reset_empty: bool = False, draft_token: str | None = None
 ) -> bool | str | None:
     """Создает обращение (Appeal) из накопленных данных dialog_data,
     публикует карточку для админов, подтверждает жителю по user_id.
@@ -220,12 +169,17 @@ async def persist_and_dispatch_appeal(
     try:
         # Recovery also participates in the inbox/erasure lifecycle gate:
         # a startup scan must not overwrite a newer live citizen action.
-        async with guard(max_user_id), get_user_lock(max_user_id), current_user(max_user_id) as (session, user):
+        async with guard(max_user_id), get_user_lock(max_user_id), current_user(max_user_id) as (session, _current):
+            user = await users_service.find_by_max_id(session, max_user_id, for_update=True)
+            if user is None:
+                return None
             if user.dialog_state != DialogState.AWAITING_SUMMARY.value:
                 log.info(
                     "отправка пропущена для пользователя %s — состояние уже не AWAITING_SUMMARY",
                     max_user_id,
                 )
+                return None
+            if not draft_token or (user.dialog_data or {}).get("draft_token") != draft_token:
                 return None
             # Единый гейт согласия/блокировки в точке создания: путь
             # «Подать похожее» (menu.start_appeal_repeat) выставляет
@@ -262,7 +216,8 @@ async def persist_and_dispatch_appeal(
                     "recent=%d, обращение не создано",
                     max_user_id, recent,
                 )
-                await users_service.reset_state(session, max_user_id)
+                # Keep the draft so the resident can submit it once the
+                # rate-limit window clears, without typing it all again.
                 return PERSIST_RATE_LIMITED
             data: dict[str, Any] = dict(user.dialog_data or {})
             replay = data.get(resident_name_gate.RESUME_KEY) or {}
@@ -270,19 +225,24 @@ async def persist_and_dispatch_appeal(
                 # A crash after name restoration but before replay must not
                 # let startup cleanup discard the saved input as an empty draft.
                 return None
-            summary = "\n".join(data.get("summary_chunks") or []).strip()
+            summary = "\n".join(data.get("summary_chunks") or [])
             attachments = data.get("attachments") or []
-            if not summary and not attachments:
+            if not summary.strip() and not attachments:
                 if reset_empty:
                     # Same lock and transaction as the state check; a later
                     # cleanup transaction could erase a newly started funnel.
                     await users_service.reset_state(session, max_user_id)
                 return False
-            topic, summary = _apply_repeat_context(
-                topic=data.get("topic", ""),
-                summary=summary,
-                data=data,
-            )
+            topic = data.get("topic", "")
+            related_id = data.get("repeat_source_appeal_id")
+            # A previously stored button or modified draft must never link
+            # another resident's appeal to this submission.
+            if related_id:
+                try:
+                    related = await appeals_service.get_by_id(session, int(related_id))
+                except (TypeError, ValueError):
+                    related = None
+                related_id = related.id if related is not None and related.user_id == user.id else None
             appeal = await appeals_service.create_appeal(
                 session,
                 user=user,
@@ -291,6 +251,7 @@ async def persist_and_dispatch_appeal(
                 topic=topic,
                 summary=summary,
                 attachments=attachments,
+                related_appeal_id=related_id,
             )
             await users_service.reset_state(session, max_user_id)
 

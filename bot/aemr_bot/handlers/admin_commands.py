@@ -225,6 +225,7 @@ def register(dp: Dispatcher) -> None:
             "reopened": texts.OP_APPEAL_REOPENED,
             "already_open": texts.OP_APPEAL_ALREADY_OPEN,
             "blocked_by_revoke": texts.OP_APPEAL_BLOCKED_BY_REVOKE,
+            "content_erased": "Содержание обращения № {number} очищено. Создайте новое обращение.",
             "not_found": texts.OP_APPEAL_NOT_FOUND,
         }[result].format(number=appeal_id)
         await event.message.answer(reply_text)
@@ -252,7 +253,7 @@ def register(dp: Dispatcher) -> None:
                 )
         await event.message.answer(
             texts.OP_APPEAL_CLOSED.format(number=appeal_id) if ok
-            else texts.OP_APPEAL_NOT_FOUND.format(number=appeal_id)
+            else texts.OP_APPEAL_CLOSE_UNAVAILABLE.format(number=appeal_id)
         )
 
     @dp.message_created(Command("erase"))
@@ -307,7 +308,7 @@ def register(dp: Dispatcher) -> None:
                     session,
                     operator_max_user_id=get_user_id(event),
                     action="erase",
-                    target=f"user max_id={target_id}",
+                    target=None,
                 )
 
         if ok and target_id is not None:
@@ -337,6 +338,12 @@ def register(dp: Dispatcher) -> None:
             await event.message.answer("Используйте: /setting <key> <value>")
             return
         key, raw_value = parts
+        if key == "sla_work_schedule":
+            from aemr_bot.handlers import admin_settings_schedule
+            actor_id = get_user_id(event)
+            if actor_id is not None:
+                await admin_settings_schedule.start(event, actor_id)
+            return
         import json
         try:
             value = json.loads(raw_value)

@@ -2,12 +2,48 @@ from datetime import UTC, datetime, timedelta
 from typing import Literal
 
 from dateutil.relativedelta import relativedelta
-from sqlalchemy import case, desc, func, or_, select, update
+from sqlalchemy import case, delete, desc, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from aemr_bot.db.models import Appeal, AppealStatus, Message, MessageDirection, User
+from aemr_bot.db.models import (
+    Appeal,
+    AppealStatus,
+    Message,
+    MessageDirection,
+    OperatorReplyAttempt,
+    OperatorReplyDraft,
+    User,
+)
 from aemr_bot.services import sla as sla_service
+from aemr_bot.services import work_schedule
+
+
+async def current_first_response_hours(session: AsyncSession) -> int:
+    """New periods inherit the UI setting; missing settings preserve env."""
+    from aemr_bot.config import settings
+    from aemr_bot.services import settings_store
+
+    value = await settings_store.get(session, "sla_response_hours")
+    if isinstance(value, int) and not isinstance(value, bool) and 1 <= value <= 168:
+        return value
+    return settings.sla_response_hours
+
+
+async def current_followup_hours(session: AsyncSession) -> int:
+    """Operational reminder threshold; 0 explicitly disables it."""
+    from aemr_bot.config import settings
+    from aemr_bot.services import settings_store
+
+    value = await settings_store.get(session, "sla_followup_hours")
+    if isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= 168:
+        return value
+    return settings.sla_followup_hours
+
+
+def response_hours_for(appeal: Appeal, fallback: int) -> int:
+    value = getattr(appeal, "sla_hours_at_start", None)
+    return value if isinstance(value, int) and not isinstance(value, bool) and value > 0 else fallback
 
 
 async def create_appeal(
@@ -18,6 +54,7 @@ async def create_appeal(
     summary: str,
     attachments: list,
     locality: str | None = None,
+    related_appeal_id: int | None = None,
 ) -> Appeal:
     appeal = Appeal(
         user_id=user.id,
@@ -27,10 +64,17 @@ async def create_appeal(
         topic=topic,
         summary=summary,
         attachments=attachments,
+        related_appeal_id=related_appeal_id,
+        sla_hours_at_start=await current_first_response_hours(session),
+        sla_schedule_at_start=await work_schedule.snapshot(session),
     )
     session.add(appeal)
     await session.flush()
     return appeal
+
+
+class ContentErasedError(ValueError):
+    """An expired appeal is immutable; new work needs a new appeal id."""
 
 
 async def add_user_message(
@@ -40,6 +84,8 @@ async def add_user_message(
     attachments: list | None = None,
     max_message_id: str | None = None,
 ) -> Message:
+    if getattr(appeal, "content_erased_at", None) is not None:
+        raise ContentErasedError("Содержание очищено. Создайте новое обращение.")
     msg = Message(
         appeal_id=appeal.id,
         direction=MessageDirection.FROM_USER.value,
@@ -60,6 +106,10 @@ async def add_operator_message(
     max_message_id: str | None,
     *,
     is_final: bool = True,
+    attachments: list | None = None,
+    apply_status: bool = True,
+    created_at: datetime | None = None,
+    delivery_source: str | None = None,
 ) -> Message:
     """Сохранить ответ оператора. Поведение статуса зависит от is_final.
 
@@ -79,18 +129,25 @@ async def add_operator_message(
     обращению» (исторически фиксируется через message-запись плюс
     audit_log от вызывающего кода).
     """
+    if getattr(appeal, "content_erased_at", None) is not None:
+        raise ContentErasedError("Содержание очищено. Создайте новое обращение.")
     msg = Message(
         appeal_id=appeal.id,
         direction=MessageDirection.FROM_OPERATOR.value,
+        response_kind="final" if is_final else "intermediate",
+        delivery_source=delivery_source,
         text=text,
         max_message_id=max_message_id,
         operator_id=operator_id,
+        attachments=attachments or [],
     )
+    if created_at is not None:
+        msg.created_at = created_at
     session.add(msg)
-    if appeal.status != AppealStatus.CLOSED.value:
+    if apply_status and appeal.status != AppealStatus.CLOSED.value:
         if is_final:
             appeal.status = AppealStatus.ANSWERED.value
-            appeal.answered_at = datetime.now(UTC)
+            appeal.answered_at = created_at or datetime.now(UTC)
         else:
             # Промежуточный: NEW → IN_PROGRESS, остальные оставляем
             # как есть (IN_PROGRESS остаётся IN_PROGRESS; ANSWERED не
@@ -98,7 +155,7 @@ async def add_operator_message(
             # reopen, потом отвечать).
             if appeal.status == AppealStatus.NEW.value:
                 appeal.status = AppealStatus.IN_PROGRESS.value
-    if operator_id:
+    if apply_status and operator_id:
         appeal.assigned_operator_id = operator_id
     await session.flush()
     return msg
@@ -113,13 +170,16 @@ async def mark_in_progress(session: AsyncSession, appeal_id: int) -> bool:
     придёт ответ. Если оператор отменил ввод — статус остаётся
     IN_PROGRESS («начали работать»), не откатывается в NEW.
     """
+    from aemr_bot.services import appeal_locks
+    await appeal_locks.hold(session, appeal_id)
     result = await session.execute(
         update(Appeal)
         .where(
             Appeal.id == appeal_id,
             Appeal.status == AppealStatus.NEW.value,
+            Appeal.content_erased_at.is_(None),
         )
-        .values(status=AppealStatus.IN_PROGRESS.value)
+        .values(status=AppealStatus.IN_PROGRESS.value, work_started_at=datetime.now(UTC))
     )
     return result.rowcount > 0
 
@@ -313,9 +373,8 @@ async def has_operator_message(
 ) -> bool:
     """True если хотя бы один ответ оператора уже доставлен по обращению.
 
-    Используется в `run_close` (P2 #23): если оператор отправлял
-    промежуточный ответ, потом закрывает «без ответа» — показываем
-    подсказку про «✉️ Ответить и закрыть» как более корректный путь.
+    Исторический ответ может предшествовать возобновлению, поэтому вид
+    ответа и его связь с текущим периодом из этого признака не выводятся.
     """
     return bool(
         await session.scalar(
@@ -330,7 +389,7 @@ async def has_operator_message(
 
 
 ReopenResult = Literal[
-    "reopened", "already_open", "blocked_by_revoke", "not_found"
+    "reopened", "already_open", "blocked_by_revoke", "content_erased", "not_found"
 ]
 
 
@@ -359,6 +418,43 @@ async def reopen(session: AsyncSession, appeal_id: int) -> ReopenResult:
     # отзыв согласия мог выставить closed_due_to_revoke=True, а reopen
     # всё равно воскрешал стёртое обращение (status=IN_PROGRESS при
     # closed_due_to_revoke=True). Теперь такое обновление не сматчит.
+    from aemr_bot.services import appeal_locks
+    await appeal_locks.hold(session, appeal_id)
+
+    # Capture the previous response period under the same row lock as the
+    # reopen. Only the saved historical setting supports an assessment;
+    # the current setting must not be projected backwards.
+    previous = await session.scalar(select(Appeal).where(Appeal.id == appeal_id).with_for_update())
+    if previous is not None and getattr(previous, "content_erased_at", None) is not None:
+        return "content_erased"
+    if (previous is None or previous.status not in {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}
+            or previous.closed_due_to_revoke):
+        if previous is None:
+            return "not_found"
+        return "blocked_by_revoke" if previous.closed_due_to_revoke else "already_open"
+    anchor = previous.sla_anchor_at or previous.created_at
+    first_response = await session.scalar(
+        select(func.min(Message.created_at)).where(
+            Message.appeal_id == appeal_id, Message.direction == MessageDirection.FROM_OPERATOR.value,
+            Message.created_at >= anchor,
+        )
+    )
+    period_end = first_response or previous.closed_at or previous.answered_at or datetime.now(UTC)
+    history = list(previous.sla_history or [])
+    previous_hours = previous.sla_hours_at_start
+    next_hours = await current_first_response_hours(session)
+    history.append({
+        "start": anchor.isoformat(), "end": period_end.isoformat(),
+        "first_response": first_response.isoformat() if first_response else None,
+        "sla_hours": previous_hours,
+        "schedule": previous.sla_schedule_at_start,
+        "overdue": (sla_service.is_overdue(anchor, first_response, previous_hours,
+                                               schedule=previous.sla_schedule_at_start)
+                    if first_response is not None and previous_hours is not None
+                    and previous.sla_schedule_at_start is not None else None),
+        "assessment": ("at_reopen_legacy" if previous_hours is None or previous.sla_schedule_at_start is None else
+                       "no_first_response" if first_response is None else "at_reopen"),
+    })
     result = await session.execute(
         update(Appeal)
         .where(
@@ -372,6 +468,10 @@ async def reopen(session: AsyncSession, appeal_id: int) -> ReopenResult:
             status=AppealStatus.IN_PROGRESS.value,
             answered_at=None,
             closed_at=None,
+            sla_anchor_at=datetime.now(UTC),
+            sla_hours_at_start=next_hours,
+            sla_schedule_at_start=await work_schedule.snapshot(session),
+            sla_history=history,
         )
     )
     if result.rowcount > 0:
@@ -395,16 +495,18 @@ async def reopen(session: AsyncSession, appeal_id: int) -> ReopenResult:
 
 
 async def close(session: AsyncSession, appeal_id: int) -> bool:
-    """Закрыть обращение без ответа.
+    """Закрыть открытое обращение без окончательного ответа.
 
-    Если обращение уже CLOSED, ничего не меняем — повторный клик
-    «⛔ Закрыть» не должен переписывать closed_at.
+    Устаревшая кнопка не должна изменять уже завершённое обращение или
+    переписывать дату его закрытия. Ранее мог быть промежуточный ответ.
     """
+    from aemr_bot.services import appeal_locks
+    await appeal_locks.hold(session, appeal_id)
     result = await session.execute(
         update(Appeal)
         .where(
             Appeal.id == appeal_id,
-            Appeal.status != AppealStatus.CLOSED.value,
+            Appeal.status.in_([AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]),
         )
         .values(status=AppealStatus.CLOSED.value, closed_at=datetime.now(UTC))
     )
@@ -435,6 +537,7 @@ async def list_unanswered(
         select(Appeal)
         .options(selectinload(Appeal.user))
         .where(
+            Appeal.content_erased_at.is_(None),
             Appeal.status.in_(
                 [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
             )
@@ -465,6 +568,7 @@ async def list_unanswered_with_messages(
         select(Appeal)
         .options(selectinload(Appeal.user), selectinload(Appeal.messages))
         .where(
+            Appeal.content_erased_at.is_(None),
             Appeal.status.in_(
                 [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
             )
@@ -476,7 +580,7 @@ async def list_unanswered_with_messages(
 
 
 async def list_unanswered_for_user(
-    session: AsyncSession, user_id: int, *, limit: int = 500
+    session: AsyncSession, user_id: int, *, limit: int | None = None
 ) -> list[Appeal]:
     """Открытые обращения (NEW + IN_PROGRESS) КОНКРЕТНОГО жителя, с
     догруженными user и messages (selectinload).
@@ -496,18 +600,20 @@ async def list_unanswered_for_user(
     IN-запроса на N≤LIMIT обращений жителя — на реальной очереди 1-2
     открытых обращений это пренебрежимо.
     """
-    res = await session.scalars(
+    query = (
         select(Appeal)
-        .options(selectinload(Appeal.user), selectinload(Appeal.messages))
         .where(
+            Appeal.content_erased_at.is_(None),
             Appeal.user_id == user_id,
             Appeal.status.in_(
                 [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
             ),
         )
         .order_by(Appeal.created_at)
-        .limit(limit)
     )
+    if limit is not None:
+        query = query.limit(limit)
+    res = await session.scalars(query)
     return list(res)
 
 
@@ -524,50 +630,95 @@ async def find_overdue_unanswered(
     Возвращает результат с догруженным `user`, чтобы вызывающий код
     мог показать имя жителя без N+1.
 
-    LIMIT 500 — защита от лавины (то же, что `list_unanswered`): если
-    оператор был в отпуске, и месяцами копится сотни просрочек, без
-    лимита cron-алерт тянет всё разом + selectinload по `user` создаёт
-    второй IN-query на тысячи id. Дальше всё равно обрезается в
-    форматтере, но БД-запрос уже отдал всё. 500 заведомо больше
-    реальной очереди.
+    Возвращается не более limit просроченных; кандидаты читаются страницами
+    в порядке начала текущего SLA, чтобы возобновлённые обращения с новым
+    сроком не скрывали действительно просроченные за первой страницей.
 
     Просрочка считается по РАБОЧЕМУ времени (services/sla.py), а не
     календарному: обращение, поступившее в пятницу вечером, не должно
     считаться просроченным в субботу, если рабочих часов ещё не было.
 
-    SQL-префильтр ниже (`created_at <= now - sla_hours` КАЛЕНДАРНО)
-    сознательно оставлен как есть — это корректная надмножество-
-    оптимизация, а не забытая календарная логика: business-время между
-    двумя моментами всегда ≤ календарного (рабочее окно — подмножество
-    суток), поэтому если business_seconds_between(created_at, now) уже
-    достиг sla_hours*3600, то и календарная разница now - created_at
-    тем более ≥ sla_hours часов. Значит порог по календарному времени
-    не может ОТСЕЯТЬ настоящую просрочку (не теряет кандидатов), а лишь
-    расширяет выборку — точный отбор доделывает Python-фильтр по
-    `sla_service.is_overdue` ниже. Смысл префильтра — не тащить из БД
-    вообще все открытые обращения (см. защиту LIMIT выше), а не
-    заменить собой правильный business-time расчёт.
+    В разных периодах могут действовать разные нормативы; поэтому кандидаты
+    отбираются по началу периода и уточняются в Python, без общего порога,
+    способного скрыть обращение с более коротким сроком.
     """
-    threshold = datetime.now(UTC) - timedelta(hours=sla_hours)
-    res = await session.scalars(
-        select(Appeal)
-        .options(selectinload(Appeal.user))
-        .where(
-            Appeal.status.in_(
-                [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
-            ),
-            Appeal.created_at <= threshold,
-        )
-        .order_by(Appeal.created_at)
-        .limit(limit)
-    )
-    candidates = list(res)
+    if limit <= 0:
+        return []
     now = datetime.now(UTC)
-    return [
-        appeal
-        for appeal in candidates
-        if sla_service.is_overdue(appeal.created_at, now, sla_hours)
-    ]
+    anchor = func.coalesce(Appeal.sla_anchor_at, Appeal.created_at)
+    after_anchor = None
+    after_id = 0
+    overdue: list[Appeal] = []
+    # A reopened old appeal may have a recent SLA anchor, so a LIMIT on
+    # creation order can hide overdue appeals farther down the queue. Iterate
+    # in stable anchor order and apply the business-time check to every page
+    # until enough actually overdue results have been found.
+    while len(overdue) < limit:
+        query = (
+            select(Appeal).options(selectinload(Appeal.user))
+            .where(
+                Appeal.content_erased_at.is_(None),
+                Appeal.status.in_([AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]),
+                anchor <= now,
+                ~select(Message.id).where(
+                    Message.appeal_id == Appeal.id,
+                    Message.direction == MessageDirection.FROM_OPERATOR.value,
+                    Message.created_at >= anchor,
+                ).exists(),
+            )
+            .order_by(anchor, Appeal.id)
+            .limit(min(500, max(100, limit - len(overdue))))
+        )
+        if after_anchor is not None:
+            query = query.where(or_(anchor > after_anchor, (anchor == after_anchor) & (Appeal.id > after_id)))
+        batch = list(await session.scalars(query))
+        if not batch:
+            break
+        for appeal in batch:
+            if sla_service.is_overdue(appeal.sla_anchor_at or appeal.created_at, now,
+                                      response_hours_for(appeal, sla_hours),
+                                      schedule=work_schedule.for_appeal(appeal)):
+                overdue.append(appeal)
+                if len(overdue) == limit:
+                    break
+        after_anchor = batch[-1].sla_anchor_at or batch[-1].created_at
+        after_id = batch[-1].id
+    return overdue
+
+
+async def first_operator_reply_times(session: AsyncSession, appeal_ids: list[int]) -> dict[int, datetime]:
+    if not appeal_ids:
+        return {}
+    rows = await session.execute(
+        select(Message.appeal_id, func.min(Message.created_at))
+        .join(Appeal, Appeal.id == Message.appeal_id)
+        .where(Message.appeal_id.in_(appeal_ids), Message.direction == MessageDirection.FROM_OPERATOR.value,
+               Message.created_at >= func.coalesce(Appeal.sla_anchor_at, Appeal.created_at))
+        .group_by(Message.appeal_id)
+    )
+    return {appeal_id: first_at for appeal_id, first_at in rows if first_at is not None}
+
+
+async def latest_intermediate_reply_times(session: AsyncSession, appeal_ids: list[int]) -> dict[int, datetime]:
+    """Return the last operator response only when its stored type is intermediate.
+
+    The current reopen anchor prevents an earlier period being treated as
+    current. Old responses without a stored type are never guessed.
+    """
+    if not appeal_ids:
+        return {}
+    ranked = (select(
+        Message.appeal_id.label("appeal_id"), Message.created_at.label("created_at"),
+        Message.response_kind.label("response_kind"),
+        func.row_number().over(partition_by=Message.appeal_id,
+                               order_by=(Message.created_at.desc(), Message.id.desc())).label("rank"),
+    ).join(Appeal, Appeal.id == Message.appeal_id).where(
+        Message.appeal_id.in_(appeal_ids), Message.direction == MessageDirection.FROM_OPERATOR.value,
+        Message.created_at >= func.coalesce(Appeal.sla_anchor_at, Appeal.created_at),
+    ).subquery())
+    rows = await session.execute(select(ranked.c.appeal_id, ranked.c.created_at).where(
+        ranked.c.rank == 1, ranked.c.response_kind == "intermediate"))
+    return {appeal_id: created_at for appeal_id, created_at in rows if created_at is not None}
 
 
 async def count_open(session: AsyncSession) -> int:
@@ -581,6 +732,7 @@ async def count_open(session: AsyncSession) -> int:
             select(func.count())
             .select_from(Appeal)
             .where(
+                Appeal.content_erased_at.is_(None),
                 Appeal.status.in_(
                     [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
                 )
@@ -592,39 +744,26 @@ async def count_open(session: AsyncSession) -> int:
 async def purge_old_appeals_content(
     session: AsyncSession, *, years: int = 5
 ) -> tuple[int, int]:
-    """Стереть текстовые поля и attachments у обращений старше N лет.
+    """Clear content after the owner's operational horizon, not an archive term.
 
-    Сами строки appeal/messages остаются — это нужно для статистики
-    количества и сохранения связи с обезличенным жителем. Содержимое
-    (summary, address, text сообщений, attachments) NULL'ится.
+    The anchor is the latest of completion/creation, the current SLA-period
+    start and explicit taking-in-work. Reopening or taking an old case into
+    work restarts its retention horizon without delaying its response SLA.
+    A newer message also prevents redaction of the whole appeal. Metadata
+    remains personal while linked to an identifiable resident; it is not
+    automatically anonymous. The default five years is an operational choice,
+    whose purposes and local approval are documented separately. It is not a
+    period imposed by 152-FZ or a classification of an archival case.
 
-    Срок отсчитывается от даты отработки (закрытия либо ответа), а для
-    брошенных обращений — от даты подачи; статус при этом не важен.
-    Подробнее про якорь отсчёта — в комментарии ниже.
-
-    Срок N лет — установлен ОПЕРАТОРОМ исходя из цели обработки
-    (152-ФЗ ст. 18.1 ч. 1 п. 2 — локальный акт определяет способы и
-    сроки хранения; ст. 5 ч. 7 — не дольше, чем требует цель). В самом
-    152-ФЗ числа «5 лет» нет: срок закрепляется локальным актом
-    оператора (см. задачу «Вписать бот в ОРД»), а не выводится из
-    закона напрямую.
-
-    Откуда именно 5 лет (решение владельца 2026-07-17). Два довода:
-    (1) сообщение в боте может оказаться СМЕЖНЫМ с официальным
-    обращением гражданина — бот работает вне 59-ФЗ, но житель нередко
-    пишет по тому же вопросу и в электронную приёмную, и срок берётся
-    по аналогии с практикой хранения обращений граждан; (2) цели
-    отчётности и анализа эффективности принятых мер — по обращению
-    надо видеть, что было сделано, в горизонте нескольких лет.
-    Это осознанный выбор оператора с понятным ориентиром, а не
-    требование закона: писать «требование 152-ФЗ» здесь нельзя.
-
-    Возвращает (purged_appeals, purged_messages).
+    Returns counts of redacted appeals and messages. External copies require
+    the deletion inventory and backup/restore procedure as well.
     """
     # `relativedelta(years=N)` корректно учитывает високосные — иначе
     # `timedelta(days=365*N)` теряет ~1 день за 4 года, и за 5-летний
     # порог retention обращения, поданные ровно 5 лет назад, могут
     # не попасть в первую же ночь. Не критично, но честнее.
+    from aemr_bot.services import privacy_epoch
+    await privacy_epoch.mark_erasure(session)
     threshold = datetime.now(UTC) - relativedelta(years=years)
     # Якорь отсчёта — COALESCE(closed_at, answered_at). closed_at ставит
     # ТОЛЬКО явное «Закрыть» (close()); финальный ответ оператора
@@ -636,22 +775,23 @@ async def purge_old_appeals_content(
     # запасной якорь: и ANSWERED, и CLOSED считаются «отработанными» с
     # момента ответа/закрытия.
     #
-    # Третий, страховочный якорь — created_at, и вместе с ним снят фильтр
-    # по статусу. Обращение, БРОШЕННОЕ в NEW/IN_PROGRESS (никто так и не
-    # ответил — оператор уволился, обращение потерялось в завале), не
-    # имеет ни closed_at, ни answered_at, поэтому под прежнее условие не
-    # попадало НИКОГДА: адрес и текст жителя оставались в базе бессрочно.
-    # Молчаливое бессрочное хранение — ровно то, чего не должно быть.
-    # Смысл третьего якоря: если обращение отработано — считаем от даты
-    # ответа/закрытия; если за N лет так и не отработано — считаем от даты
-    # подачи. Обнуление текста у формально открытого обращения не потеря:
-    # спустя пять лет на него всё равно уже не ответят, а ПДн в нём живые.
-    retention_anchor = func.coalesce(
-        Appeal.closed_at, Appeal.answered_at, Appeal.created_at
-    )
+    # Старое открытое обращение тоже не хранится бессрочно. При этом
+    # недавнее дополнение или ответ означают, что работа продолжалась:
+    # не удаляем их вместе с текстом старой карточки по дате её создания.
+    completed_or_created = func.coalesce(Appeal.closed_at, Appeal.answered_at, Appeal.created_at)
+    period_started = func.coalesce(Appeal.sla_anchor_at, Appeal.created_at)
+    work_started = func.coalesce(Appeal.work_started_at, Appeal.created_at)
+    # A reopened case can have old creation/completion timestamps but a
+    # brand-new operational period. Taking NEW into work is activity too;
+    # keep that clock separate so it never postpones the first-response SLA.
+    latest_period = case((period_started > completed_or_created, period_started), else_=completed_or_created)
+    retention_anchor = case((work_started > latest_period, work_started), else_=latest_period)
     closed_old_appeals = select(Appeal.id).where(
         retention_anchor.isnot(None),
         retention_anchor <= threshold,
+        ~select(Message.id).where(
+            Message.appeal_id == Appeal.id, Message.created_at > threshold,
+        ).exists(),
     )
     # address — тоже ПДн (адрес обращения жителя). При erase по отзыву
     # согласия (services/users.py::_redact_appeal_payloads_for_user)
@@ -659,6 +799,25 @@ async def purge_old_appeals_content(
     # симметрии не хватало — retention обнулял summary/attachments,
     # но оставлял address висеть в БД дольше срока, установленного
     # оператором. Приводим к тому же поведению.
+    from aemr_bot.services import data_erasure
+    # A previously completed cleanup must not invalidate new clean reports on
+    # every retention run. Revisit cleared rows only if payload reappeared.
+    needs_cleanup = or_(
+        Appeal.content_erased_at.is_(None), Appeal.summary.is_not(None),
+        Appeal.address.is_not(None), Appeal.attachments != [],
+        select(Message.id).where(Message.appeal_id == Appeal.id,
+            or_(Message.text.is_not(None), Message.attachments != [])).exists(),
+        select(OperatorReplyDraft.operator_id).where(OperatorReplyDraft.appeal_id == Appeal.id).exists(),
+        select(OperatorReplyAttempt.id).where(OperatorReplyAttempt.appeal_id == Appeal.id).exists(),
+    )
+    candidate_ids = list((await session.scalars(closed_old_appeals.where(needs_cleanup))).all())
+    await data_erasure.request_appeal_cleanup(session, candidate_ids)
+    await session.execute(delete(OperatorReplyDraft).where(
+        OperatorReplyDraft.appeal_id.in_(closed_old_appeals)
+    ))
+    await session.execute(delete(OperatorReplyAttempt).where(
+        OperatorReplyAttempt.appeal_id.in_(closed_old_appeals)
+    ))
     appeals_result = await session.execute(
         update(Appeal)
         .where(
@@ -669,7 +828,7 @@ async def purge_old_appeals_content(
                 Appeal.address.isnot(None),
             ),
         )
-        .values(summary=None, attachments=[], address=None)
+        .values(summary=None, attachments=[], address=None, related_appeal_id=None)
     )
     purged_appeals = appeals_result.rowcount or 0
 
@@ -683,7 +842,7 @@ async def purge_old_appeals_content(
             Message.appeal_id.in_(closed_old_appeals),
             or_(Message.text.isnot(None), Message.attachments != []),
         )
-        .values(text=None, attachments=[])
+        .values(text=None, attachments=[], admin_notice_state=None)
     )
     purged_messages = msg_result.rowcount or 0
     return purged_appeals, purged_messages
@@ -740,6 +899,7 @@ async def find_active_for_user(session: AsyncSession, user_id: int) -> Appeal | 
     return await session.scalar(
         select(Appeal)
         .where(
+            Appeal.content_erased_at.is_(None),
             Appeal.user_id == user_id,
             Appeal.status.in_(
                 [

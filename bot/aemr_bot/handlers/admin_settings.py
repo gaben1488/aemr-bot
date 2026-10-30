@@ -99,6 +99,7 @@ from aemr_bot.handlers.admin_settings_shared import (  # noqa: F401
 )
 from aemr_bot.handlers.admin_settings_text import (
     _apply_single_edit,
+    _show_edit_page,
     _show_text_card,
     _start_edit_intent,
 )
@@ -172,6 +173,20 @@ async def run_settings_action(event, payload: str) -> None:
 
 async def _route_set_action(event, operator_id: int, rest: str) -> None:
 
+    if rest.startswith(("list_page:", "obj_page:")):
+        try:
+            kind, key, page = rest.split(":")
+            page_number = int(page)
+            if page_number < 0:
+                return
+        except ValueError:
+            return
+        if kind == "list_page" and key in {"topics", "localities"}:
+            await _show_list_card(event, key, page=page_number)
+        elif kind == "obj_page" and key in {"emergency_contacts", "transport_dispatcher_contacts"}:
+            await _show_obj_card(event, key, page=page_number)
+        return
+
     if rest == "expert":
         async with session_scope() as session:
             keys = await settings_store.list_keys(session)
@@ -213,6 +228,11 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
     if rest.startswith("url:"):
         key = rest.removeprefix("url:")
         await _show_text_card(event, key)
+        return
+    if rest.startswith("editview:"):
+        parts = rest.removeprefix("editview:").rsplit(":", 1)
+        if len(parts) == 2 and parts[1].isdigit():
+            await _show_edit_page(event, operator_id, parts[0], int(parts[1]))
         return
     if rest.startswith("edit:"):
         key = rest.removeprefix("edit:")
@@ -268,11 +288,67 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
         await _show_author_card(event)
         return
 
+    if rest == "erasure_status":
+        from aemr_bot.handlers import admin_data_erasure
+        await admin_data_erasure.show_status(event)
+        return
+
+    if rest == "schedule" or rest.startswith("schedule:"):
+        from aemr_bot.handlers import admin_settings_schedule
+        if rest == "schedule":
+            await admin_settings_schedule.show(event)
+        elif rest == "schedule:edit":
+            await admin_settings_schedule.start(event, operator_id)
+        elif rest.startswith("schedule:calendar:"):
+            revision = rest.removeprefix("schedule:calendar:")
+            if revision.isdigit():
+                await admin_settings_schedule.update_calendar(event, operator_id, int(revision))
+        elif rest.startswith("schedule:cancel:"):
+            intent = _intent_get(operator_id)
+            if intent and intent.get("kind") == "work_schedule" and intent.get("token") == rest.removeprefix("schedule:cancel:"):
+                _intent_drop(operator_id)
+                await admin_settings_schedule.show(event, notice="Изменение отменено.")
+            else:
+                await admin_settings_schedule.show(event, notice="Кнопка устарела. Текущее редактирование не отменено.")
+        return
+
+    if rest == "sla":
+        from aemr_bot.handlers import admin_settings_sla
+        await admin_settings_sla.show(event)
+        return
+    if rest == "sla:edit":
+        from aemr_bot.handlers import admin_settings_sla
+        await admin_settings_sla.start(event, operator_id)
+        return
+    if rest == "sla:followup":
+        from aemr_bot.handlers import admin_settings_sla
+        await admin_settings_sla.start(event, operator_id, followup=True)
+        return
+    if rest.startswith("sla:cancel:"):
+        from aemr_bot.handlers import admin_settings_sla
+        intent = _intent_get(operator_id)
+        token = rest.removeprefix("sla:cancel:")
+        if intent and intent.get("kind") == "sla_hours" and intent.get("token") == token:
+            _intent_drop(operator_id)
+            await admin_settings_sla.show(event, notice="Изменение отменено.")
+        else:
+            await op_screen(event, "Эта кнопка устарела. Откройте настройку заново.",
+                            kbds.op_back_to_settings_keyboard())
+        return
+
     if rest == "quiet":
         await _show_quiet_card(event)
         return
     if rest == "quiet:toggle":
-        await _toggle_quiet(event)
+        # Legacy toggle buttons are stale: refreshing cannot reverse a newer choice.
+        await _show_quiet_card(event)
+        return
+    if rest.startswith("quiet:set:"):
+        bits = rest.removeprefix("quiet:set:").split(":")
+        if len(bits) != 2 or bits[0] not in {"0", "1"} or not bits[1].isdigit():
+            await _show_quiet_card(event)
+            return
+        await _toggle_quiet(event, expected=bits[0] == "1", revision=int(bits[1]))
         return
     if rest == "quiet:edit:start":
         await _start_quiet_hour_intent(event, operator_id, which="start")
@@ -285,8 +361,14 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
         await _show_notify_card(event)
         return
     if rest.startswith("notify:toggle:"):
-        key = rest.removeprefix("notify:toggle:")
-        await _toggle_notify(event, key)
+        await _show_notify_card(event)
+        return
+    if rest.startswith("notify:set:"):
+        notify_parts = rest.removeprefix("notify:set:").rsplit(":", 2)
+        if len(notify_parts) != 3 or notify_parts[1] not in {"0", "1"} or not notify_parts[2].isdigit():
+            await _show_notify_card(event)
+            return
+        await _toggle_notify(event, notify_parts[0], expected=notify_parts[1] == "1", revision=int(notify_parts[2]))
         return
 
     if rest == "pr:start":
@@ -374,6 +456,16 @@ async def handle_settings_edit_text(event, text: str) -> bool:
         return True
     if kind == "obj_add":
         if await _apply_obj_add(event, operator_id, key, new_text):
+            _intent_drop(operator_id)
+        return True
+    if kind == "work_schedule":
+        from aemr_bot.handlers import admin_settings_schedule
+        if await admin_settings_schedule.apply(event, operator_id, new_text):
+            _intent_drop(operator_id)
+        return True
+    if kind == "sla_hours":
+        from aemr_bot.handlers import admin_settings_sla
+        if await admin_settings_sla.apply(event, operator_id, new_text):
             _intent_drop(operator_id)
         return True
     if kind == "quiet_hour":

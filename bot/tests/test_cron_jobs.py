@@ -28,6 +28,16 @@ from datetime import UTC
 from aemr_bot.services import cron
 
 
+@pytest.fixture(autouse=True)
+def _isolate_notification_caches():
+    from aemr_bot.services import notify_toggles, quiet_hours
+    notify_toggles.reset_cache_for_tests()
+    quiet_hours.reset_cache_for_tests()
+    yield
+    notify_toggles.reset_cache_for_tests()
+    quiet_hours.reset_cache_for_tests()
+
+
 class TestSelfcheck:
     """_job_selfcheck — алёрт при смене статуса heartbeat."""
 
@@ -65,128 +75,59 @@ class TestSelfcheck:
 
 
 class TestPulse:
-    """_job_pulse — короткое подтверждение «бот жив»."""
-
     @pytest.mark.asyncio
-    async def test_pulse_sends_text(self) -> None:
-        send = AsyncMock()
+    async def test_pulse_sends_text_and_reserves_only_once_daily(self, session):
+        send = AsyncMock(return_value="confirmed-mid")
         await cron._job_pulse(send)
-        send.assert_called_once()
-        text = send.call_args.args[0]
-        assert "Пульс" in text
-        assert "бот работает" in text
-        assert "Время проверки" in text
+        await cron._job_pulse(send)
+        send.assert_awaited_once()
+        assert "Пульс" in send.await_args.args[0]
+        assert "Время проверки" in send.await_args.args[0]
 
     @pytest.mark.asyncio
-    async def test_pulse_retries_on_transient_failure(self) -> None:
-        send = AsyncMock(side_effect=[RuntimeError("network down"), None])
-        with patch("asyncio.sleep", AsyncMock()) as sleep:
-            await cron._job_pulse(send)
-        assert send.call_count == 2
-        sleep.assert_called_once_with(cron._ADMIN_SEND_RETRY_DELAYS_SEC[0])
+    @pytest.mark.parametrize("outcome", [None, TimeoutError("accepted? unknown")])
+    async def test_unknown_daily_pulse_is_not_retried(self, session, outcome):
+        send = AsyncMock(side_effect=outcome) if isinstance(outcome, Exception) else AsyncMock(return_value=outcome)
+        await cron._job_pulse(send)
+        await cron._job_pulse(send)
+        send.assert_awaited_once()
 
-    @pytest.mark.asyncio
-    async def test_pulse_swallows_exception(self) -> None:
-        """Если send упал — pulse не должен ронять scheduler-loop."""
-        send = AsyncMock(side_effect=RuntimeError("network down"))
-        with patch("asyncio.sleep", AsyncMock()):
-            await cron._job_pulse(send)
-        assert send.call_count == len(cron._ADMIN_SEND_RETRY_DELAYS_SEC) + 1
+
 
 
 class TestPulseNotifyToggleGate:
-    """_job_pulse: гейт `admin_notify_pulse` (services/notify_toggles.py) —
-    независимый от quiet hours, действует круглосуточно."""
-
-    @pytest.fixture(autouse=True)
-    def _clean(self):
-        from aemr_bot.services import notify_toggles
-        notify_toggles.reset_cache_for_tests()
-        yield
-        notify_toggles.reset_cache_for_tests()
-
     @pytest.mark.asyncio
-    async def test_pulse_suppressed_when_toggle_disabled(self) -> None:
-        send = AsyncMock()
-        fake_scope = _make_fake_session_scope()
-        with patch("aemr_bot.services.cron.session_scope", fake_scope), \
-             patch(
-                 "aemr_bot.services.quiet_hours.refresh_cache_from_db",
-                 AsyncMock(),
-             ), \
-             patch(
-                 "aemr_bot.services.notify_toggles.refresh_cache_from_db",
-                 AsyncMock(),
-             ), \
-             patch(
-                 "aemr_bot.services.notify_toggles.is_enabled",
-                 side_effect=lambda key: key != "admin_notify_pulse",
-             ):
-            await cron._job_pulse(send)
-        send.assert_not_called()
-
-    @pytest.mark.asyncio
-    async def test_pulse_sent_when_toggle_enabled(self) -> None:
-        send = AsyncMock()
-        fake_scope = _make_fake_session_scope()
-        with patch("aemr_bot.services.cron.session_scope", fake_scope), \
-             patch(
-                 "aemr_bot.services.quiet_hours.refresh_cache_from_db",
-                 AsyncMock(),
-             ), \
-             patch(
-                 "aemr_bot.services.notify_toggles.refresh_cache_from_db",
-                 AsyncMock(),
-             ), \
-             patch(
-                 "aemr_bot.services.notify_toggles.is_enabled",
-                 return_value=True,
-             ):
-            await cron._job_pulse(send)
-        send.assert_called_once()
+    @pytest.mark.parametrize("enabled", [False, True])
+    async def test_pulse_toggle_from_database(self, session, enabled):
+        from aemr_bot.services import settings_store
+        await settings_store.set_value(session, "admin_notify_pulse", enabled)
+        await session.commit()
+        send = AsyncMock(return_value="confirmed-mid")
+        await cron._job_pulse(send)
+        assert send.await_count == int(enabled)
 
 
-def _make_fake_session_scope():
-    """Тонкий async context manager для `session_scope()` в тестах
-    гейтов — возвращает MagicMock как сессию, ничего не коммитит."""
-    from contextlib import asynccontextmanager
 
-    @asynccontextmanager
-    async def _scope():
-        yield MagicMock()
 
-    return _scope
 
 
 class TestStartupPulse:
-    """_job_startup_pulse — catch-up хеартбит при рестарте процесса."""
-
     @pytest.mark.asyncio
-    async def test_startup_pulse_sends_recovery_text(self) -> None:
-        send = AsyncMock()
+    async def test_startup_pulse_sends_recovery_text(self):
+        send = AsyncMock(return_value="confirmed-mid")
         await cron._job_startup_pulse(send)
-        send.assert_called_once()
-        text = send.call_args.args[0]
-        # Текст должен явно отличать от обычного pulse, чтобы дежурный
-        # видел «это рестарт», а не «штатный тик».
-        assert "Рестарт" in text
-        assert "процесс бота запущен заново" in text
+        send.assert_awaited_once()
+        assert "Рестарт" in send.await_args.args[0]
+        assert "процесс бота запущен заново" in send.await_args.args[0]
 
     @pytest.mark.asyncio
-    async def test_startup_pulse_retries_on_transient_failure(self) -> None:
-        send = AsyncMock(side_effect=[RuntimeError("network down"), None])
-        with patch("asyncio.sleep", AsyncMock()) as sleep:
-            await cron._job_startup_pulse(send)
-        assert send.call_count == 2
-        sleep.assert_called_once_with(cron._ADMIN_SEND_RETRY_DELAYS_SEC[0])
+    @pytest.mark.parametrize("outcome", [None, TimeoutError("accepted? unknown")])
+    async def test_startup_unknown_result_has_one_attempt(self, outcome):
+        send = AsyncMock(side_effect=outcome) if isinstance(outcome, Exception) else AsyncMock(return_value=outcome)
+        await cron._job_startup_pulse(send)
+        send.assert_awaited_once()
 
-    @pytest.mark.asyncio
-    async def test_startup_pulse_swallows_exception(self) -> None:
-        send = AsyncMock(side_effect=RuntimeError("network down"))
-        # Не должно бросить — иначе scheduler не запустится.
-        with patch("asyncio.sleep", AsyncMock()):
-            await cron._job_startup_pulse(send)
-        assert send.call_count == len(cron._ADMIN_SEND_RETRY_DELAYS_SEC) + 1
+
 
 
 class TestBackupWithAlert:
@@ -333,7 +274,6 @@ class TestAuditLogRetention:
         DELETE ровно два: один исключает ERASURE_ACTIONS, второй берёт
         только их.
         """
-        from contextlib import asynccontextmanager
 
         session = AsyncMock()
         delete_result = MagicMock()
@@ -371,399 +311,191 @@ class TestAuditLogRetention:
 
 
 class TestPdnRetention:
-    """_job_pdn_retention_check — фактическое обезличивание после отзыва согласия."""
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("has_open", [False, True])
+    async def test_retention_erases_revoked_resident_even_with_open_appeal(self, session, has_open):
+        from datetime import datetime, timedelta
+
+        from sqlalchemy import select
+
+        from aemr_bot.db.models import Appeal, AuditLog, User
+        user = User(max_user_id=780001, first_name="Житель", consent_revoked_at=datetime.now(UTC)-timedelta(days=30))
+        session.add(user)
+        await session.flush()
+        appeal = Appeal(user_id=user.id, status="new" if has_open else "answered", summary="Текст", attachments=[])
+        session.add(appeal)
+        await session.commit()
+        send = AsyncMock()
+        await cron._job_pdn_retention_check(send, warn=False)
+        session.expire_all()
+        assert await session.scalar(select(User).where(User.max_user_id == 780001)) is None
+        audit = await session.scalar(select(AuditLog).where(AuditLog.action == "auto_erase_pdn_retention"))
+        assert audit is not None and audit.target is None and audit.operator_max_user_id is None
+        assert send.await_count == int(has_open)
+        if has_open:
+            assert "без ответа" in send.await_args.args[0]
+            assert "780001" not in send.await_args.args[0]
+            assert send.await_args.kwargs["critical"] is True
 
     @pytest.mark.asyncio
-    async def test_notifies_admin_after_actual_erasure(self) -> None:
+    @pytest.mark.parametrize("has_open", [False, True])
+    async def test_deadline_warning_lists_appeals_without_resident_ids(self, session, has_open):
+        from datetime import datetime, timedelta
+
+        from aemr_bot.db.models import Appeal, User
+        user = User(max_user_id=780002, consent_revoked_at=datetime.now(UTC)-timedelta(days=24))
+        session.add(user)
+        await session.flush()
+        appeal = Appeal(user_id=user.id, status="new" if has_open else "answered", summary="Текст", attachments=[])
+        session.add(appeal)
+        await session.commit()
         send = AsyncMock()
-        session = AsyncMock()
-        user = MagicMock()
-        user.id = 100
-
-        @asynccontextmanager
-        async def fake_scope():
-            yield session
-
-        with patch("aemr_bot.services.cron.session_scope", fake_scope), \
-             patch("aemr_bot.services.users.find_pending_pdn_retention",
-                   AsyncMock(return_value=[42])), \
-             patch("aemr_bot.services.users.find_by_max_id",
-                   AsyncMock(return_value=user)), \
-             patch("aemr_bot.services.users.has_open_appeals",
-                   AsyncMock(return_value=False)), \
-             patch("aemr_bot.services.users.erase_pdn",
-                   AsyncMock(return_value=True)), \
-             patch("aemr_bot.services.operators.write_audit", AsyncMock()):
-            await cron._job_pdn_retention_check(send)
-
-        texts = [call.args[0] for call in send.call_args_list]
-        assert any("30 дней" in text and "42" in text for text in texts)
+        await cron._warn_about_approaching_pdn_deadline(send)
+        assert send.await_count == int(has_open)
+        if has_open:
+            assert f"№ {appeal.id}" in send.await_args.args[0]
+            assert "780002" not in send.await_args.args[0]
+            assert "закрыты без ответа" in send.await_args.args[0]
 
     @pytest.mark.asyncio
-    async def test_open_appeals_do_not_postpone_erasure(self) -> None:
-        """Открытые обращения НЕ откладывают уничтожение ПДн.
+    async def test_vanished_candidate_does_not_create_user_or_audit(self, session):
+        erase = AsyncMock()
+        audit = AsyncMock()
+        with (patch.object(cron.users_service, "find_pending_pdn_retention", AsyncMock(return_value=[780003])),
+              patch.object(cron.users_service, "erase_pdn", erase),
+              patch.object(cron.operators_service, "write_audit", audit)):
+            await cron._job_pdn_retention_check(AsyncMock(), warn=False)
+        erase.assert_not_awaited()
+        audit.assert_not_awaited()
 
-        Регресс: житель с обращением в NEW/IN_PROGRESS пропускался «до
-        следующего дня» — и так бессрочно, пока оператор не ответит.
-        Но выборка берёт тех, у кого 30 дней УЖЕ истекли (152-ФЗ ст. 21
-        ч. 5), то есть пропуск тянул срок за пределы закона, причём
-        молча. Закон не даёт продлевать срок из-за нерасторопности
-        оператора: 30 дней и есть окно на финальный ответ.
 
-        Теперь erase_pdn вызывается и при открытых обращениях (он сам их
-        закроет), а оператор получает явное предупреждение, что они
-        закрылись без ответа.
-        """
-        send = AsyncMock()
-        session = AsyncMock()
-        user = MagicMock()
-        user.id = 100
-        erase = AsyncMock(return_value=True)
-
-        @asynccontextmanager
-        async def fake_scope():
-            yield session
-
-        with patch("aemr_bot.services.cron.session_scope", fake_scope), \
-             patch("aemr_bot.services.users.find_pending_pdn_retention",
-                   AsyncMock(return_value=[42])), \
-             patch("aemr_bot.services.users.find_by_max_id",
-                   AsyncMock(return_value=user)), \
-             patch("aemr_bot.services.users.has_open_appeals",
-                   AsyncMock(return_value=True)), \
-             patch("aemr_bot.services.users.erase_pdn", erase), \
-             patch("aemr_bot.services.operators.write_audit", AsyncMock()):
-            await cron._job_pdn_retention_check(send)
-
-        # Главное: уничтожение состоялось, а не отложилось.
-        erase.assert_awaited_once()
-        texts = [call.args[0] for call in send.call_args_list]
-        # И оператор предупреждён, что обращения закрыты без ответа.
-        assert any("БЕЗ ответа" in text for text in texts)
-
-    @pytest.mark.asyncio
-    async def test_warns_before_deadline_when_appeals_open(self) -> None:
-        """За неделю до истечения срока оператор предупреждён.
-
-        Уничтожение по истечении 30 дней закроет обращения без ответа.
-        Пока время есть, у оператора должен быть шанс ответить, а не
-        узнать постфактум.
-        """
-        send = AsyncMock()
-        session = AsyncMock()
-        user = MagicMock()
-        user.id = 100
-
-        @asynccontextmanager
-        async def fake_scope():
-            yield session
-
-        with patch("aemr_bot.services.cron.session_scope", fake_scope), \
-             patch("aemr_bot.services.users.find_revoked_deadline_approaching",
-                   AsyncMock(return_value=[77])), \
-             patch("aemr_bot.services.users.find_by_max_id",
-                   AsyncMock(return_value=user)), \
-             patch("aemr_bot.services.users.has_open_appeals",
-                   AsyncMock(return_value=True)):
-            await cron._warn_about_approaching_pdn_deadline(send)
-
-        texts = [call.args[0] for call in send.call_args_list]
-        assert any("77" in t and "закроются без ответа" in t for t in texts)
-
-    @pytest.mark.asyncio
-    async def test_no_warning_when_nothing_to_answer(self) -> None:
-        """Без открытых обращений предупреждать не о чем — молчим.
-
-        Иначе алёрт превратится в шум и его перестанут читать.
-        """
-        send = AsyncMock()
-        session = AsyncMock()
-        user = MagicMock()
-        user.id = 100
-
-        @asynccontextmanager
-        async def fake_scope():
-            yield session
-
-        with patch("aemr_bot.services.cron.session_scope", fake_scope), \
-             patch("aemr_bot.services.users.find_revoked_deadline_approaching",
-                   AsyncMock(return_value=[77])), \
-             patch("aemr_bot.services.users.find_by_max_id",
-                   AsyncMock(return_value=user)), \
-             patch("aemr_bot.services.users.has_open_appeals",
-                   AsyncMock(return_value=False)):
-            await cron._warn_about_approaching_pdn_deadline(send)
-
-        send.assert_not_awaited()
-
-    @pytest.mark.asyncio
-    async def test_vanished_user_no_phantom_no_audit(self) -> None:
-        """Житель исчез между find_pending_pdn_retention() и итерацией
-        (успел /forget): find_by_max_id → None → continue. Не создаём
-        фантомного User, не зовём erase_pdn, не пишем лишний audit."""
-        send = AsyncMock()
-        session = AsyncMock()
-
-        @asynccontextmanager
-        async def fake_scope():
-            yield session
-
-        erase = AsyncMock(return_value=True)
-        write_audit = AsyncMock()
-        get_or_create = AsyncMock()
-        with patch("aemr_bot.services.cron.session_scope", fake_scope), \
-             patch("aemr_bot.services.users.find_pending_pdn_retention",
-                   AsyncMock(return_value=[42])), \
-             patch("aemr_bot.services.users.find_by_max_id",
-                   AsyncMock(return_value=None)) as find_by_max_id, \
-             patch("aemr_bot.services.users.get_or_create", get_or_create), \
-             patch("aemr_bot.services.users.has_open_appeals",
-                   AsyncMock(return_value=False)), \
-             patch("aemr_bot.services.users.erase_pdn", erase), \
-             patch("aemr_bot.services.operators.write_audit", write_audit):
-            await cron._job_pdn_retention_check(send)
-
-        find_by_max_id.assert_awaited_once()
-        get_or_create.assert_not_called()  # никакого фантома
-        erase.assert_not_called()
-        write_audit.assert_not_called()
-        # Ни одного «фактически обезличено» уведомления.
-        texts = [call.args[0] for call in send.call_args_list]
-        assert not any("обезличен" in text.lower() for text in texts)
 
 
 class TestFunnelWatchdog:
-    """_job_funnel_watchdog — сброс зависших воронок."""
+    @pytest.mark.asyncio
+    async def test_database_error_is_logged_without_sending(self, caplog):
+        bot = MagicMock(send_message=AsyncMock())
+        send = AsyncMock()
+        with (caplog.at_level(logging.ERROR, logger="aemr_bot.services.cron"),
+              patch.object(cron, "session_scope", side_effect=RuntimeError("db down"))):
+            await cron._job_funnel_watchdog(bot, send)
+        bot.send_message.assert_not_awaited()
+        send.assert_not_awaited()
+        assert "funnel_watchdog crashed" in caplog.text
 
     @pytest.mark.asyncio
-    async def test_swallows_exception_no_db(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
-        bot = MagicMock()
-        bot.send_message = AsyncMock()
-        send_admin_text = AsyncMock()
-        with caplog.at_level(logging.ERROR, logger="aemr_bot.services.cron"), \
-             patch("aemr_bot.services.cron.session_scope",
-                   side_effect=RuntimeError("db down")):
-            result = await cron._job_funnel_watchdog(bot, send_admin_text)
-        # Падение БД проглочено верхним try/except: ни житель, ни
-        # служебная группа уведомлений не получают, ошибка — в лог.
-        assert result is None
-        bot.send_message.assert_not_called()
-        send_admin_text.assert_not_called()
-        assert any(
-            "funnel_watchdog crashed" in rec.message for rec in caplog.records
-        )
+    @pytest.mark.parametrize("count", [4, 7])
+    async def test_stale_users_reset_and_only_mass_stall_alerts_admin(self, session, count):
+        from datetime import datetime, timedelta
+
+        from sqlalchemy import select
+
+        from aemr_bot.db.models import User
+        for i in range(count):
+            session.add(User(max_user_id=781000+i, dialog_state="awaiting_name",
+                             updated_at=datetime.now(UTC)-timedelta(hours=25)))
+        await session.commit()
+        bot = MagicMock(send_message=AsyncMock())
+        send = AsyncMock(return_value="confirmed-mid")
+        await cron._job_funnel_watchdog(bot, send)
+        assert bot.send_message.await_count == count
+        states = list(await session.scalars(select(User.dialog_state).where(User.max_user_id >= 781000)))
+        assert states == ["idle"] * count
+        assert send.await_count == int(count >= 5)
+        if count >= 5:
+            assert f"{count}/{count}" in send.await_args.args[0]
+            assert send.await_args.kwargs["critical"] is True
 
     @pytest.mark.asyncio
-    async def test_below_threshold_no_admin_alert(self) -> None:
-        """Под порогом (4 застрявших) — никакого admin-уведомления.
-        Регресс-страховка от шумных alert'ов на нормальной нагрузке."""
-        from contextlib import asynccontextmanager
+    async def test_stale_appeal_text_is_paused_instead_of_discarded(self, session):
+        from datetime import datetime, timedelta
 
-        from aemr_bot.services import cron as cron_mod
+        from sqlalchemy import select
 
-        bot = MagicMock()
-        bot.send_message = AsyncMock()
-        send_admin_text = AsyncMock()
-        stuck = [(100 + i, "awaiting_name") for i in range(4)]
+        from aemr_bot.db.models import User
+        session.add(User(max_user_id=781100, dialog_state="awaiting_followup_text",
+                         dialog_data={"summary_chunks": ["Сохранить текст"]},
+                         updated_at=datetime.now(UTC)-timedelta(hours=25)))
+        await session.commit()
+        bot = MagicMock(send_message=AsyncMock())
+        await cron._job_funnel_watchdog(bot, AsyncMock())
+        saved = await session.scalar(select(User).where(User.max_user_id == 781100))
+        assert saved.dialog_state == "idle"
+        assert saved.appeal_draft["data"]["summary_chunks"] == ["Сохранить текст"]
+        assert "Черновик сохранён" in bot.send_message.await_args.kwargs["text"]
 
-        @asynccontextmanager
-        async def fake_scope():
-            yield MagicMock()
 
-        with patch.object(cron_mod, "session_scope", fake_scope), \
-             patch("aemr_bot.services.users.find_stuck_in_funnel",
-                   AsyncMock(return_value=stuck)), \
-             patch("aemr_bot.services.users.reset_state", AsyncMock()):
-            await cron_mod._job_funnel_watchdog(bot, send_admin_text)
-
-        # bot.send_message — по 1 на каждого жителя.
-        assert bot.send_message.await_count == 4
-        # admin-канал — ТИШИНА
-        send_admin_text.assert_not_awaited()
-
-    @pytest.mark.asyncio
-    async def test_at_threshold_sends_admin_summary(self) -> None:
-        """При ≥5 застрявших — bot отправляет в админ-чат сводку.
-        Аномальный массовый зашпил — сигнал об UX-регрессии или DDoS."""
-        from contextlib import asynccontextmanager
-
-        from aemr_bot.services import cron as cron_mod
-
-        bot = MagicMock()
-        bot.send_message = AsyncMock()
-        send_admin_text = AsyncMock()
-        stuck = [(100 + i, "awaiting_name") for i in range(7)]
-
-        @asynccontextmanager
-        async def fake_scope():
-            yield MagicMock()
-
-        with patch.object(cron_mod, "session_scope", fake_scope), \
-             patch("aemr_bot.services.users.find_stuck_in_funnel",
-                   AsyncMock(return_value=stuck)), \
-             patch("aemr_bot.services.users.reset_state", AsyncMock()):
-            await cron_mod._job_funnel_watchdog(bot, send_admin_text)
-
-        # Жителям — по сбросу.
-        assert bot.send_message.await_count == 7
-        # Админ-канал — одна сводка.
-        send_admin_text.assert_awaited_once()
-        msg = send_admin_text.await_args.args[0]
-        assert "7" in msg, f"число застрявших не упомянуто: {msg}"
-        assert "🧹" in msg
-        # Подсказка про проверку логов/IT
-        assert "проблем" in msg.lower() or "Funnel watchdog" in msg
 
 
 class TestNotifyToggleGates:
-    """Гейты `admin_notify_*` для monthly-report / open-reminder /
-    overdue-reminder (services/notify_toggles.py) — выключен тумблер →
-    job не считает данные и не шлёт сообщение; включён → работает
-    как раньше."""
-
-    @pytest.fixture(autouse=True)
-    def _clean(self):
-        from aemr_bot.services import notify_toggles
-        notify_toggles.reset_cache_for_tests()
-        yield
-        notify_toggles.reset_cache_for_tests()
-
-    # ── monthly report ──────────────────────────────────────────────
+    @pytest.mark.asyncio
+    async def test_monthly_report_suppressed_when_disabled(self):
+        send = AsyncMock()
+        with patch("aemr_bot.services.notify_toggles.is_enabled", return_value=False):
+            await cron._job_monthly_report(send)
+        send.assert_not_awaited()
 
     @pytest.mark.asyncio
-    async def test_monthly_report_suppressed_when_disabled(self) -> None:
-        send_doc = AsyncMock()
-        with patch(
-            "aemr_bot.services.notify_toggles.is_enabled", return_value=False,
-        ):
-            await cron._job_monthly_report(send_doc)
-        send_doc.assert_not_called()
+    @pytest.mark.parametrize("current_epoch", [True, False])
+    async def test_monthly_report_uses_complete_export_and_erasure_guard(self, session, current_epoch):
+        from aemr_bot.services import complete_stats, privacy_epoch
+        send = AsyncMock()
+        with (patch("aemr_bot.services.notify_toggles.is_enabled", return_value=True),
+              patch.object(complete_stats, "build_xlsx_with_epoch", AsyncMock(return_value=(b"xlsx-bytes", "за месяц", 5, 42))) as build,
+              patch.object(privacy_epoch, "hold_export_if_current", AsyncMock(return_value=current_epoch)) as guard):
+            await cron._job_monthly_report(send)
+        assert build.await_args.args[1] == "month"
+        start, end, _ = build.await_args.kwargs["window"]
+        assert start < end and start.tzinfo is not None and end.tzinfo is not None
+        assert guard.await_args.args[1] == 42
+        assert send.await_count == int(current_epoch)
+        if current_epoch:
+            assert send.await_args.kwargs["content"] == b"xlsx-bytes"
+            assert "5 обращений" in send.await_args.kwargs["caption"]
 
     @pytest.mark.asyncio
-    async def test_monthly_report_sent_when_enabled(self) -> None:
-        send_doc = AsyncMock()
-        with patch(
-            "aemr_bot.services.notify_toggles.is_enabled", return_value=True,
-        ), patch.object(cron, "session_scope") as scope, patch.object(
-            cron.stats_service, "build_xlsx",
-            AsyncMock(return_value=(b"xlsx-bytes", "Июль 2026", 5)),
-        ):
-            scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
-            scope.return_value.__aexit__ = AsyncMock(return_value=False)
-            await cron._job_monthly_report(send_doc)
-        send_doc.assert_awaited_once()
-        kwargs = send_doc.await_args.kwargs
-        assert kwargs["content"] == b"xlsx-bytes"
-        assert "5 обращений" in kwargs["caption"]
+    @pytest.mark.parametrize("job_name,toggle", [
+        ("_job_working_hours_open_reminder", "admin_notify_open_reminder"),
+        ("_job_working_hours_overdue_reminder", "admin_notify_overdue_reminder"),
+    ])
+    @pytest.mark.parametrize("case", ["working", "quiet", "disabled", "lunch", "weekend", "holiday", "before_open", "after_close"])
+    async def test_reminder_uses_live_database_schedule_and_notification_gates(self, session, monkeypatch, job_name, toggle, case):
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
 
-    # ── open reminder ────────────────────────────────────────────────
+        from aemr_bot.services import (
+            notify_toggles,
+            queue_panel,
+            quiet_hours,
+            settings_store,
+            work_schedule,
+        )
+        instant = datetime(2026, 6, 20 if case == "weekend" else 16,
+                           {"lunch": 12, "before_open": 7, "after_close": 19}.get(case, 8),
+                           30, tzinfo=ZoneInfo("Asia/Kamchatka"))
+        class FixedDate(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return instant.astimezone(tz) if tz else instant.replace(tzinfo=None)
+        monkeypatch.setattr(cron, "datetime", FixedDate)
+        monkeypatch.setattr(quiet_hours, "datetime", FixedDate)
+        value = dict(work_schedule.environment(), start=8, end=19,
+                     holidays=["2026-06-16"] if case == "holiday" else [])
+        await settings_store.set_value(session, work_schedule.KEY, value)
+        await settings_store.set_value(session, toggle, case != "disabled")
+        await settings_store.set_value(session, "admin_quiet_hours_enabled", case == "quiet")
+        await settings_store.set_value(session, "admin_quiet_hours_start", 0)
+        await settings_store.set_value(session, "admin_quiet_hours_end", 23)
+        await session.commit()
+        await notify_toggles.refresh_cache_from_db(session)
+        await quiet_hours.refresh_cache_from_db(session)
+        with patch.object(queue_panel, "refresh", AsyncMock()) as refresh:
+            await getattr(cron, job_name)(object())
+        assert refresh.await_count == int(case == "working")
+        if case not in {"quiet", "disabled"}:
+            assert work_schedule.active()["start"] == 8
 
-    @pytest.mark.asyncio
-    async def test_open_reminder_suppressed_when_disabled(self) -> None:
-        bot = AsyncMock()
-        with patch(
-            "aemr_bot.services.notify_toggles.is_enabled", return_value=False,
-        ), patch.object(cron, "is_workday", return_value=True) as workday:
-            await cron._job_working_hours_open_reminder(bot)
-        # Гейт срабатывает ДО проверки рабочего дня — считать не нужно.
-        workday.assert_not_called()
-        bot.send_message.assert_not_called()
 
-    @pytest.mark.asyncio
-    async def test_open_reminder_runs_when_enabled(self) -> None:
-        bot = AsyncMock()
-        with patch(
-            "aemr_bot.services.notify_toggles.is_enabled", return_value=True,
-        ), patch.object(cron, "is_workday", return_value=True), patch.object(
-            cron, "session_scope",
-        ) as scope, patch.object(
-            cron.appeals_service, "list_unanswered", AsyncMock(return_value=[]),
-        ):
-            scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
-            scope.return_value.__aexit__ = AsyncMock(return_value=False)
-            await cron._job_working_hours_open_reminder(bot)
-        # Список пуст → тишина (по контракту job'а), но исключений нет
-        # и гейт не заблокировал выполнение раньше времени.
-        bot.send_message.assert_not_called()
-
-    @pytest.mark.asyncio
-    async def test_open_reminder_calls_is_overdue_once_per_appeal(self) -> None:
-        """FIX (perf): раньше in_sla/overdue считались двумя list-comp'ами
-        → is_overdue звался ДВАЖДЫ на каждое обращение (а он итерирует по
-        рабочим дням от created_at). Теперь один проход: ровно 1 вызов на
-        обращение, разбиение in_sla/overdue корректно."""
-        from datetime import datetime, timedelta
-
-        bot = AsyncMock()
-        now = datetime.now(cron.TZ)
-        appeals = []
-        for i in range(4):
-            ap = MagicMock()
-            ap.id = 100 + i
-            ap.created_at = now - timedelta(hours=i + 1)
-            ap.user = MagicMock(first_name=f"U{i}")
-            ap.locality = "Елизово"
-            appeals.append(ap)
-
-        # Чётные — просрочены, нечётные — в SLA (проверяем корректность разбиения).
-        def fake_is_overdue(created_at, now_arg, hrs):
-            idx = [a.created_at for a in appeals].index(created_at)
-            return idx % 2 == 0
-
-        is_overdue = MagicMock(side_effect=fake_is_overdue)
-
-        with patch(
-            "aemr_bot.services.notify_toggles.is_enabled", return_value=True,
-        ), patch.object(cron, "is_workday", return_value=True), patch.object(
-            cron, "session_scope",
-        ) as scope, patch.object(
-            cron.appeals_service, "list_unanswered",
-            AsyncMock(return_value=appeals),
-        ), patch.object(
-            cron.sla_service, "is_overdue", is_overdue,
-        ), patch.object(
-            cron, "_send_with_open_tickets_button", AsyncMock(),
-        ) as send_btn:
-            scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
-            scope.return_value.__aexit__ = AsyncMock(return_value=False)
-            await cron._job_working_hours_open_reminder(bot)
-
-        # Ровно один вызов is_overdue на обращение (не два).
-        assert is_overdue.call_count == len(appeals)
-        # Разбиение корректно: 2 просрочено (idx 0,2), 2 в SLA (idx 1,3).
-        send_btn.assert_awaited_once()
-        text = send_btn.await_args.args[1]
-        assert "в SLA — 2" in text and "просрочено — 2" in text
-
-    # ── overdue reminder ─────────────────────────────────────────────
-
-    @pytest.mark.asyncio
-    async def test_overdue_reminder_suppressed_when_disabled(self) -> None:
-        bot = AsyncMock()
-        with patch(
-            "aemr_bot.services.notify_toggles.is_enabled", return_value=False,
-        ), patch.object(cron, "is_workday", return_value=True) as workday:
-            await cron._job_working_hours_overdue_reminder(bot)
-        workday.assert_not_called()
-        bot.send_message.assert_not_called()
-
-    @pytest.mark.asyncio
-    async def test_overdue_reminder_runs_when_enabled(self) -> None:
-        bot = AsyncMock()
-        with patch(
-            "aemr_bot.services.notify_toggles.is_enabled", return_value=True,
-        ), patch.object(cron, "is_workday", return_value=True), patch.object(
-            cron, "session_scope",
-        ) as scope, patch.object(
-            cron.appeals_service, "find_overdue_unanswered",
-            AsyncMock(return_value=[]),
-        ):
-            scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
-            scope.return_value.__aexit__ = AsyncMock(return_value=False)
-            await cron._job_working_hours_overdue_reminder(bot)
-        bot.send_message.assert_not_called()
 
 
 class TestFormatAppealLines:
@@ -776,6 +508,8 @@ class TestFormatAppealLines:
         from datetime import datetime
         ap = MagicMock()
         ap.id = 42
+        ap.sla_schedule_at_start = None
+        ap.sla_anchor_at = None
         ap.created_at = datetime.now(UTC)
         ap.locality = "Елизовское ГП"
         ap.user.first_name = "Иван"
@@ -790,6 +524,8 @@ class TestFormatAppealLines:
         for i in range(15):
             ap = MagicMock()
             ap.id = i
+            ap.sla_schedule_at_start = None
+            ap.sla_anchor_at = None
             ap.created_at = datetime.now(UTC)
             ap.locality = "X"
             ap.user.first_name = "Y"
@@ -872,38 +608,25 @@ class TestBuildScheduler:
         for old in ("pulse-offhours", "pulse-workhours", "pulse-sunday"):
             assert old not in names, f"старый job {old!r} должен быть упразднён"
 
-    def test_open_reminder_mon_fri_with_lunch_break(self) -> None:
-        """Регрессия: open-reminder работает пн-пт с обедом 12-13 (skip).
+    def test_open_reminder_trigger_reaches_changed_working_window(self):
+        from datetime import datetime
+        sched = cron.build_scheduler(MagicMock(), AsyncMock(), AsyncMock())
+        job = next(j for j in sched.get_jobs() if j.name == "open-reminder-workhours")
+        # Even Saturday and an hour outside the former 9–18 window must
+        # tick: the live DB schedule/calendar decides whether to refresh.
+        instant = datetime(2026, 6, 20, 7, 0, tzinfo=cron.TZ)
+        fire = job.trigger.get_next_fire_time(None, instant)
+        assert fire == instant.replace(minute=10)
 
-        Регламент v7 §39 «пн-пт 09:00-18:00» + уточнение в v8-draft «обед
-        12:00-13:00». Раньше код был пн-сб 9-17 (соответствовал
-        Таблице 3 §70 v7, противоречил §39); user подтвердил
-        фактическую практику = пн-пт + обед, проект v8 синхронизирует
-        §39 и Таблицу 3.
-        """
-        bot = MagicMock()
-        sched = cron.build_scheduler(bot, AsyncMock(), AsyncMock())
-        job = next(
-            j for j in sched.get_jobs() if j.name == "open-reminder-workhours"
-        )
-        text = str(job.trigger)
-        assert "mon-fri" in text, f"day_of_week не mon-fri: {text}"
-        # hour="9-11,13-17" — обеденный перерыв 12 пропускается
-        assert "9-11" in text and "13-17" in text, (
-            f"обеденный перерыв 12-13 не пропущен: {text}"
-        )
-
-    def test_overdue_reminder_mon_fri_with_lunch_break(self) -> None:
-        """Регрессия: overdue-reminder — то же расписание, что open-reminder
-        (minute=40 вместо 10)."""
-        bot = MagicMock()
-        sched = cron.build_scheduler(bot, AsyncMock(), AsyncMock())
-        job = next(
-            j for j in sched.get_jobs() if j.name == "overdue-reminder-workhours"
-        )
-        text = str(job.trigger)
-        assert "mon-fri" in text
-        assert "9-11" in text and "13-17" in text
+    def test_overdue_reminder_trigger_reaches_changed_working_window(self):
+        from datetime import datetime
+        sched = cron.build_scheduler(MagicMock(), AsyncMock(), AsyncMock())
+        job = next(j for j in sched.get_jobs() if j.name == "overdue-reminder-workhours")
+        # Even Saturday and an hour outside the former 9–18 window must
+        # tick: the live DB schedule/calendar decides whether to refresh.
+        instant = datetime(2026, 6, 20, 7, 0, tzinfo=cron.TZ)
+        fire = job.trigger.get_next_fire_time(None, instant)
+        assert fire == instant.replace(minute=40)
 
 
 class TestThreatIntelRefresh:
@@ -949,3 +672,39 @@ class TestThreatIntelRefresh:
         ):
             await cron._job_threat_intel_refresh(send)
         send.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_queue_refresh_keeps_period_calendars_after_live_schedule_change(session, monkeypatch):
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    from aemr_bot.db.models import User
+    from aemr_bot.services import appeals, queue_panel, settings_store, work_schedule
+
+    tz = ZoneInfo("Asia/Kamchatka")
+    instant = datetime(2026, 6, 16, 10, 30, tzinfo=tz)
+    anchor = instant.replace(hour=9)
+    class FixedDate(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return instant.astimezone(tz) if tz else instant.replace(tzinfo=None)
+    monkeypatch.setattr(queue_panel, "datetime", FixedDate)
+    user = User(max_user_id=782000)
+    session.add(user)
+    await session.flush()
+    old = dict(work_schedule.environment(), start=9, end=18, holidays=[])
+    await settings_store.set_value(session, work_schedule.KEY, old)
+    first = await appeals.create_appeal(session, user, "Адрес", "Дорога", "Первое", [])
+    first.created_at = anchor
+    first.sla_hours_at_start = 1
+    await settings_store.set_value(session, work_schedule.KEY, dict(old, start=10))
+    second = await appeals.create_appeal(session, user, "Адрес", "Дорога", "Второе", [])
+    second.created_at = anchor
+    second.sla_hours_at_start = 1
+    await session.commit()
+    await work_schedule.refresh(session)
+    text, nonempty = await queue_panel._snapshot()
+    assert nonempty
+    assert f"⚠️ Просрочен первый ответ: 1\n#{first.id}" in text
+    assert f"🆕 Ожидают первого ответа: 1\n#{second.id}" in text

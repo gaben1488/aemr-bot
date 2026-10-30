@@ -18,7 +18,7 @@ async def settings_sessions(tmp_path):
     engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'settings.db'}")
     async with engine.begin() as connection:
         await connection.execute(text(
-            "CREATE TABLE settings (key VARCHAR(64) PRIMARY KEY, value JSON, "
+            "CREATE TABLE settings (key VARCHAR(64) PRIMARY KEY, value JSON, revision BIGINT NOT NULL DEFAULT 1, "
             "updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, synced_at DATETIME)"
         ))
     try:
@@ -57,11 +57,12 @@ async def test_concurrent_add_rejects_stale_write_and_can_retry(
     both_read = asyncio.Event()
     first_committed = asyncio.Event()
     original_get = settings_store.get
+    original_versioned = settings_store.get_versioned
     reads = 0
 
     async def racing_get(session, setting_key):
         nonlocal reads
-        snapshot = await original_get(session, setting_key)
+        snapshot = await original_versioned(session, setting_key)
         reads += 1
         if reads == 2:
             both_read.set()
@@ -81,7 +82,7 @@ async def test_concurrent_add_rejects_stale_write_and_can_retry(
     audit = AsyncMock()
     send = AsyncMock()
     monkeypatch.setattr(handler, "session_scope", scope)
-    monkeypatch.setattr(settings_store, "get", racing_get)
+    monkeypatch.setattr(settings_store, "get_versioned", racing_get)
     monkeypatch.setattr(handler.ops_svc, "write_audit", audit)
     monkeypatch.setattr(handler, "op_send", send)
     monkeypatch.setattr(handler, "_show_obj_card" if is_object else "_show_list_card", AsyncMock())
@@ -95,7 +96,7 @@ async def test_concurrent_add_rejects_stale_write_and_can_retry(
         assert await original_get(session, key) == initial + [first_item]
 
     # The rejected addition remains actionable and merges into a fresh snapshot.
-    monkeypatch.setattr(settings_store, "get", original_get)
+    monkeypatch.setattr(settings_store, "get_versioned", original_versioned)
     assert await apply_add(object(), 2, key, second_text) is True
     async with settings_sessions() as session:
         assert await original_get(session, key) == initial + [first_item, second_item]
@@ -182,7 +183,7 @@ async def test_current_button_deletes_the_displayed_entry(monkeypatch, settings_
     monkeypatch.setattr(handler, "session_scope", scope)
     monkeypatch.setattr(handler, f"_show_{kind}_card", AsyncMock())
     monkeypatch.setattr(handler.ops_svc, "write_audit", audit)
-    suffix = f"{key}:1:{settings_store.value_revision(initial)}"
+    suffix = f"{key}:1:v1"
     await getattr(handler, f"_{kind}_delete")(object(), 7, suffix)
     async with settings_sessions() as session:
         assert await settings_store.get(session, key) == [initial[0], initial[2]]
@@ -282,9 +283,10 @@ async def test_delete_preserves_add_committed_after_its_read(monkeypatch, settin
         await session.commit()
 
     original_get = settings_store.get
+    original_versioned = settings_store.get_versioned
 
     async def racing_get(session, setting_key):
-        snapshot = await original_get(session, setting_key)
+        snapshot = await original_versioned(session, setting_key)
         async with settings_sessions() as other:
             await settings_store.set_value(other, key, initial + [addition])
             await other.commit()
@@ -298,12 +300,12 @@ async def test_delete_preserves_add_committed_after_its_read(monkeypatch, settin
 
     audit = AsyncMock()
     show = AsyncMock()
-    monkeypatch.setattr(settings_store, "get", racing_get)
+    monkeypatch.setattr(settings_store, "get_versioned", racing_get)
     monkeypatch.setattr(handler, "session_scope", scope)
     monkeypatch.setattr(handler, f"_show_{kind}_card", show)
     monkeypatch.setattr(handler.ops_svc, "write_audit", audit)
     await getattr(handler, f"_{kind}_delete")(
-        object(), 7, f"{key}:1:{settings_store.value_revision(initial)}",
+        object(), 7, f"{key}:1:v1",
     )
     async with settings_sessions() as session:
         assert await original_get(session, key) == initial + [addition]
@@ -322,7 +324,7 @@ async def test_conflicting_add_keeps_operator_input_intent(monkeypatch):
 
     monkeypatch.setattr(facade, "ensure_role", AsyncMock(return_value=True))
     monkeypatch.setattr(handler, "session_scope", scope)
-    monkeypatch.setattr(settings_store, "get", AsyncMock(return_value=["A"]))
+    monkeypatch.setattr(settings_store, "get_versioned", AsyncMock(return_value=(["A"], 1)))
     monkeypatch.setattr(settings_store, "set_value", AsyncMock(side_effect=settings_store.SettingConflictError))
     monkeypatch.setattr(handler, "op_send", AsyncMock())
     monkeypatch.setattr(handler.ops_svc, "write_audit", AsyncMock())

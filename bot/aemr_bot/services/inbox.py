@@ -62,15 +62,30 @@ async def accept(events: list[dict]) -> None:
     if not events:
         return
     async with session_scope() as session:
+        from aemr_bot.config import settings
+        from aemr_bot.services import data_erasure, privacy_epoch
+        await privacy_epoch.hold_delivery(session)
         # Bound SQL parameter count while committing the entire transport batch
         # atomically. Deduplication remains in PostgreSQL, including same-batch IDs.
         for offset in range(0, len(events), _RECEIPT_BATCH_SIZE):
             rows = []
+            incoming = []
             for payload in events[offset:offset + _RECEIPT_BATCH_SIZE]:
                 key, user_id = _identity(payload)
+                message = payload.get("message")
+                message = message if isinstance(message, dict) else {}
+                body = message.get("body")
+                body = body if isinstance(body, dict) else {}
+                recipient = message.get("recipient")
+                recipient = recipient if isinstance(recipient, dict) else {}
+                if (payload.get("update_type") == "message_created" and isinstance(user_id, int)
+                        and user_id > 0 and body.get("mid")
+                        and (settings.admin_group_id is None or recipient.get("chat_id") != settings.admin_group_id)):
+                    incoming.append((str(body["mid"]), user_id))
                 rows.append({"event_key": key,
                              "update_type": str(payload.get("update_type", "unknown"))[:64],
                              "max_user_id": user_id, "payload": payload})
+            await data_erasure.record_incoming_copies(session, incoming)
             await session.execute(insert(InboxEvent).values(rows).on_conflict_do_nothing(
                 index_elements=[InboxEvent.event_key],
             ))
@@ -129,20 +144,24 @@ async def maintenance(bot) -> None:
         await session.execute(delete(InboxEvent).where(InboxEvent.received_at < now - timedelta(days=30)))
         failures = list((await session.scalars(select(InboxEvent).where(
             InboxEvent.state == "failed", InboxEvent.notified.is_(False),
-        ).order_by(InboxEvent.id).limit(20))).all())
+        ).order_by(InboxEvent.id).limit(20).with_for_update(skip_locked=True))).all())
+        if failures:
+            # Claim before the MAX request. If the process crashes or the
+            # response is lost, sending the same alert again could duplicate it.
+            await session.execute(update(InboxEvent).where(
+                InboxEvent.id.in_([r.id for r in failures])
+            ).values(notified=True))
     if not failures:
         return
-    ids = ", ".join(f"#{r.id} ({r.update_type}, MAX ID {r.max_user_id or '—'})" for r in failures)
+    ids = ", ".join(f"#{r.id} ({r.update_type})" for r in failures)
     sent = await admin_bus.send(bot, text=(
         "⚠️ Не завершена обработка событий: " + ids + ". "
         "Автоматического повтора нет: часть действий могла выполниться. "
         "Проверьте обращения и журнал рассылок перед повтором действия; "
         "при необходимости попросите отправителя повторить сообщение."
-    ))
-    if sent:
-        async with session_scope() as session:
-            await session.execute(update(InboxEvent).where(InboxEvent.id.in_([r.id for r in failures]))
-                                  .values(notified=True))
+    ), critical=True)
+    if not sent:
+        log.warning("inbox: delivery of failed-event alert was not confirmed; inspect diagnostics")
 
 
 async def process_one(dp, bot) -> bool:

@@ -1,297 +1,98 @@
-"""Anti-drift тест: ключевые ЧИСЛА из `docs/site/_kb/_LEDGER.md`
-запиннены к реальному коду, чтобы супер-канон не мог тихо устареть.
+"""Compare the active ledger's explicit facts with code and migration files.
 
-**Зачем.** `_LEDGER.md` объявлен «выверенным реестром фактов» — на него
-опираются Регламент v8, вики `_kb2/` и Политика ПДн. Каждый факт привязан
-к коду через `file:line`. Но `file:line` дрейфует молча: в самом леджере
-уже зафиксированы два таких дрейфа (миграции 17→18, `config.py:129→180`).
-Реестр cron'а закрыт `test_cron_docs_sync.py`, реестр callback'ов —
-`test_callback_coverage_contract.py`; этот тест закрывает оставшиеся
-ключевые числовые факты Части I.
-
-Здесь пиннятся не строки-номера (они подсказка, истина — значение), а
-сами ЗНАЧЕНИЯ: если код меняет любое из них, тест падает и заставляет
-синхронно поправить И код, И `_LEDGER.md`. Источник истины — КОД
-(`aemr_bot`), импорт где возможно; миграции считаются по файлам
-`alembic/versions/*.py`.
-
-**Workflow при падении.** Сообщение каждого assert говорит, какой факт
-разошёлся. Поправить нужно ОБА: реальное значение в коде (если менялось
-оно) и соответствующую строку в `_LEDGER.md` (значение + при желании
-`file:line`).
-
-**Покрываемые факты `_LEDGER.md` (Часть I):**
-- Оператор §3 / Сводка: `SLA_RESPONSE_HOURS == 4` (`config.py`).
-- Разработчик-MLP §B / config: `answer_max_chars == 800`.
-- Разработчик §4 / РЕШЕНИЕ audit_log: `audit_log_retention_days == 365`,
-  диапазон `ge=30, le=3650`.
-- Администратор §4 / Сводка: `len(settings_store.SCHEMA) == 23` (2026-07-09:
-  +6 модульных тумблеров `admin_notify_*`, было 17).
-- Оператор §2: `OperatorRole` = 4 значения (coordinator/aemr/egp/it).
-- Разработчик §1: число файлов миграций `alembic/versions/*.py == 27`,
-  последняя ревизия `0027`, нумерация непрерывна 0001..0027.
-- Разработчик §2: число ORM-таблиц (классов `(Base)` в `models.py`) `== 12`.
-- Администратор §6: `infra/Dockerfile` ставит из `uv.lock` с `--require-hashes`
-  (content-check, не число — ловит откат образа на pip-из-диапазонов).
+Values come from the reviewed document, not from a second stale constant in
+this test. New fields/keys/tables/revisions must update the ledger too.
 """
 from __future__ import annotations
 
-import inspect
+import ast
+import json
 import pathlib
 import re
 
-from aemr_bot.config import Settings, settings
+import pytest
+
+from aemr_bot.config import Settings
 from aemr_bot.db.models import Base, OperatorRole
 from aemr_bot.services import settings_store
 
-# `bot/tests/<this>` → parents[2] == repo root (тот же приём, что в
-# test_cron_docs_sync.py). Отсюда дотягиваемся до леджера и до миграций.
-REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
-LEDGER = REPO_ROOT / "docs" / "site" / "_kb" / "_LEDGER.md"
-MIGRATIONS_DIR = (
-    REPO_ROOT / "bot" / "aemr_bot" / "db" / "alembic" / "versions"
-)
-MODELS_PATH = REPO_ROOT / "bot" / "aemr_bot" / "db" / "models.py"
-
-# Общий хвост сообщений: при любом падении правим И код, И леджер.
-_FIX = (
-    "\n\n→ Если упало: значение в коде изменилось. Обнови И КОД, И "
-    "`docs/site/_kb/_LEDGER.md` (значение, и при необходимости file:line). "
-    "КОД = истина №1; леджер обязан следовать за ним."
-)
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+LEDGER = ROOT / "docs/site/_kb/_LEDGER.md"
 
 
-def _migration_numbers() -> list[int]:
-    """Числовые префиксы файлов миграций `NNNN_*.py` (без `__init__`).
-
-    Имена файлов — самый устойчивый anti-drift сигнал: они zero-padded и
-    сортируемы (`0001`..`0018`). Возвращаем отсортированный список int'ов.
-    """
-    nums: list[int] = []
-    for path in MIGRATIONS_DIR.glob("*.py"):
-        if path.name == "__init__.py":
-            continue
-        m = re.match(r"^(\d+)_", path.name)
-        assert m, (
-            f"Файл миграции с неожиданным именем (не `NNNN_*.py`): "
-            f"{path.name}. Конвенция нумерации нарушена." + _FIX
-        )
-        nums.append(int(m.group(1)))
-    return sorted(nums)
+def _facts() -> dict:
+    source = LEDGER.read_text(encoding="utf-8")
+    match = re.search(r"<!-- facts:start -->\s*```json\s*(.*?)\s*```\s*<!-- facts:end -->", source, re.DOTALL)
+    assert match, "Active ledger must contain a reviewed machine-readable fact block"
+    return json.loads(match.group(1))
 
 
-# --- §3 Оператор / Сводка: SLA_RESPONSE_HOURS == 4 --------------------
-
-
-def test_sla_response_hours_is_4() -> None:
-    """`_LEDGER.md` Оператор §3: `SLA_RESPONSE_HOURS = 4` (config.py)."""
-    assert settings.sla_response_hours == 4, (
-        f"_LEDGER.md фиксирует SLA_RESPONSE_HOURS=4, в коде "
-        f"{settings.sla_response_hours} (config.py, alias SLA_RESPONSE_HOURS)."
-        + _FIX
+@pytest.mark.parametrize("field", ["sla_response_hours", "sla_followup_hours", "answer_max_chars",
+                                   "summary_max_chars", "attachments_max_per_appeal",
+                                   "max_api_retries", "audit_log_retention_days"])
+def test_documented_defaults_match_model_fields(field: str) -> None:
+    assert _facts()["defaults"][field] == Settings.model_fields[field].default, (
+        f"Update active ledger: {field} default changed; installed environment overrides are separate."
     )
 
 
-# --- §B Разработчик-MLP / config: answer_max_chars == 800 -------------
+def test_documented_settings_keys_match_complete_schema() -> None:
+    assert _facts()["settings_keys"] == sorted(settings_store.SCHEMA), "Update ledger for added/removed settings"
 
 
-def test_answer_max_chars_is_800() -> None:
-    """`_LEDGER.md` (Этап B, спецификация): `answer_max_chars = 800`."""
-    assert settings.answer_max_chars == 800, (
-        f"_LEDGER.md фиксирует answer_max_chars=800, в коде "
-        f"{settings.answer_max_chars} (config.py, alias ANSWER_MAX_CHARS)."
-        + _FIX
-    )
+def test_documented_operator_roles_match_enum() -> None:
+    assert _facts()["operator_roles"] == sorted(r.value for r in OperatorRole)
 
 
-# --- §4 Разработчик / РЕШЕНИЕ audit_log: 365 + диапазон 30..3650 ------
+def test_migrations_match_documented_head_count_and_contiguous_chain() -> None:
+    versions = ROOT / "bot/aemr_bot/db/alembic/versions"
+    files = [p for p in versions.glob("*.py") if p.name != "__init__.py"]
+    numbers = []
+    revisions = {}
+    for path in files:
+        match = re.match(r"^(\d{4})_", path.name)
+        assert match, f"Unexpected migration filename: {path.name}"
+        numbers.append(int(match.group(1)))
+        tree = ast.parse(path.read_text())
+        values = {}
+        for node in tree.body:
+            if isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if isinstance(target, ast.Name) and target.id in {"revision", "down_revision"}:
+                        values[target.id] = ast.literal_eval(node.value)
+            elif (isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name)
+                  and node.target.id in {"revision", "down_revision"}):
+                values[node.target.id] = ast.literal_eval(node.value)
+        revisions[values["revision"]] = values["down_revision"]
+    facts = _facts()
+    assert len(files) == facts["migration_count"]
+    assert sorted(numbers) == list(range(1, facts["migration_count"] + 1))
+    heads = set(revisions) - set(revisions.values())
+    assert heads == {facts["migration_head"]}
+    current = facts["migration_head"]
+    visited = set()
+    while current is not None:
+        assert current not in visited, "Migration cycle"
+        visited.add(current)
+        current = revisions[current]
+    assert visited == set(revisions), "Detached migration branch"
 
 
-def test_audit_log_retention_days_is_365() -> None:
-    """`_LEDGER.md` Разработчик §4: дефолт `audit_log_retention_days=365`."""
-    assert settings.audit_log_retention_days == 365, (
-        f"_LEDGER.md фиксирует AUDIT_LOG_RETENTION_DAYS=365 (год аудита), "
-        f"в коде {settings.audit_log_retention_days} (config.py)." + _FIX
-    )
+def test_documented_orm_tables_match_runtime_and_source() -> None:
+    expected = _facts()["orm_tables"]
+    assert expected == sorted(Base.metadata.tables)
+    tree = ast.parse((ROOT / "bot/aemr_bot/db/models.py").read_text())
+    table_classes = [node for node in tree.body if isinstance(node, ast.ClassDef)
+                     and any(isinstance(base, ast.Name) and base.id == "Base" for base in node.bases)]
+    assert len(table_classes) == len(expected)
 
 
-def test_audit_log_retention_range_is_30_to_3650() -> None:
-    """`_LEDGER.md` Разработчик §4: диапазон `ge=30, le=3650`.
-
-    Проверяем pydantic-метаданные поля (Ge/Le), а не только дефолт —
-    именно диапазон 30..3650 зафиксирован в каноне и в обосновании
-    решения по 152-ФЗ.
-    """
+def test_audit_retention_constraints_match_documented_range() -> None:
     field = Settings.model_fields["audit_log_retention_days"]
-    bounds: dict[str, int] = {}
-    for meta in field.metadata:
-        # annotated_types.Ge / Le имеют атрибуты .ge / .le.
-        if hasattr(meta, "ge"):
-            bounds["ge"] = meta.ge
-        if hasattr(meta, "le"):
-            bounds["le"] = meta.le
-    assert bounds.get("ge") == 30 and bounds.get("le") == 3650, (
-        f"_LEDGER.md фиксирует диапазон audit_log_retention_days "
-        f"ge=30, le=3650; в коде {bounds} (config.py Field constraints)."
-        + _FIX
-    )
+    bounds = {key: getattr(meta, key) for meta in field.metadata for key in ("ge", "le") if hasattr(meta, key)}
+    assert bounds == _facts()["audit_retention_bounds"]
 
 
-# --- §4 Администратор / Сводка: len(settings_store.SCHEMA) == 23 ------
-
-
-def test_settings_schema_has_23_keys() -> None:
-    """`_LEDGER.md` Администратор §4: `settings_store.SCHEMA` — 23 ключа.
-
-    2026-07-09: было 17, +6 модульных тумблеров служебных уведомлений
-    (`admin_notify_pulse/consent/subscriptions/open_reminder/
-    overdue_reminder/monthly_stats`, см. `services/notify_toggles.py`).
-    """
-    assert len(settings_store.SCHEMA) == 23, (
-        f"_LEDGER.md фиксирует len(SCHEMA)=23, в коде "
-        f"{len(settings_store.SCHEMA)} (services/settings_store.py). "
-        f"Ключи: {sorted(settings_store.SCHEMA)}." + _FIX
-    )
-
-
-# --- §2 Оператор: OperatorRole = 4 значения --------------------------
-
-
-def test_operator_role_has_four_values() -> None:
-    """`_LEDGER.md` Оператор §2: `OperatorRole` — coordinator/aemr/egp/it."""
-    actual = {r.value for r in OperatorRole}
-    expected = {"coordinator", "aemr", "egp", "it"}
-    assert actual == expected, (
-        f"_LEDGER.md фиксирует OperatorRole={sorted(expected)} (4 значения), "
-        f"в коде {sorted(actual)} (db/models.py)." + _FIX
-    )
-
-
-# --- §1 Разработчик: 27 миграций, последняя 0027 ---------------------
-
-
-def test_migrations_count_is_26() -> None:
-    """`_LEDGER.md` Разработчик §1: ровно 26 файлов миграций.
-
-    Считаем файлы `alembic/versions/*.py` (импортировать нечего —
-    миграции это файлы). В леджере уже были дрейфы 17→18→19→20→21→22→23→24→26 — этот
-    тест ловит следующий.
-    """
-    nums = _migration_numbers()
-    assert len(nums) == 27, (
-        f"_LEDGER.md фиксирует 27 миграций (0001..0027), на диске "
-        f"{len(nums)}: {nums}." + _FIX
-    )
-
-
-def test_latest_migration_is_0027_and_contiguous() -> None:
-    """`_LEDGER.md` Разработчик §1: последняя ревизия `0027`, без дыр.
-
-    Нумерация обязана быть непрерывной 1..27 — иначе пропущена/удалена
-    миграция, и «последняя 0027» в леджере вводит в заблуждение.
-    """
-    nums = _migration_numbers()
-    assert nums[-1] == 27, (
-        f"_LEDGER.md фиксирует последнюю миграцию 0027, максимальная на "
-        f"диске {nums[-1]:04d}." + _FIX
-    )
-    assert nums == list(range(1, 28)), (
-        f"_LEDGER.md подразумевает непрерывную нумерацию 0001..0027, на "
-        f"диске пропуски/дубли: {nums}." + _FIX
-    )
-
-
-# --- §2 Разработчик: 12 ORM-таблиц -----------------------------------
-
-
-def test_orm_table_count_is_12() -> None:
-    """`_LEDGER.md` Разработчик §2: ровно 12 ORM-таблиц.
-
-    Проверяем двумя независимыми путями, оба должны дать 12:
-    * рантайм — `len(Base.metadata.tables)` (живые таблицы);
-    * исходник — число `class X(Base):` в `models.py`.
-    Если значения разойдутся между собой — это тоже сигнал (например,
-    класс-таблица не подхватился metadata). Оба сверяются с каноном 12.
-    """
-    runtime_tables = sorted(Base.metadata.tables.keys())
-    runtime_count = len(runtime_tables)
-
-    source = MODELS_PATH.read_text(encoding="utf-8")
-    source_count = len(re.findall(r"^class \w+\(Base\):", source, re.MULTILINE))
-
-    assert runtime_count == source_count, (
-        f"Рассинхрон внутри models.py: metadata={runtime_count} таблиц "
-        f"{runtime_tables}, а текстом `class X(Base):` найдено "
-        f"{source_count}. Проверь, что все табличные классы наследуют Base "
-        f"и имеют __tablename__." + _FIX
-    )
-    assert runtime_count == 12, (
-        f"_LEDGER.md фиксирует 12 ORM-таблиц, в коде {runtime_count}: "
-        f"{runtime_tables} (db/models.py)." + _FIX
-    )
-
-
-# --- Sanity: канон и миграции на месте --------------------------------
-
-
-def test_ledger_file_exists() -> None:
-    """Канон `_LEDGER.md` существует по ожидаемому пути."""
-    assert LEDGER.is_file(), (
-        f"Супер-канон не найден: {LEDGER}. Если переехал — обнови путь "
-        f"LEDGER в этом тесте."
-    )
-
-
-def test_migrations_dir_exists() -> None:
-    """Каталог миграций существует по ожидаемому пути."""
-    assert MIGRATIONS_DIR.is_dir(), (
-        f"Каталог миграций не найден: {MIGRATIONS_DIR}. Если переехал — "
-        f"обнови MIGRATIONS_DIR в этом тесте."
-    )
-
-
-# --- Self-check: helper не «ослеп» -----------------------------------
-
-
-def test_migration_numbers_helper_self_check() -> None:
-    """Канарейка: `_migration_numbers` реально что-то находит и сортирует.
-
-    Пустой/несортированный результат означал бы, что glob сломан и
-    числовые тесты выше прошли бы ложно-зелёными.
-    """
-    nums = _migration_numbers()
-    assert nums, "_migration_numbers() вернул пусто — glob по versions/ сломан."
-    assert nums == sorted(nums), "_migration_numbers() обязан быть отсортирован."
-    assert nums[0] == 1, f"Первая миграция должна быть 0001, получено {nums[0]:04d}."
-
-
-def test_imported_symbols_are_live() -> None:
-    """Канарейка: импортируемые из `aemr_bot` символы существуют и того
-    типа, что ожидаем (защита от молчаливого рефактора имён)."""
-    assert hasattr(settings, "sla_response_hours")
-    assert hasattr(settings, "answer_max_chars")
-    assert hasattr(settings, "audit_log_retention_days")
-    assert isinstance(settings_store.SCHEMA, dict)
-    assert inspect.isclass(OperatorRole)
-    assert "audit_log_retention_days" in Settings.model_fields
-
-
-# --- §6 Администратор / infra: Dockerfile ставит из uv.lock с хешами ---
-
-
-def test_dockerfile_uses_uv_lock_with_hashes() -> None:
-    """`_LEDGER.md` Администратор §6: образ ставит зависимости из `uv.lock`
-    с хеш-проверкой, а не `pip install -e` из диапазонов.
-
-    Content-дрейф (не числовой): Dockerfile уже мигрировал на
-    uv.lock + `--require-hashes`, и §6 это фиксирует. Если кто-то откатит
-    образ на `pip install -e` из pyproject-диапазонов — lock снова станет
-    декоративным, а §6 (и DEPS.md) начнут врать. Тест ловит откат.
-    """
-    dockerfile = (REPO_ROOT / "infra" / "Dockerfile").read_text(encoding="utf-8")
-    for needle in ("uv.lock", "uv export", "--require-hashes"):
-        assert needle in dockerfile, (
-            f"_LEDGER.md §6 фиксирует установку из uv.lock с хеш-проверкой, "
-            f"но в infra/Dockerfile нет «{needle}». Похоже на откат образа "
-            f"с lock+hash на pip-из-диапазонов." + _FIX
-        )
+def test_image_dependency_install_remains_locked_and_hash_checked() -> None:
+    source = (ROOT / "infra/Dockerfile").read_text()
+    assert all(value in source for value in ("uv.lock", "uv export", "--require-hashes"))

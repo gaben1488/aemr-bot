@@ -7,13 +7,14 @@ from typing import Any
 
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
+from aemr_bot.services import data_erasure
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.pii_mask import mask_phone as _mask_phone
 
 log = logging.getLogger(__name__)
 
 
-async def _send(bot: Any, text: str, *, critical: bool = False) -> None:
+async def _send(bot: Any, text: str, *, critical: bool = False, attachments: list | None = None) -> None:
     """Отправить служебное уведомление и не ломать действие жителя при сбое MAX.
 
     Идёт через admin_bus, чтобы каждое уведомление двигало
@@ -32,7 +33,7 @@ async def _send(bot: Any, text: str, *, critical: bool = False) -> None:
     if not cfg.admin_group_id:
         return
     try:
-        await admin_bus.send(bot, text=text, critical=critical)
+        await admin_bus.send(bot, text=text, critical=critical, attachments=attachments)
     except Exception:
         log.debug("не удалось отправить служебное уведомление", exc_info=True)
 
@@ -91,11 +92,18 @@ async def notify_consent_given(bot: Any, *, max_user_id: int) -> None:
     if not notify_toggles.is_enabled("admin_notify_consent"):
         log.debug("notify_consent_given: admin_notify_consent disabled, suppressed")
         return
-    desc = await _describe_user(max_user_id)
-    await _send(
-        bot,
-        f"✅ Житель дал согласие на обработку ПДн.\n{desc}",
-    )
+    if not cfg.admin_group_id:
+        return
+    try:
+        async with data_erasure.personal_view(max_user_ids=[max_user_id]):
+            desc = await _describe_user(max_user_id)
+            await _send(
+                bot,
+                f"✅ Житель дал согласие на обработку ПДн.\n{desc}",
+            )
+    except data_erasure.PersonalDataErasedError:
+        # A delayed notification must not recreate an erased identifier.
+        return
 
 
 async def notify_consent_revoked(
@@ -106,31 +114,37 @@ async def notify_consent_revoked(
 ) -> None:
     """Уведомление об отзыве согласия на ПДн.
 
-    2026-07-09 (находка security-ревью): НЕ подчиняется ни одному
-    тумблеру (`admin_notify_*`) и ни quiet hours — отправляется через
-    `critical=True`. Отзыв согласия с открытыми обращениями юридически
-    значим (152-ФЗ): оператор обязан дать финальный ответ ДО того, как
-    данные жителя будут обезличены по retention. Если это уведомление
-    потеряется в тихом режиме или будет выключено тумблером — открытое
-    обращение рискует остаться без ответа безвозвратно (обезличивание
-    убьёт возможность связаться с жителем).
+    Отзыв с открытыми обращениями требует внимания и не подавляется
+    тихим режимом. Правовое основание дальнейшей обработки оценивается
+    ответственным лицом.
     """
-    desc = await _describe_user(max_user_id)
-    if open_appeal_ids:
-        ids = ", ".join(f"#{appeal_id}" for appeal_id in open_appeal_ids)
-        detail = (
-            f"Открытые обращения ждут финального ответа через бот: {ids}.\n"
-            f"Ответьте по обычной карточке или командой /reply. После ответа "
-            f"обращение закроется, новые обращения без нового согласия не "
-            f"принимаются."
-        )
-    else:
-        detail = "Открытых обращений у этого жителя сейчас нет."
-    await _send(
-        bot,
-        f"⚠️ Житель отозвал согласие на ПДн.\n{desc}\n\n{detail}",
-        critical=True,
-    )
+    if not cfg.admin_group_id:
+        return
+    try:
+        async with data_erasure.personal_view(max_user_ids=[max_user_id]):
+            desc = await _describe_user(max_user_id)
+            if open_appeal_ids:
+                ids = ", ".join(f"#{appeal_id}" for appeal_id in open_appeal_ids[:20])
+                more = f" и ещё {len(open_appeal_ids) - 20}" if len(open_appeal_ids) > 20 else ""
+                detail = (
+                    f"Открытые обращения: {ids}{more}.\n"
+                    f"Проверьте порядок дальнейшей работы и сроки очистки данных."
+                )
+            else:
+                detail = "Открытых обращений у этого жителя сейчас нет."
+            from maxapi.types import CallbackButton
+            from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
+            keyboard = InlineKeyboardBuilder()
+            keyboard.row(CallbackButton(text="📋 Открыть очередь", payload="op:open_tickets"))
+            await _send(
+                bot,
+                f"⚠️ Житель отозвал согласие на ПДн.\n{desc}\n\n{detail}",
+                critical=True,
+                attachments=[keyboard.as_markup()],
+            )
+    except data_erasure.PersonalDataErasedError:
+        # A delayed notification must not recreate an erased identifier.
+        return
 
 
 async def notify_broadcast_subscribed(bot: Any, *, max_user_id: int) -> None:
@@ -146,11 +160,18 @@ async def notify_broadcast_subscribed(bot: Any, *, max_user_id: int) -> None:
             "suppressed"
         )
         return
-    desc = await _describe_user(max_user_id)
-    await _send(
-        bot,
-        f"🔔 Житель подписался на муниципальные уведомления.\n{desc}",
-    )
+    if not cfg.admin_group_id:
+        return
+    try:
+        async with data_erasure.personal_view(max_user_ids=[max_user_id]):
+            desc = await _describe_user(max_user_id)
+            await _send(
+                bot,
+                f"🔔 Житель подписался на муниципальные уведомления.\n{desc}",
+            )
+    except data_erasure.PersonalDataErasedError:
+        # A delayed notification must not recreate an erased identifier.
+        return
 
 
 async def notify_broadcast_unsubscribed(
@@ -172,12 +193,19 @@ async def notify_broadcast_unsubscribed(
             "suppressed"
         )
         return
-    desc = await _describe_user(max_user_id)
-    await _send(
-        bot,
-        f"🔕 Житель отписался от муниципальных уведомлений.\n{desc}\n"
-        f"Источник отписки: {source}",
-    )
+    if not cfg.admin_group_id:
+        return
+    try:
+        async with data_erasure.personal_view(max_user_ids=[max_user_id]):
+            desc = await _describe_user(max_user_id)
+            await _send(
+                bot,
+                f"🔕 Житель отписался от муниципальных уведомлений.\n{desc}\n"
+                f"Источник отписки: {source}",
+            )
+    except data_erasure.PersonalDataErasedError:
+        # A delayed notification must not recreate an erased identifier.
+        return
 
 
 async def notify_data_erased(
@@ -195,18 +223,16 @@ async def notify_data_erased(
     этом сразу (карточки в чате устаревают, дальнейшая работа по ним
     бессмысленна). Тот же мотив, что у `notify_consent_revoked` выше.
     """
-    # Здесь _describe_user намеренно НЕ зовём: данные жителя уже
-    # erase'нуты к этому моменту (first_name='Удалено', phone обнулён).
-    # Описание не информативно. Пишем только id и факт.
+    # Не публикуем идентификатор жителя заново после удаления данных.
     if closed_appeal_ids:
-        ids = ", ".join(f"#{appeal_id}" for appeal_id in closed_appeal_ids)
-        detail = f"Закрыто без ответа: {ids}. Карточки в чате устарели."
+        ids = ", ".join(f"#{appeal_id}" for appeal_id in closed_appeal_ids[:20])
+        more = f" и ещё {len(closed_appeal_ids) - 20}" if len(closed_appeal_ids) > 20 else ""
+        detail = f"Закрыто без ответа: {ids}{more}. Карточки в чате устарели."
     else:
         detail = "Открытых обращений для закрытия не найдено."
     await _send(
         bot,
         f"🗑 Житель удалил данные из рабочей базы бота.\n"
-        f"MAX user id: {max_user_id}\n"
         f"{detail}",
         critical=True,
     )

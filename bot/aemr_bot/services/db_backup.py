@@ -337,7 +337,7 @@ async def _upload_to_s3(out_path: Path) -> None:
     log.info("backup uploaded to s3: %s", out_path.name)
 
 
-async def backup_db() -> BackupResult:
+async def _backup_db_impl() -> BackupResult:
     """Еженедельный pg_dump → опционально gpg → локальный том → опционально S3.
 
     Сделано под self-hosted: по умолчанию сохраняет только в локальный
@@ -465,3 +465,114 @@ async def backup_db() -> BackupResult:
         log.exception("backup s3 upload failed (local copy still intact)")
 
     return BackupResult(path=out)
+
+
+async def _cleanup_erased_backups_impl() -> int:
+    """Remove recognized dumps after erasure; retain non-backup files.
+
+    Encrypted SQL cannot be surgically edited. All application dumps present
+    during cleanup are invalidated. S3 current objects are removed individually;
+    versioned/retained copies require the storage owner's confirmation.
+    """
+    from sqlalchemy import select
+
+    from aemr_bot.db.models import ErasureTombstone
+    from aemr_bot.db.session import session_scope
+
+    async with session_scope() as session:
+        pending = list((await session.scalars(select(ErasureTombstone)
+            .where(ErasureTombstone.backups_state == "pending"))).all())
+    if not pending:
+        return 0
+    try:
+        if settings.backup_local_dir:
+            directory = Path(settings.backup_local_dir)
+            if not directory.is_dir() or not os.access(directory, os.R_OK | os.W_OK | os.X_OK):
+                raise BackupError("configured_backup_directory_unavailable")
+            for path in directory.glob("aemr-*"):
+                if path.is_file() and not path.is_symlink() and path.name.endswith((".sql", ".sql.gpg")):
+                    path.unlink()
+        remote = bool(settings.backup_s3_bucket)
+        if remote:
+            from aemr_bot.services.data_erasure import _write_instruction
+            # Persist the attempt before external deletion. A crash/timeout
+            # requires review rather than repeating a possibly executed call.
+            async with session_scope() as claim_session:
+                for item in pending:
+                    current = await claim_session.get(ErasureTombstone, item.subject_digest, with_for_update=True)
+                    if current is not None:
+                        current.backups_state = "manual"
+                        current.last_error = "s3_cleanup_attempt_unknown"
+                    _write_instruction(f"{item.subject_digest}.backup.json", {
+                        "subject_digest": item.subject_digest, "erased_before": item.erased_before.isoformat(), "state": "manual",
+                        "error": "s3_cleanup_attempt_unknown",
+                    })
+            if not (settings.backup_s3_endpoint and settings.backup_s3_access_key and settings.backup_s3_secret_key):
+                raise BackupError("incomplete_s3_configuration")
+            env = os.environ.copy()
+            env.update({
+                "RCLONE_CONFIG_BACKUPS3_TYPE": "s3",
+                "RCLONE_CONFIG_BACKUPS3_PROVIDER": "Other",
+                "RCLONE_CONFIG_BACKUPS3_ACCESS_KEY_ID": settings.backup_s3_access_key,
+                "RCLONE_CONFIG_BACKUPS3_SECRET_ACCESS_KEY": settings.backup_s3_secret_key,
+                "RCLONE_CONFIG_BACKUPS3_ENDPOINT": settings.backup_s3_endpoint,
+            })
+            proc = await asyncio.create_subprocess_exec(
+                "rclone", "delete", f"backups3:{settings.backup_s3_bucket}/",
+                "--include", "/aemr-*.sql", "--include", "/aemr-*.sql.gpg", env=env,
+            )
+            if await _wait_proc(proc, settings.backup_rclone_timeout_seconds, "erasure-rclone") != 0:
+                raise BackupError("s3_delete_failed")
+        state, error = ("manual", "verify_s3_versions_and_retention") if remote else ("done", None)
+    except Exception as exc:
+        state, error = ("manual" if settings.backup_s3_bucket else "pending"), type(exc).__name__
+    async with session_scope() as session:
+        for item in pending:
+            current = await session.get(ErasureTombstone, item.subject_digest, with_for_update=True)
+            # A second request during cleanup must retain its own pending work.
+            if current is not None and current.erased_before == item.erased_before:
+                current.backups_state = state
+                current.last_error = error
+                from aemr_bot.services.data_erasure import _write_instruction
+                _write_instruction(f"{item.subject_digest}.backup.json", {
+                    "subject_digest": item.subject_digest, "erased_before": item.erased_before.isoformat(), "state": state, "error": error,
+                })
+    return len(pending) if state == "done" else 0
+
+
+async def backup_db() -> BackupResult:
+    if not settings.backup_local_dir:
+        # Optional backups stay quietly disabled, without touching the DB.
+        return await _backup_db_impl()
+    from sqlalchemy import select
+
+    from aemr_bot.db.models import ErasureTombstone
+    from aemr_bot.db.session import session_scope
+    from aemr_bot.services import privacy_epoch
+    try:
+        # The same epoch barrier as exports covers dump + upload. An erasure
+        # cannot commit while a pre-erasure dump is still being published.
+        async with session_scope() as session:
+            await privacy_epoch.hold_delivery(session)
+            await _hold_backup_lock(session)
+            await _cleanup_erased_backups_impl()
+            blocked = await session.scalar(select(ErasureTombstone.subject_digest)
+                .where(ErasureTombstone.backups_state != "done").limit(1))
+            if blocked:
+                return BackupResult(path=None, fail_kind="erasure", fail_detail="Erasure backup cleanup requires reconciliation")
+            return await _backup_db_impl()
+    except Exception as exc:
+        return BackupResult(path=None, fail_kind="erasure", fail_detail=type(exc).__name__)
+
+
+async def _hold_backup_lock(session) -> None:
+    from sqlalchemy import text
+    if session.bind.dialect.name == "postgresql":
+        await session.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": 0x41454D524241434B})
+
+
+async def cleanup_erased_backups() -> int:
+    from aemr_bot.db.session import session_scope
+    async with session_scope() as session:
+        await _hold_backup_lock(session)
+        return await _cleanup_erased_backups_impl()

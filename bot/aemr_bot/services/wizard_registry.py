@@ -64,6 +64,7 @@ _broadcast_wizards: dict[int, dict[str, Any]] = {}
 #   - is_final=False — промежуточный ответ, обращение остаётся
 #     IN_PROGRESS. Для диалогов/уточнений (см. PR intermediate-reply).
 _reply_intent: dict[int, tuple[int, bool, float]] = {}
+_reply_intent_tokens: dict[int, str] = {}
 
 
 # ---- Public API: op_wizard ------------------------------------------------
@@ -117,12 +118,19 @@ def set_reply_intent(
     ts: float,
     *,
     is_final: bool = True,
+    token: str = "",
 ) -> None:
     _reply_intent[operator_id] = (appeal_id, is_final, ts)
+    _reply_intent_tokens[operator_id] = token
+
+
+def reply_intent_token_matches(operator_id: int, token: str) -> bool:
+    return bool(token and _reply_intent_tokens.get(operator_id) == token)
 
 
 def drop_reply_intent(operator_id: int) -> None:
     _reply_intent.pop(operator_id, None)
+    _reply_intent_tokens.pop(operator_id, None)
 
 
 # ---- Public API: bulk operations -----------------------------------------
@@ -133,6 +141,7 @@ def reset_all() -> None:
     _op_wizards.clear()
     _broadcast_wizards.clear()
     _reply_intent.clear()
+    _reply_intent_tokens.clear()
 
 
 # ---- Persistence hooks (миграция 0011) -----------------------------------

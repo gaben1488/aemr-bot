@@ -23,6 +23,7 @@ from aemr_bot.db.models import (
     Event,
     Message,
     MessageDirection,
+    OperatorReplyAttempt,
     OperatorRole,
     User,
 )
@@ -31,7 +32,7 @@ from aemr_bot.handlers._auth import ensure_operator, ensure_role, get_operator
 from aemr_bot.handlers._common import op_screen
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
-from aemr_bot.services import db_backup
+from aemr_bot.services import data_erasure, db_backup
 from aemr_bot.utils.event import (
     extract_message_id,
     get_message_text,
@@ -89,6 +90,12 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
             log.debug("show_op_menu refusal notice skipped", exc_info=True)
         return
 
+    from aemr_bot.services import operator_drafts
+    async with session_scope() as session:
+        draft = await operator_drafts.get(session, op.id, locked=True)
+        if draft is not None and draft.state == "editing":
+            draft.state = "paused"
+
     is_it = op.role == OperatorRole.IT.value
     can_broadcast = op.role in {
         OperatorRole.IT.value,
@@ -115,7 +122,8 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
         event,
         texts.OP_HELP.format(answer_limit=cfg.answer_max_chars),
         kbds.op_help_keyboard(
-            open_count=open_count, is_it=is_it, can_broadcast=can_broadcast
+            open_count=open_count, is_it=is_it, can_broadcast=can_broadcast,
+            reply_draft_token=draft.token if draft is not None else None
         ),
         new=pin,
     )
@@ -131,11 +139,11 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
             log.exception("pin_message для /op_help не удался")
 
 
-async def run_open_tickets(event) -> None:
+async def run_open_tickets(event, *, new: bool = False) -> None:
     """Кнопочный аналог /open_tickets. Доступен любой роли."""
     if not await ensure_operator(event):
         return
-    await _do_open_tickets(event)
+    await _do_open_tickets(event, new=new)
 
 
 async def run_diag(event) -> None:
@@ -153,59 +161,152 @@ async def run_backup(event) -> None:
     await _do_backup(event)
 
 
-async def _do_open_tickets(event) -> None:
+async def _do_open_tickets(event, page: int = 0, *, new: bool = False) -> None:
     """Компактный listing открытых обращений (шаг 2-в от 2026-05-26).
 
     Одно сообщение в чате: заголовок «📋 Открытые обращения (N)» +
     кнопка-строка на каждое обращение `#N · 🆕 · тема (фрагмент)`.
-    Клик на кнопку → `op:open_card:N` → полная карточка с timeline
-    через `admin_card.render(force_new=True)`.
+    Клик на кнопку → `op:open_card:N` → редактируемый экран просмотра;
+    исторические карточки событий остаются отдельными сообщениями.
 
     Раньше listing рендерил полную карточку на каждое обращение
     (20-50 KB чата на 10 обращений, операторы прокручивали). Теперь
     одно компактное сообщение, история разворачивается явно по
     клику.
     """
-    from sqlalchemy import select
+    from sqlalchemy import func, select
 
 
     # Индикатор набора: запрос и обработка могут занять 1-2 сек на загруженной
     # базе. Без него оператор видит «зависание» после тапа кнопки.
     await mark_typing(event, cfg.admin_group_id)
 
-    async with session_scope() as session:
-        query = (
-            select(Appeal)
-            .where(
-                Appeal.status.in_(
-                    [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
-                )
+    async with data_erasure.personal_view(aggregate=True):
+        async with session_scope() as session:
+            condition = Appeal.status.in_(
+                [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
+            ) & Appeal.content_erased_at.is_(None)
+            total = await session.scalar(select(func.count()).select_from(Appeal).where(condition)) or 0
+            pages = max(1, (total + 7) // 8)
+            page = min(max(0, page), pages - 1)
+            query = (
+                select(Appeal)
+                .where(condition)
+                .order_by(Appeal.created_at, Appeal.id)
+                .limit(8).offset(page * 8)
             )
-            .order_by(Appeal.created_at)
+            open_appeals = (await session.scalars(query)).all()
+
+        if not open_appeals:
+            await op_screen(event, "🎉 Сейчас нет открытых обращений.", kbds.op_back_to_menu_keyboard(), new=new)
+            return
+
+        # Для каждого обращения формируем компактный label кнопки:
+        # фрагмент темы или сути, обрезанный до 40 символов. Один и тот
+        # же limit — чтобы кнопки выровнялись визуально в MAX-клиенте.
+        items: list[tuple[int, str, str]] = []
+        for appeal in open_appeals:
+            topic_preview = (appeal.topic or appeal.summary or "—").strip()
+            topic_preview = topic_preview.replace("\n", " ")
+            if len(topic_preview) > 40:
+                topic_preview = topic_preview[:39] + "…"
+            items.append((appeal.id, appeal.status, topic_preview))
+
+        text = (
+            f"📋 Открытые обращения: {total}\n"
+            f"Страница {page + 1} из {pages}\n\n"
+            f"Нажмите на обращение, чтобы открыть его полную карточку "
+            f"с историей переписки."
         )
-        open_appeals = (await session.scalars(query)).all()
+        await op_screen(event, text, kbds.open_tickets_listing_keyboard(items, page=page, pages=pages), new=new)
 
-    if not open_appeals:
-        await op_screen(event, "🎉 Нет открытых или неотвеченных обращений.")
+
+async def run_delivery_issues(event, page: int = 0) -> None:
+    """Show pending or uncertain follow-ups with links back to their cards."""
+    from maxapi.types import CallbackButton
+    from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
+    from sqlalchemy import func, select
+
+    from aemr_bot.utils.event import ack_callback
+
+    if not await ensure_operator(event):
+        await ack_callback(event)
         return
+    await ack_callback(event)
+    async with data_erasure.personal_view(aggregate=True):
+        states = ("pending", "sending", "unknown", "alerting", "unknown_alerted", "partial")
+        async with session_scope() as session:
+            total = await session.scalar(select(func.count()).select_from(Message).where(
+                Message.admin_notice_state.in_(states))) or 0
+            pages = max(1, (total + 7) // 8)
+            page = min(max(0, page), pages - 1)
+            records = list(await session.scalars(select(Message).where(
+                Message.admin_notice_state.in_(states)).order_by(Message.id.desc())
+                .offset(page * 8).limit(8)))
+        labels = {"pending": "ожидает отправки", "sending": "результат не подтверждён",
+                  "unknown": "результат неизвестен", "alerting": "результат неизвестен",
+                  "unknown_alerted": "результат неизвестен", "partial": "вложения показаны не полностью"}
+        lines = ["📬 Доставка дополнений", f"Записей: {total} · страница {page + 1}/{pages}",
+                 "Проверьте чат и историю обращения перед повторной отправкой.", ""]
+        keyboard = InlineKeyboardBuilder()
+        for item in records:
+            lines.append(f"№ {item.appeal_id} · {labels.get(item.admin_notice_state or "", 'проверить')}")
+            keyboard.row(CallbackButton(text=f"📂 Обращение № {item.appeal_id}",
+                                        payload=f"op:open_card:{item.appeal_id}"))
+        if not records:
+            lines.append("Неподтверждённых дополнений нет.")
+        nav = []
+        if page:
+            nav.append(CallbackButton(text="◀️ Назад", payload=f"op:delivery_issues:{page - 1}"))
+        if page + 1 < pages:
+            nav.append(CallbackButton(text="Далее ▶️", payload=f"op:delivery_issues:{page + 1}"))
+        if nav:
+            keyboard.row(*nav)
+        keyboard.row(CallbackButton(text="↩️ Диагностика", payload="op:diag"))
+        await op_screen(event, "\n".join(lines), keyboard.as_markup())
 
-    # Для каждого обращения формируем компактный label кнопки:
-    # фрагмент темы или сути, обрезанный до 40 символов. Один и тот
-    # же limit — чтобы кнопки выровнялись визуально в MAX-клиенте.
-    items: list[tuple[int, str, str]] = []
-    for appeal in open_appeals:
-        topic_preview = (appeal.topic or appeal.summary or "—").strip()
-        topic_preview = topic_preview.replace("\n", " ")
-        if len(topic_preview) > 40:
-            topic_preview = topic_preview[:39] + "…"
-        items.append((appeal.id, appeal.status, topic_preview))
 
-    text = (
-        f"📋 Открытые обращения ({len(open_appeals)})\n\n"
-        f"Нажмите на обращение, чтобы открыть его полную карточку "
-        f"с историей переписки."
-    )
-    await op_screen(event, text, kbds.open_tickets_listing_keyboard(items))
+async def run_reply_issues(event, page: int = 0) -> None:
+    """List outstanding reply attempts without exposing message contents."""
+    from maxapi.types import CallbackButton
+    from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
+    from sqlalchemy import func, select
+
+    from aemr_bot.utils.event import ack_callback
+
+    if not await ensure_operator(event):
+        await ack_callback(event)
+        return
+    await ack_callback(event)
+    async with data_erasure.personal_view(aggregate=True):
+        conditions = OperatorReplyAttempt.state.in_(["sending", "unknown", "confirmed", "not_delivered"])
+        async with session_scope() as session:
+            total = await session.scalar(select(func.count()).select_from(OperatorReplyAttempt).where(conditions)) or 0
+            pages = max(1, (total + 7) // 8)
+            page = min(max(page, 0), pages - 1)
+            records = list(await session.scalars(select(OperatorReplyAttempt).where(conditions)
+                                                 .order_by(OperatorReplyAttempt.id.desc())
+                                                 .offset(page * 8).limit(8)))
+        labels = {"sending": "результат неизвестен", "unknown": "результат неизвестен",
+                  "confirmed": "записывается в историю", "not_delivered": "не доставлен · черновик"}
+        lines = ["✉️ Проверка ответов", f"Записей: {total} · страница {page + 1}/{pages}",
+                 "Проверьте переписку перед повторной отправкой.", ""]
+        keyboard = InlineKeyboardBuilder()
+        for item in records:
+            lines.append(f"№ {item.appeal_id} · {labels[item.state]}")
+            keyboard.row(CallbackButton(text=f"📄 Ответ по № {item.appeal_id}",
+                                        payload=f"op:reply_attempt:{item.id}:0"))
+        if not records:
+            lines.append("Ответов для проверки нет.")
+        nav = []
+        if page:
+            nav.append(CallbackButton(text="◀️ Назад", payload=f"op:reply_issues:{page - 1}"))
+        if page + 1 < pages:
+            nav.append(CallbackButton(text="Далее ▶️", payload=f"op:reply_issues:{page + 1}"))
+        if nav:
+            keyboard.row(*nav)
+        keyboard.row(CallbackButton(text="↩️ Диагностика", payload="op:diag"))
+        await op_screen(event, "\n".join(lines), keyboard.as_markup())
 
 
 async def _do_diag(event) -> None:
@@ -366,9 +467,9 @@ async def _do_diag(event) -> None:
     # случаях оператору полезно знать «pulse событий нет вовсе» —
     # раньше /diag показывал «—» без warn, на свежем кластере
     # выглядело как «всё ок».
-    pulse_warn = last_event is None
+    pulse_warn = False
     if last_event is None:
-        pulse_line = "⚠️ событий нет вовсе (свежий старт?)"
+        pulse_line = "событий пока нет"
     else:
         if last_event.tzinfo is None:
             last_event = last_event.replace(tzinfo=UTC)
@@ -381,12 +482,66 @@ async def _do_diag(event) -> None:
             hours = minutes_ago // 60
             pulse_line = f"{hours} ч {minutes_ago % 60} мин назад"
         if minutes_ago > 15:
-            pulse_warn = True
-            pulse_line = f"⚠️ {pulse_line}"
+            pulse_line = f"{pulse_line} (это не показатель сбоя)"
         else:
             pulse_line = f"✅ {pulse_line}"
 
     warnings_lines: list[str] = []
+    from aemr_bot.services import alert_state, threat_intel
+    async with session_scope() as session:
+        from aemr_bot.services.appeals import current_first_response_hours
+        current_sla_hours = await current_first_response_hours(session)
+        threat_alert = await alert_state.get(session, "threat_intel")
+        from aemr_bot.db.models import InboxEvent
+        failed_receipts = await session.scalar(
+            select(func.count()).select_from(InboxEvent).where(InboxEvent.state == "failed")
+        ) or 0
+        uncertain_replies = await session.scalar(
+            select(func.count()).select_from(OperatorReplyAttempt).where(
+                OperatorReplyAttempt.state.in_(["sending", "unknown", "confirmed", "not_delivered"])
+            )
+        ) or 0
+        uncertain_followups = await session.scalar(
+            select(func.count()).select_from(Message).where(
+                Message.admin_notice_state.in_(["sending", "unknown", "alerting", "unknown_alerted", "partial"])
+            )
+        ) or 0
+        pending_followups = await session.scalar(
+            select(func.count()).select_from(Message).where(Message.admin_notice_state == "pending")
+        ) or 0
+        uncertain_cards = await session.scalar(
+            select(func.count()).select_from(Appeal).where(
+                Appeal.admin_message_id.is_(None),
+                Appeal.initial_card_state.in_(["sending", "uncertain"]),
+                Appeal.status.in_([AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]),
+            )
+        ) or 0
+    if uncertain_replies:
+        warnings_lines.append(
+            f"⚠️ Ответов требуют проверки или дальнейшего действия: {uncertain_replies}. "
+            "Откройте список перед повторной отправкой."
+        )
+    if pending_followups:
+        warnings_lines.append(f"⏳ Дополнений ожидают уведомления: {pending_followups}.")
+    if uncertain_followups:
+        warnings_lines.append(
+            f"⚠️ Не подтверждена полная доставка дополнений: {uncertain_followups}. "
+            "Проверьте служебный чат и историю обращений перед повтором."
+        )
+    if uncertain_cards:
+        warnings_lines.append(
+            f"⚠️ Не подтверждена публикация первых карточек: {uncertain_cards}. "
+            "Проверьте очередь и служебный чат перед повтором."
+        )
+    if failed_receipts:
+        warnings_lines.append(
+            f"⚠️ Не завершено событий за период хранения: {failed_receipts}. "
+            "Проверьте журнал до повторных действий."
+        )
+    if threat_intel.get_store().is_stale():
+        warnings_lines.append("⚠️ Источники антифишинга давно не обновлялись; проверьте их доступность.")
+        if threat_alert == "unknown":
+            warnings_lines.append("⚠️ Доставка предупреждения о базе угроз не подтверждена; проверьте служебный чат.")
     if pulse_warn:
         warnings_lines.append(
             f"⚠️ Pulse молчит {pulse_line.replace('⚠️ ', '')} — проверить, "
@@ -431,14 +586,42 @@ async def _do_diag(event) -> None:
         "Конфигурация:\n"
         f"• Режим: {cfg.bot_mode}\n"
         f"• Лимит ответа: {cfg.answer_max_chars} симв.\n"
-        f"• SLA: {cfg.sla_response_hours} ч"
+        f"• Новый период: {current_sla_hours} рабочих ч"
     )
+    from aemr_bot.services import queue_panel
+    queue_status = await queue_panel.recovery_status()
+    queue_uncertain = (queue_status.get("state") in {"attempting", "unknown"}
+                       or bool(queue_status.get("edit_unknown")))
+    if queue_uncertain:
+        warnings_lines.append(
+            "⚠️ Панель очереди: результат создания или изменения неизвестен. IT должен проверить "
+            "сообщения MAX; перед пересозданием удалить найденную старую панель. "
+            "Автоматического повтора нет."
+        )
+    else:
+        body += f"\n• Панель очереди: {queue_status.get('state', 'ещё не создана')}"
+    queue_operator = await get_operator(event) if queue_uncertain else None
+    queue_recovery = bool(queue_operator and queue_operator.role == OperatorRole.IT.value
+                          and queue_status.get("recoverable"))
     if warnings_lines:
         body += "\n\nВнимание:\n" + "\n".join(warnings_lines)
     else:
         body += "\n\n✅ Аномалий не обнаружено."
 
-    await op_screen(event, body)
+    if pending_followups or uncertain_followups or uncertain_replies or queue_recovery:
+        from maxapi.types import CallbackButton
+        from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
+        keyboard = InlineKeyboardBuilder()
+        if queue_recovery:
+            keyboard.row(kbds.queue_recovery_button(queue_status["token"]))
+        if pending_followups or uncertain_followups:
+            keyboard.row(CallbackButton(text="📬 Дополнения", payload="op:delivery_issues:0"))
+        if uncertain_replies:
+            keyboard.row(CallbackButton(text="✉️ Ответы", payload="op:reply_issues:0"))
+        keyboard.row(CallbackButton(text="↩️ В меню", payload="op:menu"))
+        await op_screen(event, body, keyboard.as_markup())
+    else:
+        await op_screen(event, body)
 
 
 async def _do_backup(event) -> None:

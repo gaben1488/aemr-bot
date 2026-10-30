@@ -137,6 +137,8 @@ PREFIX_APPEAL_SHOW = "appeal:show:"
 PREFIX_APPEAL_FOLLOWUP = "appeal:followup:"
 PREFIX_APPEAL_REPEAT = "appeal:repeat:"
 PREFIX_APPEAL_ATTS = "appeal:atts:"
+PREFIX_APPEAL_HISTORY = "appeal:history:"
+PREFIX_APPEAL_RECORD_ATTS = "appeal:record_atts:"
 PREFIX_APPEALS_PAGE = "appeals:page:"
 
 # BROADCAST_ADMIN
@@ -156,6 +158,8 @@ PREFIX_OP_BLOCK = "op:block:"
 PREFIX_OP_UNBLOCK = "op:unblock:"
 PREFIX_OP_ATTS = "op:atts:"
 PREFIX_OP_OPEN_CARD = "op:open_card:"
+PREFIX_OP_HISTORY = "op:history:"
+PREFIX_OP_RECORD_ATTS = "op:record_atts:"
 PREFIX_OP_OPADD = "op:opadd:"
 PREFIX_OP_OPCARD = "op:opcard:"
 PREFIX_OP_OPROLE = "op:oprole:"
@@ -201,6 +205,22 @@ def appeal_repeat(appeal_id: int) -> str:
 def appeal_atts(appeal_id: int) -> str:
     """Свои вложения по обращению. → ``appeal:atts:<appeal_id>``."""
     return PREFIX_APPEAL_ATTS + str(appeal_id)
+
+
+def appeal_history(appeal_id: int, page: int) -> str:
+    return f"{PREFIX_APPEAL_HISTORY}{appeal_id}:{page}"
+
+
+def op_history(appeal_id: int, page: int) -> str:
+    return f"{PREFIX_OP_HISTORY}{appeal_id}:{page}"
+
+
+def appeal_record_atts(appeal_id: int, message_id: int) -> str:
+    return f"{PREFIX_APPEAL_RECORD_ATTS}{appeal_id}:{message_id}"
+
+
+def op_record_atts(appeal_id: int, message_id: int) -> str:
+    return f"{PREFIX_OP_RECORD_ATTS}{appeal_id}:{message_id}"
 
 
 def appeals_page(page: int) -> str:
@@ -365,3 +385,72 @@ def op_set(path: str) -> str:
     Разбирается в ``admin_settings.py``.
     """
     return PREFIX_OP_SET + path
+
+
+# Durable composition and operational diagnostics routes.
+OP_QUEUE_VIEW = "op:queue_view"
+PREFIX_OP_REPLY_DRAFT = "op:replydraft:"
+PREFIX_OP_REPLY_CANCEL = "op:reply_cancel:"
+PREFIX_RESIDENT_DRAFT = "draft:"
+PREFIX_OP_QUEUE_RECREATE = "op:queue_recreate:"
+PREFIX_OP_OPEN_PAGE = "op:open_page:"
+PREFIX_OP_DELIVERY_ISSUES = "op:delivery_issues:"
+PREFIX_OP_REPLY_ISSUES = "op:reply_issues:"
+PREFIX_OP_REPLY_ATTEMPT = "op:reply_attempt:"
+PREFIX_OP_REPLY_RESOLVE = "op:reply_resolve:"
+PREFIX_OP_REPLY_CONFIRM = "op:reply_confirm:"
+PREFIX_OP_REPLY_ATTEMPT_ATTS = "op:reply_attempt_atts:"
+PREFIX_OP_WORD = "op:word:"
+PREFIX_OP_CONSENT = "op:consent:"
+
+
+def op_reply_draft(action: str, token: str) -> str:
+    return f"{PREFIX_OP_REPLY_DRAFT}{action}:{token}"
+
+
+def op_reply_cancel(token: str) -> str:
+    return PREFIX_OP_REPLY_CANCEL + token
+
+
+def resident_draft(action: str, token: str) -> str:
+    return f"{PREFIX_RESIDENT_DRAFT}{action}:{token}"
+
+
+def op_queue_recreate(token: str) -> str:
+    return PREFIX_OP_QUEUE_RECREATE + token
+
+
+def op_open_page(page: int) -> str:
+    return PREFIX_OP_OPEN_PAGE + str(page)
+
+
+def op_delivery_issues(page: int) -> str:
+    return PREFIX_OP_DELIVERY_ISSUES + str(page)
+
+
+def op_reply_issues(page: int) -> str:
+    return PREFIX_OP_REPLY_ISSUES + str(page)
+
+
+def op_reply_attempt(attempt_id: int, page: int) -> str:
+    return f"{PREFIX_OP_REPLY_ATTEMPT}{attempt_id}:{page}"
+
+
+def op_reply_resolve(attempt_id: int, result: str) -> str:
+    return f"{PREFIX_OP_REPLY_RESOLVE}{attempt_id}:{result}"
+
+
+def op_reply_confirm(attempt_id: int, result: str) -> str:
+    return f"{PREFIX_OP_REPLY_CONFIRM}{attempt_id}:{result}"
+
+
+def op_reply_attempt_atts(attempt_id: int) -> str:
+    return PREFIX_OP_REPLY_ATTEMPT_ATTS + str(attempt_id)
+
+
+def op_word(appeal_id: int) -> str:
+    return PREFIX_OP_WORD + str(appeal_id)
+
+
+def op_consent(appeal_id: int, page: int) -> str:
+    return f"{PREFIX_OP_CONSENT}{appeal_id}:{page}"

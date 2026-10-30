@@ -1,4 +1,5 @@
 import logging
+import secrets
 from collections.abc import Callable
 from datetime import UTC
 from typing import Any, NamedTuple
@@ -8,8 +9,14 @@ from aemr_bot.config import settings as cfg
 from aemr_bot.db.models import AppealStatus, DialogState, User
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import current_user
-from aemr_bot.services import admin_card as admin_card_service
-from aemr_bot.services import admin_events, admin_relay, card_format, settings_store
+from aemr_bot.services import (
+    admin_events,
+    admin_relay,
+    appeal_history,
+    card_format,
+    data_erasure,
+    settings_store,
+)
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as ops_service
@@ -17,11 +24,14 @@ from aemr_bot.services import users as users_service
 from aemr_bot.utils import menu_tracker
 from aemr_bot.utils.event import (
     ack_callback,
+    check_edit_result,
+    extract_message_id,
     get_callback_message_id,
     get_chat_id,
     get_user_id,
     send_or_edit_screen,
 )
+from aemr_bot.utils.resident_lifecycle import guard
 from aemr_bot.utils.typing_indicator import mark_typing
 
 log = logging.getLogger(__name__)
@@ -39,7 +49,7 @@ async def _send_or_edit_menu(
     text: str,
     attachments: list | None = None,
     force_new_message: bool = False,
-) -> None:
+) -> str | None:
     """Показать экран меню жителю с freshness-rule.
 
     **Единое правило для всех карточек/сообщений бота** (см.
@@ -91,12 +101,14 @@ async def _send_or_edit_menu(
 
     if edit_allowed:
         try:
-            await event.bot.edit_message(
+            result = await event.bot.edit_message(
                 message_id=callback_mid,
                 text=text,
                 attachments=attachments,
+                notify=False,
             )
-            return
+            check_edit_result(result)
+            return callback_mid
         # RuntimeError — единственное сознательное расхождение с общей
         # `utils.event.send_or_edit_screen` (регрессия:
         # tests/test_reliability_pass.py): он означает баг в коде или
@@ -121,12 +133,113 @@ async def _send_or_edit_menu(
     # функцией (send_message + note_editable_send(kind='menu')), поэтому
     # не дублируем её здесь. force_new_message=True — потому что решение
     # про edit уже принято выше.
-    await send_or_edit_screen(
+    sent = await send_or_edit_screen(
         event,
         text=text,
         attachments=attachments,
         force_new_message=True,
     )
+    return extract_message_id(sent)
+
+
+async def _send_public_resident_screen(event, *, text: str, attachments: list) -> None:
+    """A source-free screen remains usable after erasure without creating a profile."""
+    uid, chat_id = get_user_id(event), get_chat_id(event)
+    if uid is None and chat_id is None:
+        return
+    sent = await data_erasure.tracked_send(
+        event.bot, kind="public_menu", max_user_ids=[uid] if uid is not None else [],
+        allow_erased_recipient=True, chat_id=chat_id, user_id=uid if chat_id is None else None,
+        text=text, attachments=attachments,
+    )
+    mid = extract_message_id(sent)
+    if mid and chat_id is not None:
+        menu_tracker.note_editable_send(chat_id, mid, kind="menu")
+
+
+async def _unavailable_personal_view(event) -> None:
+    await _send_public_resident_screen(
+        event, text="Сохранённые данные недоступны. Откройте меню и проверьте актуальное состояние.",
+        attachments=[keyboards.back_to_menu_keyboard()],
+    )
+
+
+def _privacy_edition(user) -> dict | None:
+    created = getattr(user, "created_at", None)
+    if created is None:
+        return None
+    consent = user.consent_pdn_at
+    return {"created_at": created.isoformat(),
+            "consent_pdn_at": consent.isoformat() if consent is not None else None,
+            "consent_sha256": user.consent_pdn_text_sha256}
+
+
+async def _send_privacy_confirmation(event, *, action: str, text: str, attachments: list) -> None:
+    uid = get_user_id(event)
+    if uid is None:
+        return
+    try:
+        async with guard(uid), data_erasure.personal_view(max_user_ids=[uid]):
+            async with session_scope() as session:
+                user = await users_service.find_by_max_id(session, uid, for_update=True)
+                if user is None:
+                    return
+                edition = _privacy_edition(user)
+                # An unconfirmed replacement prompt must not leave its predecessor authorized.
+                data = dict(user.dialog_data or {})
+                data.pop("_privacy_confirmation", None)
+                user.dialog_data = data
+            mid = await _send_or_edit_menu(event, text=text, attachments=attachments, force_new_message=True)
+            if not mid or edition is None:
+                return
+            async with session_scope() as session:
+                user = await users_service.find_by_max_id(session, uid, for_update=True)
+                if user is not None and _privacy_edition(user) == edition:
+                    user.dialog_data = {**(user.dialog_data or {}), "_privacy_confirmation": {
+                        "action": action, "mid": mid, "edition": edition,
+                    }}
+    except data_erasure.PersonalDataErasedError:
+        await _unavailable_personal_view(event)
+
+
+def _clear_privacy_confirmation(user: User) -> None:
+    if "_privacy_confirmation" in (user.dialog_data or {}):
+        user.dialog_data = {key: value for key, value in user.dialog_data.items()
+                            if key != "_privacy_confirmation"}
+
+
+async def invalidate_privacy_confirmation(max_user_id: int) -> None:
+    """New citizen input cancels a prior destructive prompt without losing draft data."""
+    async with guard(max_user_id), session_scope() as session:
+        user = await users_service.find_by_max_id(session, max_user_id, for_update=True)
+        if user is not None:
+            _clear_privacy_confirmation(user)
+
+
+async def _run_privacy_confirmation(event, max_user_id: int | None, action: str) -> bool:
+    mid = get_callback_message_id(event)
+    if max_user_id is None or get_user_id(event) != max_user_id or not mid:
+        await ack_callback(event, "Подтверждение устарело. Откройте действие заново.")
+        return True
+    # Do not carry a shared read barrier into a mutation taking the exclusive erasure lock.
+    async with guard(max_user_id):
+        async with session_scope() as session:
+            user = await users_service.find_by_max_id(session, max_user_id, for_update=True)
+            confirmation = (user.dialog_data or {}).get("_privacy_confirmation") if user else None
+            matches = (isinstance(confirmation, dict) and confirmation.get("action") == action
+                       and confirmation.get("mid") == mid and confirmation.get("edition") == _privacy_edition(user))
+            if user is None or not matches:
+                await ack_callback(event, "Подтверждение устарело. Откройте действие заново.")
+                return True
+            data = dict(user.dialog_data or {})
+            data.pop("_privacy_confirmation", None)
+            user.dialog_data = data
+        await ack_callback(event)
+        if action == "erase":
+            await do_forget(event, max_user_id)
+        else:
+            await do_consent_revoke(event, max_user_id)
+    return True
 
 
 async def open_main_menu(event):
@@ -139,46 +252,59 @@ async def open_main_menu(event):
     информация» и приёмная. Остальные кнопки всё равно ведут к
     блокировочным сообщениям, проще их не показывать.
     """
-    max_user_id = get_user_id(event)
-    is_blocked = False
-    subscribed = False
-    recep_url = None
-    # Сессию открываем только когда есть кого искать: анонимному
-    # событию (max_user_id is None) меню рендерится по дефолтам.
-    if max_user_id is not None:
-        async with current_user(max_user_id) as (session, user):
-            is_blocked = user.is_blocked
-            if not is_blocked:
-                subscribed = await broadcasts_service.is_subscribed(session, max_user_id)
-            else:
-                # Заблокированному оставляем электронную приёмную как
-                # запасной канал — это сохранение прав, не привилегия.
-                recep_url = await settings_store.get(session, "electronic_reception_url")
+    try:
+        uid = get_user_id(event)
+        async with guard(uid), data_erasure.personal_view(max_user_ids=[uid] if uid is not None else []):
+            max_user_id = get_user_id(event)
+            is_blocked = False
+            subscribed = False
+            has_draft = False
+            recep_url = None
+            # Сессию открываем только когда есть кого искать: анонимному
+            # событию (max_user_id is None) меню рендерится по дефолтам.
+            if max_user_id is not None:
+                async with current_user(max_user_id) as (session, user):
+                    from aemr_bot.services import resident_drafts
+                    user = await users_service.find_by_max_id(session, max_user_id, for_update=True) or user
+                    await resident_drafts.pause(session, user)
+                    is_blocked = user.is_blocked
+                    has_draft = bool(user.appeal_draft)
+                    if not is_blocked:
+                        subscribed = await broadcasts_service.is_subscribed(session, max_user_id)
+                    else:
+                        # Заблокированному оставляем электронную приёмную как
+                        # запасной канал — это сохранение прав, не привилегия.
+                        recep_url = await settings_store.get(session, "electronic_reception_url")
 
-    if is_blocked:
-        await _send_or_edit_menu(
-            event,
-            text=(
-                "Ваш аккаунт заблокирован — подача обращений и подписка "
-                "недоступны. Доступные разделы — ниже. Если блокировка "
-                "ошибочна, обратитесь к координатору Администрации."
-            ),
-            attachments=[keyboards.blocked_user_menu(recep_url)],
-        )
-        return
+            if is_blocked:
+                await _send_or_edit_menu(
+                    event,
+                    text=(
+                        "Ваш аккаунт заблокирован — подача обращений и подписка "
+                        "недоступны. Доступные разделы — ниже. Если блокировка "
+                        "ошибочна, обратитесь к координатору Администрации."
+                    ),
+                    attachments=[keyboards.blocked_user_menu(recep_url)],
+                )
+                return
 
-    # C1: подгружаем актуальный welcome из БД (если IT отредактировал
-    # через UI) с fallback на hardcoded texts.WELCOME. Санитизация
-    # автоматическая внутри get_text_with_fallback.
-    async with session_scope() as text_session:
-        welcome = await settings_store.get_text_with_fallback(
-            text_session, "welcome_text", texts.WELCOME
+            # C1: подгружаем актуальный welcome из БД (если IT отредактировал
+            # через UI) с fallback на hardcoded texts.WELCOME. Санитизация
+            # автоматическая внутри get_text_with_fallback.
+            async with session_scope() as text_session:
+                welcome = await settings_store.get_text_with_fallback(
+                    text_session, "welcome_text", texts.WELCOME
+                )
+            await _send_or_edit_menu(
+                event,
+                text=welcome,
+                attachments=[keyboards.main_menu(subscribed=subscribed, has_draft=has_draft)],
+            )
+    except data_erasure.PersonalDataErasedError:
+        await _send_public_resident_screen(
+            event, text=texts.WELCOME,
+            attachments=[keyboards.main_menu(subscribed=False, has_draft=False)],
         )
-    await _send_or_edit_menu(
-        event,
-        text=welcome,
-        attachments=[keyboards.main_menu(subscribed=subscribed)],
-    )
 
 
 MY_APPEALS_PAGE_SIZE = 5
@@ -188,37 +314,41 @@ async def open_my_appeals(event, max_user_id: int, page: int = 1):
     # Индикатор набора: подсчёт и выборка по обращениям — у активных
     # жителей может занять >500 мс. Без него тап «📁 Мои обращения»
     # ощущается как «бот завис».
-    await mark_typing(event)
+    try:
+        async with guard(max_user_id), data_erasure.personal_view(max_user_ids=[max_user_id]):
+            await mark_typing(event)
 
-    page = max(1, page)
-    async with current_user(max_user_id) as (session, user):
-        total = await appeals_service.count_for_user(session, user.id)
-        if total == 0:
+            page = max(1, page)
+            async with current_user(max_user_id) as (session, user):
+                total = await appeals_service.count_for_user(session, user.id)
+                if total == 0:
+                    await _send_or_edit_menu(
+                        event,
+                        text=texts.APPEAL_LIST_EMPTY,
+                        attachments=[keyboards.empty_list_keyboard()],
+                    )
+                    return
+                total_pages = max(1, (total + MY_APPEALS_PAGE_SIZE - 1) // MY_APPEALS_PAGE_SIZE)
+                page = min(page, total_pages)
+                offset = (page - 1) * MY_APPEALS_PAGE_SIZE
+                appeals = await appeals_service.list_for_user(
+                    session, user.id, limit=MY_APPEALS_PAGE_SIZE, offset=offset
+                )
+            items = [(a.id, card_format.appeal_list_label(a)) for a in appeals]
+            header = (
+                f"Ваши обращения (стр. {page}/{total_pages}, всего {total}):"
+                if total_pages > 1
+                else f"Ваши обращения (всего {total}):"
+            )
             await _send_or_edit_menu(
                 event,
-                text=texts.APPEAL_LIST_EMPTY,
-                attachments=[keyboards.empty_list_keyboard()],
+                text=header,
+                attachments=[
+                    keyboards.my_appeals_list_keyboard(items, page=page, total_pages=total_pages)
+                ],
             )
-            return
-        total_pages = max(1, (total + MY_APPEALS_PAGE_SIZE - 1) // MY_APPEALS_PAGE_SIZE)
-        page = min(page, total_pages)
-        offset = (page - 1) * MY_APPEALS_PAGE_SIZE
-        appeals = await appeals_service.list_for_user(
-            session, user.id, limit=MY_APPEALS_PAGE_SIZE, offset=offset
-        )
-    items = [(a.id, card_format.appeal_list_label(a)) for a in appeals]
-    header = (
-        f"Ваши обращения (стр. {page}/{total_pages}, всего {total}):"
-        if total_pages > 1
-        else f"Ваши обращения (всего {total}):"
-    )
-    await _send_or_edit_menu(
-        event,
-        text=header,
-        attachments=[
-            keyboards.my_appeals_list_keyboard(items, page=page, total_pages=total_pages)
-        ],
-    )
+    except data_erasure.PersonalDataErasedError:
+        await _unavailable_personal_view(event)
 
 
 async def start_appeal_followup(event, appeal_id: int, max_user_id: int):
@@ -231,48 +361,57 @@ async def start_appeal_followup(event, appeal_id: int, max_user_id: int):
     «🔁 Подать похожее».
     """
 
-    from aemr_bot.handlers import resident_name_gate
-    if await resident_name_gate.require_name(event, max_user_id, payload=f"appeal:followup:{appeal_id}"):
-        return
+    try:
+        async with guard(max_user_id), data_erasure.personal_view(appeal_id=appeal_id, max_user_ids=[max_user_id]):
+            from aemr_bot.services import resident_drafts
+            if await resident_drafts.offer_saved(event, max_user_id):
+                return
+            from aemr_bot.handlers import resident_name_gate
+            if await resident_name_gate.require_name(event, max_user_id, payload=f"appeal:followup:{appeal_id}"):
+                return
 
-    async with session_scope() as session:
-        appeal = await appeals_service.get_by_id(session, appeal_id)
-        if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
-            await _send_or_edit_menu(
-                event,
-                text="Обращение не найдено.",
-                attachments=[keyboards.back_to_menu_keyboard()],
-            )
-            return
-        # Дополнять можно только неотвеченные обращения. ANSWERED/CLOSED
-        # считаются завершёнными: повтор по ним — новое связанное
-        # обращение, чтобы история не «оживала» задним числом.
-        if appeal.status in {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}:
+            import secrets
+            async with session_scope() as session:
+                appeal = await appeals_service.get_by_id(session, appeal_id)
+                if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
+                    await _send_or_edit_menu(
+                        event,
+                        text="Обращение не найдено.",
+                        attachments=[keyboards.back_to_menu_keyboard()],
+                    )
+                    return
+                # Дополнять можно только неотвеченные обращения. ANSWERED/CLOSED
+                # считаются завершёнными: повтор по ним — новое связанное
+                # обращение, чтобы история не «оживала» задним числом.
+                if appeal.status in {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}:
+                    await _send_or_edit_menu(
+                        event,
+                        text=(
+                            "Это обращение уже завершено. Если вопрос повторился "
+                            "или ответ нужно обсудить отдельно, откройте карточку "
+                            "и нажмите «🔁 Подать похожее» — бот создаст новое "
+                            "связанное обращение."
+                        ),
+                        attachments=[keyboards.back_to_menu_keyboard()],
+                    )
+                    return
+                draft_token = secrets.token_urlsafe(12)
+                await users_service.set_state(
+                    session,
+                    max_user_id,
+                    DialogState.AWAITING_FOLLOWUP_TEXT,
+                    data={"appeal_id": appeal_id, "draft_token": draft_token},
+                )
             await _send_or_edit_menu(
                 event,
                 text=(
-                    "Это обращение уже завершено. Если вопрос повторился "
-                    "или ответ нужно обсудить отдельно, откройте карточку "
-                    "и нажмите «🔁 Подать похожее» — бот создаст новое "
-                    "связанное обращение."
+                    f"Опишите дополнение к обращению #{appeal_id}. Можно прислать "
+                    "несколько сообщений, фото, видео или файлов, затем подтвердить отправку."
                 ),
-                attachments=[keyboards.back_to_menu_keyboard()],
+                attachments=[keyboards.appeal_draft_keyboard(draft_token, has_content=False, followup=True)],
             )
-            return
-        await users_service.set_state(
-            session,
-            max_user_id,
-            DialogState.AWAITING_FOLLOWUP_TEXT,
-            data={"appeal_id": appeal_id},
-        )
-    await _send_or_edit_menu(
-        event,
-        text=(
-            f"Опишите дополнение к обращению #{appeal_id} одним сообщением. "
-            f"Можно приложить фото, видео или файл."
-        ),
-        attachments=[keyboards.cancel_keyboard()],
-    )
+    except data_erasure.PersonalDataErasedError:
+        await _unavailable_personal_view(event)
 
 
 async def start_appeal_repeat(event, appeal_id: int, max_user_id: int):
@@ -284,63 +423,73 @@ async def start_appeal_repeat(event, appeal_id: int, max_user_id: int):
     обращение получит пометку связи с отвеченным или закрытым вопросом.
     """
 
-    from aemr_bot.handlers import resident_name_gate
-    if await resident_name_gate.require_name(event, max_user_id, payload=f"appeal:repeat:{appeal_id}"):
-        return
+    try:
+        async with guard(max_user_id), data_erasure.personal_view(appeal_id=appeal_id, max_user_ids=[max_user_id]):
+            from aemr_bot.services import resident_drafts
+            if await resident_drafts.offer_saved(event, max_user_id):
+                return
+            from aemr_bot.handlers import resident_name_gate
+            if await resident_name_gate.require_name(event, max_user_id, payload=f"appeal:repeat:{appeal_id}"):
+                return
 
-    async with session_scope() as session:
-        appeal = await appeals_service.get_by_id(session, appeal_id)
-        if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
+            async with session_scope() as session:
+                appeal = await appeals_service.get_by_id(session, appeal_id)
+                if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
+                    await _send_or_edit_menu(
+                        event,
+                        text="Обращение не найдено.",
+                        attachments=[keyboards.back_to_menu_keyboard()],
+                    )
+                    return
+                if not (appeal.locality and appeal.address):
+                    # Старое обращение без адреса (теоретически может случиться,
+                    # если оно было создано до миграции с шагом локалити). Тогда
+                    # просто запускаем обычную воронку.
+                    from aemr_bot.handlers.appeal_funnel import (
+                        start_appeal_flow as _start_appeal_flow,
+                    )
+
+                    await _start_appeal_flow(event, max_user_id)
+                    return
+                data: dict[str, Any] = {
+                    "locality": appeal.locality,
+                    "address": appeal.address,
+                    "topic": appeal.topic,
+                    "draft_token": secrets.token_urlsafe(12),
+                }
+                if appeal.status in {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}:
+                    data.update(
+                        {
+                            "repeat_source_appeal_id": appeal.id,
+                            "repeat_source_status": appeal.status,
+                            "repeat_source_topic": appeal.topic,
+                        }
+                    )
+                await users_service.set_state(
+                    session,
+                    max_user_id,
+                    DialogState.AWAITING_SUMMARY,
+                    data=data,
+                )
+            if appeal.status == AppealStatus.ANSWERED.value:
+                context = "по уже отвеченному вопросу"
+            elif appeal.status == AppealStatus.CLOSED.value:
+                context = "по закрытому вопросу"
+            else:
+                context = "с теми же данными"
             await _send_or_edit_menu(
                 event,
-                text="Обращение не найдено.",
-                attachments=[keyboards.back_to_menu_keyboard()],
+                text=(
+                    f"Подаём новое обращение {context}:\n"
+                    f"📍 {appeal.locality}, {appeal.address}\n"
+                    f"🏷 {appeal.topic or '—'}\n\n"
+                    f"Опишите суть одним или несколькими сообщениями. Можно приложить фото, видео "
+                    f"или файлы. Когда всё готово, подтвердите отправку черновика."
+                ),
+                attachments=[keyboards.appeal_draft_keyboard(data["draft_token"], has_content=False)],
             )
-            return
-        if not (appeal.locality and appeal.address):
-            # Старое обращение без адреса (теоретически может случиться,
-            # если оно было создано до миграции с шагом локалити). Тогда
-            # просто запускаем обычную воронку.
-            from aemr_bot.handlers.appeal_funnel import start_appeal_flow as _start_appeal_flow
-
-            await _start_appeal_flow(event, max_user_id)
-            return
-        data: dict[str, Any] = {
-            "locality": appeal.locality,
-            "address": appeal.address,
-            "topic": appeal.topic,
-        }
-        if appeal.status in {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}:
-            data.update(
-                {
-                    "repeat_source_appeal_id": appeal.id,
-                    "repeat_source_status": appeal.status,
-                    "repeat_source_topic": appeal.topic,
-                }
-            )
-        await users_service.set_state(
-            session,
-            max_user_id,
-            DialogState.AWAITING_SUMMARY,
-            data=data,
-        )
-    if appeal.status == AppealStatus.ANSWERED.value:
-        context = "по уже отвеченному вопросу"
-    elif appeal.status == AppealStatus.CLOSED.value:
-        context = "по закрытому вопросу"
-    else:
-        context = "с теми же данными"
-    await _send_or_edit_menu(
-        event,
-        text=(
-            f"Подаём новое обращение {context}:\n"
-            f"📍 {appeal.locality}, {appeal.address}\n"
-            f"🏷 {appeal.topic or '—'}\n\n"
-            f"Опишите суть одним сообщением. Можно приложить фото, видео "
-            f"или файл."
-        ),
-        attachments=[keyboards.cancel_keyboard()],
-    )
+    except data_erasure.PersonalDataErasedError:
+        await _unavailable_personal_view(event)
 
 
 async def show_appeal(event, appeal_id: int, max_user_id: int):
@@ -351,40 +500,41 @@ async def show_appeal(event, appeal_id: int, max_user_id: int):
     - ANSWERED / CLOSED — «🔁 Подать похожее» для нового связанного обращения.
     - Везде «↩ В меню».
 
-    После карточки переотправляем все вложения, отправленные жителем
-    по этому обращению (исходные + дополнения). Без них контекст
-    исходного обращения «яма во дворе» искажается — половина смысла
-    в фотографии. Аналогично оператору в `/op_help → 📋 Открытые
-    обращения` (см. admin_panel._do_open_tickets).
+    Вложения обеих сторон доступны по отдельной кнопке; автоматически
+    при каждом открытии карточки они не пересылаются.
     """
-    async with session_scope() as session:
-        # get_by_id_with_messages нужен, чтобы посчитать
-        # attachment_count для кнопки «🗂 Показать вложения» внизу
-        # карточки. Сами вложения НЕ переотправляются автоматически —
-        # это вызывало hang при каждом тапе на карточку (см. PR-fix-hang).
-        # Сейчас житель тапает кнопку явно, когда хочет посмотреть.
-        appeal = await appeals_service.get_by_id_with_messages(
-            session, appeal_id
-        )
-        if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
+    try:
+        async with guard(max_user_id), data_erasure.personal_view(appeal_id=appeal_id, max_user_ids=[max_user_id]):
+            async with session_scope() as session:
+                # get_by_id_with_messages нужен, чтобы посчитать
+                # attachment_count для кнопки «🗂 Показать вложения» внизу
+                # карточки. Сами вложения НЕ переотправляются автоматически —
+                # это вызывало hang при каждом тапе на карточку (см. PR-fix-hang).
+                # Сейчас житель тапает кнопку явно, когда хочет посмотреть.
+                appeal = await appeals_service.get_by_id_with_messages(
+                    session, appeal_id
+                )
+                if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
+                    await _send_or_edit_menu(
+                        event,
+                        text="Обращение не найдено.",
+                        attachments=[keyboards.back_to_menu_keyboard()],
+                    )
+                    return
+                attachment_count = len(admin_relay.collect_appeal_attachments(appeal))
+                text = card_format.user_card(appeal)
+                status = appeal.status
             await _send_or_edit_menu(
                 event,
-                text="Обращение не найдено.",
-                attachments=[keyboards.back_to_menu_keyboard()],
+                text=text,
+                attachments=[
+                    keyboards.user_appeal_card_keyboard(
+                        appeal_id, status, attachment_count=attachment_count
+                    )
+                ],
             )
-            return
-        attachment_count = len(admin_relay._collect_all_user_attachments(appeal))
-        text = card_format.user_card(appeal)
-        status = appeal.status
-    await _send_or_edit_menu(
-        event,
-        text=text,
-        attachments=[
-            keyboards.user_appeal_card_keyboard(
-                appeal_id, status, attachment_count=attachment_count
-            )
-        ],
-    )
+    except data_erasure.PersonalDataErasedError:
+        await _unavailable_personal_view(event)
 
 
 async def open_security_info(event):
@@ -626,9 +776,23 @@ async def open_goodbye(event):
     переводит юридические термины в жизненные ситуации, чтобы пенсионер
     понимал «что мне выбрать», а не «что значит отозвать согласие».
     """
+    async with session_scope() as session:
+        consent_text = await settings_store.get(session, "consent_text")
+    text = texts.GOODBYE_PROMPT
+    if isinstance(consent_text, str):
+        # Existing operator-edited consent may name the previous buttons.
+        # Do not overwrite that document; explain the renamed actions until
+        # the operator reviews and updates the configured text.
+        aliases = []
+        if "Хочу попрощаться, но дождаться ответа" in consent_text:
+            aliases.append("«Хочу попрощаться, но дождаться ответа» — теперь «Отозвать согласие»")
+        if "Стереть данные обо мне прямо сейчас" in consent_text:
+            aliases.append("«Стереть данные обо мне прямо сейчас» — теперь «Удалить данные»")
+        if aliases:
+            text += "\n\nПрежние названия:\n" + "\n".join(aliases)
     await _send_or_edit_menu(
         event,
-        text=texts.GOODBYE_PROMPT,
+        text=text,
         attachments=[keyboards.goodbye_keyboard()],
     )
 
@@ -642,8 +806,8 @@ async def ask_goodbye_revoke_confirm(event):
     Меняется только клавиатура — возврат на отказ ведёт обратно в
     A4-экран, а не в карточку «Согласие на ПДн» (которой больше нет).
     """
-    await _send_or_edit_menu(
-        event,
+    await _send_privacy_confirmation(
+        event, action="revoke",
         text=texts.CONSENT_REVOKE_CONFIRM,
         attachments=[keyboards.goodbye_revoke_confirm_keyboard()],
     )
@@ -681,23 +845,30 @@ async def ask_goodbye_erase_confirm(event):
     рассмотреть две оставшиеся опции, чем уйти на уровень выше.
     """
 
-    max_user_id = get_user_id(event)
-    open_lines: list[str] = []
-    if max_user_id is not None:
-        async with current_user(max_user_id) as (session, user):
-            mine = await appeals_service.list_unanswered_for_user(
-                session, user.id
+    try:
+        uid = get_user_id(event)
+        async with guard(uid), data_erasure.personal_view(max_user_ids=[uid] if uid is not None else []):
+            max_user_id = get_user_id(event)
+            open_lines: list[str] = []
+            if max_user_id is not None:
+                async with current_user(max_user_id) as (session, user):
+                    mine = await appeals_service.list_unanswered_for_user(
+                        session, user.id
+                    )
+                    open_lines = [_format_open_appeal_line(ap) for ap in mine[:5]]
+            text = texts.ERASE_CONFIRM
+            if open_lines:
+                text += f"\n\nСейчас в работе: {len(mine)}.\n• " + "\n• ".join(open_lines)
+                if len(mine) > len(open_lines):
+                    text += f"\n… и ещё {len(mine) - len(open_lines)}."
+                text += "\n\nПри стирании эти обращения закроются без ответа."
+            await _send_privacy_confirmation(
+                event, action="erase",
+                text=text,
+                attachments=[keyboards.goodbye_erase_confirm_keyboard()],
             )
-            open_lines = [_format_open_appeal_line(ap) for ap in mine]
-    text = texts.ERASE_CONFIRM
-    if open_lines:
-        text += "\n\nСейчас у вас в работе:\n• " + "\n• ".join(open_lines)
-        text += "\n\nПри стирании эти обращения закроются без ответа."
-    await _send_or_edit_menu(
-        event,
-        text=text,
-        attachments=[keyboards.goodbye_erase_confirm_keyboard()],
-    )
+    except data_erasure.PersonalDataErasedError:
+        await _unavailable_personal_view(event)
 
 
 async def ask_forget_confirm(event):
@@ -707,32 +878,37 @@ async def ask_forget_confirm(event):
     закрыты» он легко прочитает как «решены», а не «выкинуты»).
     """
 
-    max_user_id = get_user_id(event)
-    open_lines: list[str] = []
-    if max_user_id is not None:
-        async with current_user(max_user_id) as (session, user):
-            mine = await appeals_service.list_unanswered_for_user(
-                session, user.id
+    try:
+        uid = get_user_id(event)
+        async with guard(uid), data_erasure.personal_view(max_user_ids=[uid] if uid is not None else []):
+            max_user_id = get_user_id(event)
+            open_lines: list[str] = []
+            if max_user_id is not None:
+                async with current_user(max_user_id) as (session, user):
+                    mine = await appeals_service.list_unanswered_for_user(
+                        session, user.id
+                    )
+                for ap in mine[:5]:
+                    open_lines.append("• " + _format_open_appeal_line(ap))
+                if len(mine) > 5:
+                    open_lines.append(f"… и ещё {len(mine) - 5}.")
+
+            text = texts.ERASE_CONFIRM
+            if open_lines:
+                text = (
+                    f"{text}\n\n"
+                    f"Сейчас у вас в работе {len(mine)} обращ.:\n"
+                    + "\n".join(open_lines)
+                    + "\n\nПри удалении они будут закрыты без ответа."
+                )
+
+            await _send_privacy_confirmation(
+                event, action="erase",
+                text=text,
+                attachments=[keyboards.forget_confirm_keyboard()],
             )
-        for ap in mine[:5]:
-            open_lines.append("• " + _format_open_appeal_line(ap))
-        if len(mine) > 5:
-            open_lines.append(f"… и ещё {len(mine) - 5}.")
-
-    text = texts.ERASE_CONFIRM
-    if open_lines:
-        text = (
-            f"{text}\n\n"
-            f"Сейчас у вас в работе {len(open_lines)} обращ.:\n"
-            + "\n".join(open_lines)
-            + "\n\nПри удалении они будут закрыты без ответа."
-        )
-
-    await _send_or_edit_menu(
-        event,
-        text=text,
-        attachments=[keyboards.forget_confirm_keyboard()],
-    )
+    except data_erasure.PersonalDataErasedError:
+        await _unavailable_personal_view(event)
 
 
 def _format_dt_local(dt) -> str:
@@ -748,29 +924,33 @@ async def show_consent_status(event, max_user_id: int):
     """Карточка состояния согласия. Показывает один из трёх вариантов
     (активно / отозвано / никогда не давалось) и кнопки действий.
     """
-    async with session_scope() as session:
-        user = await users_service.get_or_create(session, max_user_id=max_user_id)
-    consent_active = user.consent_pdn_at is not None
-    if consent_active:
-        text = texts.CONSENT_STATUS_ACTIVE.format(
-            given_at=_format_dt_local(user.consent_pdn_at)
-        )
-    elif user.consent_revoked_at is not None:
-        text = texts.CONSENT_STATUS_REVOKED.format(
-            revoked_at=_format_dt_local(user.consent_revoked_at)
-        )
-    else:
-        text = texts.CONSENT_STATUS_NEVER
-    await _send_or_edit_menu(
-        event,
-        text=text,
-        attachments=[keyboards.consent_status_keyboard(consent_active=consent_active)],
-    )
+    try:
+        async with guard(max_user_id), data_erasure.personal_view(max_user_ids=[max_user_id]):
+            async with session_scope() as session:
+                user = await users_service.get_or_create(session, max_user_id=max_user_id)
+            consent_active = user.consent_pdn_at is not None
+            if consent_active:
+                text = texts.CONSENT_STATUS_ACTIVE.format(
+                    given_at=_format_dt_local(user.consent_pdn_at)
+                )
+            elif user.consent_revoked_at is not None:
+                text = texts.CONSENT_STATUS_REVOKED.format(
+                    revoked_at=_format_dt_local(user.consent_revoked_at)
+                )
+            else:
+                text = texts.CONSENT_STATUS_NEVER
+            await _send_or_edit_menu(
+                event,
+                text=text,
+                attachments=[keyboards.consent_status_keyboard(consent_active=consent_active)],
+            )
+    except data_erasure.PersonalDataErasedError:
+        await _unavailable_personal_view(event)
 
 
 async def ask_consent_revoke_confirm(event):
-    await _send_or_edit_menu(
-        event,
+    await _send_privacy_confirmation(
+        event, action="revoke",
         text=texts.CONSENT_REVOKE_CONFIRM,
         attachments=[keyboards.consent_revoke_confirm_keyboard()],
     )
@@ -815,20 +995,6 @@ async def do_consent_revoke(event, max_user_id: int):
         max_user_id=max_user_id,
         open_appeal_ids=[a.id for a in my_open],
     )
-    if my_open:
-        # Перепубликовать карточки открытых обращений через единый
-        # admin_card.render. force_new=True — это явное событие (отзыв
-        # согласия), нужна новая запись внизу чата как маркер.
-        #
-        # appeal.user уже подгружен через list_unanswered_for_user,
-        # messages тоже загружены (selectinload) — НЕ ставим
-        # __dict__.setdefault("messages", []), иначе перезаписали бы
-        # реальные сообщения пустым списком и timeline снова исчез.
-
-        for appeal in my_open:
-            await admin_card_service.render(
-                event.bot, appeal, force_new=True
-            )
 
 
 async def do_forget(event, max_user_id: int):
@@ -840,20 +1006,18 @@ async def do_forget(event, max_user_id: int):
     """
 
     closed_ids: list[int] = []
-    async with current_user(max_user_id) as (session, user):
-        mine = await appeals_service.list_unanswered_for_user(
-            session, user.id
-        )
-        closed_ids = [a.id for a in mine]
-        await users_service.erase_pdn(session, max_user_id)
+    async with current_user(max_user_id) as (session, _user):
+        closed_ids = await users_service.erase_pdn_detailed(session, max_user_id) or []
         await ops_service.write_audit(
             session,
-            operator_max_user_id=max_user_id,
+            operator_max_user_id=None,
             action="self_erase",
-            target=f"user max_id={max_user_id}",
+            target=None,
         )
-    await _send_or_edit_menu(
-        event,
+    from aemr_bot.services import data_erasure
+    await data_erasure.tracked_send(
+        event.bot, kind="erasure_confirmation", max_user_ids=[max_user_id],
+        allow_erased_recipient=True, chat_id=get_chat_id(event),
         text=texts.ERASE_REQUESTED,
         attachments=[keyboards.back_to_menu_keyboard()],
     )
@@ -1061,29 +1225,76 @@ _EXACT: dict[str, _MenuRoute] = {
 }
 
 async def show_appeal_attachments(event, appeal_id: int, max_user_id: int):
-    """Кнопка «🗂 Показать вложения (N)» под карточкой обращения у
-    жителя (PR-fix-hang). До этого вложения переотправлялись каждый
-    раз при открытии карточки и могли подвешивать handler. Теперь —
-    только по явному тапу."""
-    async with session_scope() as session:
-        appeal = await appeals_service.get_by_id_with_messages(session, appeal_id)
-    if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
-        await _send_or_edit_menu(
-            event,
-            text="Обращение не найдено.",
-            attachments=[keyboards.back_to_menu_keyboard()],
-        )
-        return
-    user_id = get_user_id(event)
-    if user_id is None:
-        return
-    await admin_relay.render_appeal_attachments(
-        event.bot,
-        chat_id=None,
-        user_id=user_id,
-        appeal=appeal,
-        header_template="📎 Вложения к обращению #{appeal_id}",
-    )
+    """Показать сохранённые вложения обеих сторон по запросу владельца."""
+    try:
+        async with guard(max_user_id), data_erasure.personal_view(appeal_id=appeal_id, max_user_ids=[max_user_id]):
+            async with session_scope() as session:
+                appeal = await appeals_service.get_by_id_with_messages(session, appeal_id)
+            if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
+                await _send_or_edit_menu(
+                    event,
+                    text="Обращение не найдено.",
+                    attachments=[keyboards.back_to_menu_keyboard()],
+                )
+                return
+            user_id = get_user_id(event)
+            if user_id is None:
+                return
+            await admin_relay.render_appeal_attachments(
+                event.bot,
+                chat_id=None,
+                user_id=user_id,
+                appeal=appeal,
+                header_template="📎 Вложения к обращению #{appeal_id}",
+            )
+    except data_erasure.PersonalDataErasedError:
+        await _unavailable_personal_view(event)
+
+
+async def show_appeal_history(event, appeal_id: int, page: int, max_user_id: int):
+    try:
+        async with guard(max_user_id), data_erasure.personal_view(appeal_id=appeal_id, max_user_ids=[max_user_id]):
+            async with session_scope() as session:
+                appeal = await appeals_service.get_by_id_with_messages(session, appeal_id)
+            if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
+                await _send_or_edit_menu(event, text="Обращение не найдено.",
+                                         attachments=[keyboards.back_to_menu_keyboard()])
+                return
+            pages = appeal_history.pages_for(appeal, operator=False)
+            page = max(0, min(page, len(pages) - 1))
+            attachments = bool(admin_relay.collect_appeal_attachments(appeal))
+            await _send_or_edit_menu(
+                event, text=f"{pages[page].render(appeal_id)}\n\nСтраница {page + 1} из {len(pages)}",
+                attachments=[keyboards.appeal_history_keyboard(appeal_id, page, len(pages),
+                                                               attachments=attachments,
+                                                               message_id=pages[page].message_id
+                                                               if pages[page].attachments else None)],
+            )
+    except data_erasure.PersonalDataErasedError:
+        await _unavailable_personal_view(event)
+
+
+async def show_record_attachments(event, appeal_id: int, message_id: int, max_user_id: int):
+    try:
+        async with guard(max_user_id), data_erasure.personal_view(appeal_id=appeal_id, max_user_ids=[max_user_id]):
+            async with session_scope() as session:
+                appeal = await appeals_service.get_by_id_with_messages(session, appeal_id)
+            if not appeal or not appeal.user or appeal.user.max_user_id != max_user_id:
+                await _send_or_edit_menu(event, text="Обращение не найдено.",
+                                         attachments=[keyboards.back_to_menu_keyboard()])
+                return
+            attachments = appeal_history.attachments_for(appeal, message_id, operator=False)
+            if not attachments:
+                await _send_or_edit_menu(event, text="Вложения этой записи недоступны.",
+                                         attachments=[keyboards.back_to_menu_keyboard()])
+                return
+            await admin_relay.render_appeal_attachments(
+                event.bot, chat_id=None, user_id=max_user_id, appeal=appeal,
+                header_template="📎 Вложения записи обращения #{appeal_id}",
+                attachments_override=attachments,
+            )
+    except data_erasure.PersonalDataErasedError:
+        await _unavailable_personal_view(event)
 
 
 # Префикс → handler(event, appeal_id, max_user_id). Хвост payload'а —
@@ -1114,9 +1325,44 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
     payload обработан, False — если это не меню-callback и вызывающему
     надо продолжить разбор.
     """
+    privacy_actions = {
+        "settings:forget_yes": "erase", "goodbye:erase_yes": "erase",
+        "settings:consent_revoke_yes": "revoke", "goodbye:revoke_yes": "revoke",
+    }
+    if payload in privacy_actions:
+        return await _run_privacy_confirmation(event, max_user_id, privacy_actions[payload])
+    if max_user_id is not None and not payload.startswith(("appeal:followup:", "appeal:repeat:")):
+        from aemr_bot.services import resident_drafts
+        async with session_scope() as session:
+            user = await users_service.find_by_max_id(session, max_user_id, for_update=True)
+            if user is not None:
+                _clear_privacy_confirmation(user)
+                await resident_drafts.pause(session, user)
     route = _EXACT.get(payload)
     if route is not None:
         return await _run_exact_route(event, route, max_user_id)
+
+    if payload.startswith("appeal:history:") and max_user_id is not None:
+        await ack_callback(event)
+        try:
+            appeal_id, page = map(int, payload.removeprefix("appeal:history:").split(":"))
+            if appeal_id <= 0 or page < 0:
+                return True
+        except ValueError:
+            return True
+        await show_appeal_history(event, appeal_id, page, max_user_id)
+        return True
+
+    if payload.startswith("appeal:record_atts:") and max_user_id is not None:
+        await ack_callback(event)
+        try:
+            appeal_id, message_id = map(int, payload.removeprefix("appeal:record_atts:").split(":"))
+            if appeal_id <= 0 or message_id < 0:
+                return True
+        except ValueError:
+            return True
+        await show_record_attachments(event, appeal_id, message_id, max_user_id)
+        return True
 
     # appeals:page:<N|noop> — пагинация «Мои обращения». noop = текущая
     # страница, тап только ак'ается. Битый хвост глотается без ак'а.

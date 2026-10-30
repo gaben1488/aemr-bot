@@ -5,6 +5,7 @@ from zoneinfo import ZoneInfo
 
 from aemr_bot.config import settings
 from aemr_bot.db.models import Appeal, MessageDirection, User
+from aemr_bot.services.content_status import content_notice
 from aemr_bot.texts import (
     ADMIN_CARD_TEMPLATE,
     ADMIN_FOLLOWUP_TEMPLATE,
@@ -70,6 +71,33 @@ def _clip(text: str, limit: int = 900) -> str:
     if len(text) <= limit:
         return text
     return text[: limit - 1].rstrip() + "…"
+
+
+def _bounded_preview(text: str, limit: int) -> str:
+    """Fit the overview while retaining both its beginning and latest updates."""
+    if len(text.encode("utf-16-le")) // 2 <= limit:
+        return text
+    separator = "\n\n… Полный текст — в истории обращения.\n\n"
+    budget = limit - len(separator.encode("utf-16-le")) // 2
+    left_budget = budget // 2
+    right_budget = budget - left_budget
+    used = 0
+    for index, char in enumerate(text):
+        used += 2 if ord(char) > 0xFFFF else 1
+        if used > left_budget:
+            left = text[:index].rstrip()
+            break
+    else:
+        return text
+    used = 0
+    for reverse_index, char in enumerate(reversed(text)):
+        used += 2 if ord(char) > 0xFFFF else 1
+        if used > right_budget:
+            right = text[len(text) - reverse_index:].lstrip()
+            break
+    else:
+        right = text
+    return left + separator + right
 
 
 def _loaded_messages(appeal: Appeal) -> list:
@@ -260,6 +288,35 @@ def admin_card(appeal: Appeal, user: User) -> str:
         summary=defang_for_admin(_strip_card_chrome(appeal.summary)) or "—",
         answer_limit=settings.answer_max_chars,
     )
+    status = getattr(appeal, "status", None)
+    status_emoji, status_text = STATUS_LABELS.get(status or "", ("•", "Статус неизвестен"))
+    header = f"{status_emoji} Состояние: {status_text}"
+    anchor = getattr(appeal, "sla_anchor_at", None) or getattr(appeal, "created_at", None)
+    if (status in {"new", "in_progress"} and anchor is not None
+            and anchor.tzinfo is not None and "messages" in getattr(appeal, "__dict__", {})):
+        from datetime import UTC
+
+        from aemr_bot.services import sla, work_schedule
+
+        responses = [m for m in _loaded_messages(appeal)
+                     if getattr(m, "direction", None) == "from_operator"
+                     and getattr(m, "created_at", None) and m.created_at.tzinfo is not None
+                     and m.created_at >= anchor]
+        if responses:
+            first = min(m.created_at for m in responses)
+            elapsed = sla.business_seconds_between(first, datetime.now(UTC), schedule=work_schedule.for_appeal(appeal)) / 3600
+            header += f"\n💬 Первый ответ: {_local(first)} · после него {elapsed:.1f} рабочих ч"
+        else:
+            hours = getattr(appeal, "sla_hours_at_start", None)
+            target = hours if isinstance(hours, int) and hours > 0 else settings.sla_response_hours
+            elapsed = sla.business_seconds_between(anchor, datetime.now(UTC), schedule=work_schedule.for_appeal(appeal)) / 3600
+            origin = "срок периода" if hours and getattr(appeal, "sla_schedule_at_start", None) is not None else "ориентир без снимка периода"
+            flag = "⚠️ " if elapsed >= target else "⏱ "
+            header += f"\n{flag}Первый ответ: {elapsed:.1f} из {target} рабочих ч ({origin})"
+    body = header + ("\n" + content_notice(appeal) if content_notice(appeal) else "") + "\n\n" + body
+    related = getattr(appeal, "related_appeal_id", None)
+    if related:
+        body = f"🔗 Связано с обращением № {related}\n\n" + body
     summary_line = attachments_summary_line(appeal.attachments or [])
     if summary_line:
         body = f"{body}\n{summary_line}"
@@ -296,8 +353,11 @@ def admin_card(appeal: Appeal, user: User) -> str:
     )
     # _maybe_url_warning возвращает "" если URL'ов нет — отдельный
     # double-scan (старый `has_url`) больше не нужен, экономим проход.
-    body = body + _maybe_url_warning(warn_src)
-    return body
+    warning = _maybe_url_warning(warn_src)
+    body = _bounded_preview(body, 2700)
+    if warning:
+        body += _bounded_preview(warning, 700)
+    return _bounded_preview(body, 3400)
 
 
 def _bounded_scan_source(summary: str, visible_msgs: list) -> str:
@@ -396,12 +456,11 @@ def _maybe_url_warning(text: str) -> str:
         attribution = ", ".join(sorted(matched_sources)) or "threat-intel"
         more = "" if len(malicious) <= 3 else f" и ещё {len(malicious) - 3}"
         return (
-            "\n\n⛔ Подозрительные ссылки (известные фишинг/malware "
-            f"по threat-intel базе; {attribution}): {sample}{more}. "
-            "Категорически не открывайте, не пересылайте. Если житель "
-            "просит разобраться — отметьте в audit, направьте жителя "
-            "в МВД (отделение полиции по месту жительства, единый "
-            "экстренный номер 112)."
+            "\n\n⛔ Адрес совпал с записью в базе угроз "
+            f"({attribution}): {sample}{more}. Это признак риска, "
+            "но база может ошибаться или устареть. Не открывайте ссылку. "
+            "При признаках мошенничества сообщите ИТ и предложите жителю "
+            "обратиться в полицию; при срочной опасности — 112."
         )
     # Базовый ⚠️ показываем только при наличии http(s)/quasi-URL
     # (`urls`). Голый домен без схемы сам по себе ⚠️ НЕ триггерит —
@@ -412,8 +471,8 @@ def _maybe_url_warning(text: str) -> str:
         return ""
     return (
         "\n\n⚠️ Текст содержит ссылку. Не открывайте напрямую из "
-        "карточки — сверьте адрес визуально и при необходимости "
-        "введите в браузер вручную."
+        "карточки. Проверьте её через утверждённые средства безопасности; "
+        "самостоятельный ввод адреса не делает ссылку безопасной."
     )
 
 
@@ -465,13 +524,18 @@ def user_card(appeal: Appeal) -> str:
         topic=appeal.topic or "—",
         summary=appeal.summary or "—",
     )
+    related = getattr(appeal, "related_appeal_id", None)
+    if related:
+        body = f"🔗 Связано с обращением № {related}\n\n" + body
+    if content_notice(appeal):
+        body = content_notice(appeal) + "\n\n" + body
     # Лента для жителя: те же блоки что у admin_card, но житель видит
     # «Ваше дополнение» и «Ответ Администрации» вместо служебных
     # маркеров (через user_appeal_timeline_block).
     timeline = user_appeal_timeline_block(appeal)
     if timeline:
         body = f"{body}\n\n{timeline}"
-    return body
+    return _bounded_preview(body, 3400)
 
 
 def user_appeal_timeline_block(appeal: Appeal) -> str:
@@ -482,7 +546,10 @@ def user_appeal_timeline_block(appeal: Appeal) -> str:
     (700 vs 400 — житель хочет видеть полный ответ).
     """
     return _render_timeline(
-        _loaded_messages(appeal),
+        [m for m in _loaded_messages(appeal)
+         if getattr(m, "direction", "") in {
+             MessageDirection.FROM_USER.value, MessageDirection.FROM_OPERATOR.value,
+         }],
         operator_marker="📨 Ответ Администрации",
         user_marker="📩 Ваше дополнение",
         text_limit=700,

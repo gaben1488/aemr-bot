@@ -26,12 +26,19 @@ from collections.abc import Awaitable, Callable
 from aemr_bot import keyboards as kbds
 from aemr_bot import texts
 from aemr_bot.config import settings as cfg
+from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
-from aemr_bot.handlers import admin_commands, callback_router
+from aemr_bot.handlers import admin_commands, admin_panel, callback_router
 from aemr_bot.handlers import broadcast as broadcast_handler
 from aemr_bot.handlers import broadcast_templates as broadcast_templates_handler
-from aemr_bot.handlers._auth import ensure_operator
-from aemr_bot.services import admin_card as admin_card_service
+from aemr_bot.handlers._auth import ensure_operator, get_operator
+from aemr_bot.services import (
+    admin_relay,
+    appeal_history,
+    card_format,
+    consent_history,
+    data_erasure,
+)
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.utils.event import ack_callback, send_or_edit_screen
 
@@ -92,33 +99,383 @@ async def _op_reply_intermediate(event, appeal_id: int) -> None:
     await admin_commands.run_reply_intent(event, appeal_id, is_final=False)
 
 
+async def _op_open_page(event, page: int) -> None:
+    await ack_callback(event)
+    operator = await get_operator(event)
+    if operator is None:
+        return
+    await admin_commands._do_open_tickets(event, page=page)
+
+
 async def _op_open_card(event, appeal_id: int) -> None:
-    """Открыть полную карточку обращения с timeline (история переписки).
+    """Открыть редактируемый экран просмотра без новой записи события."""
 
-    Шаг 2-в от 2026-05-26: listing «Открытые обращения» компактный
-    (одна кнопка на обращение), история раскрывается явным кликом
-    через эту команду. Используем `admin_card.render(force_new=True)`
-    — карточка появится новой записью внизу чата, не редактирует
-    listing-сообщение (сохраняет sacred-инвариант).
-    """
+    operator = await get_operator(event)
+    if operator is None:
+        return
+    async with data_erasure.personal_view() as personal:
+        async with session_scope() as session:
+            appeal = await appeals_service.get_by_id_with_messages(
+                session, appeal_id
+            )
+        if appeal is None:
+            await ack_callback(event, "Не найдено")
+            await send_or_edit_screen(
+                event,
+                chat_id=cfg.admin_group_id,
+                text=f"⚠️ Обращение #{appeal_id} не найдено (возможно, удалено).",
+                attachments=[kbds.op_back_to_menu_keyboard()],
+            )
+            return
+        await ack_callback(event, "Открываю…")
+        if appeal.user is None:
+            await send_or_edit_screen(
+                event, chat_id=cfg.admin_group_id, text="Данные обращения недоступны.",
+                attachments=[kbds.op_back_to_menu_keyboard()],
+            )
+            return
+        owner_id = getattr(appeal.user, "max_user_id", None)
+        if isinstance(owner_id, int) and owner_id > 0:
+            if getattr(appeal, "content_erased_at", None) is None:
+                await personal.include(appeal_id=appeal.id)
+            else:
+                await personal.include(max_user_ids=[owner_id])
+        # This is a mutable shared navigation screen, not a reply target. Strip
+        # every marker, including user-supplied ones, so a swipe on an edited
+        # screen cannot route a reply to another resident.
+        text = card_format.admin_card(appeal, appeal.user).replace("🆔 №", "🆔 \u200b№")
+        text = text.replace(
+            "✉️ Ответ — кнопкой ниже либо потяните карточку влево.",
+            "✉️ Ответ — кнопкой ниже.",
+        )
+        periods = getattr(appeal, "sla_history", None) or []
+        assessed = [period for period in periods if isinstance(period, dict)
+                    and period.get("assessment") == "at_reopen"
+                    and period.get("first_response") and isinstance(period.get("overdue"), bool)]
+        breaches = sum(1 for period in assessed if period["overdue"])
+        if periods:
+            text += (f"\n\n⏱ Прошлых периодов: {len(periods)}, с просрочкой: {breaches}; "
+                     f"без достоверной оценки: {len(periods) - len(assessed)}.")
+        text += "\n\nДля ответа используйте кнопку под карточкой."
+        keyboard = kbds.appeal_admin_actions(
+            appeal.id, appeal.status, is_it=operator.role == OperatorRole.IT.value,
+            user_blocked=bool(appeal.user.is_blocked),
+            closed_due_to_revoke=bool(getattr(appeal, "closed_due_to_revoke", False)),
+            attachment_count=len(admin_relay.collect_appeal_attachments(appeal)),
+        )
+        await send_or_edit_screen(event, chat_id=cfg.admin_group_id, text=text, attachments=[keyboard])
 
+
+async def _op_history(event, payload: str) -> None:
+    await ack_callback(event)
+    if not await ensure_operator(event):
+        return
+    try:
+        appeal_id, page = map(int, payload.removeprefix("op:history:").split(":"))
+        if appeal_id <= 0 or page < 0:
+            return
+    except ValueError:
+        return
+    async with data_erasure.personal_view() as personal:
+        async with session_scope() as session:
+            appeal = await appeals_service.get_by_id_with_messages(session, appeal_id)
+        if not appeal:
+            await send_or_edit_screen(event, chat_id=cfg.admin_group_id, text="Обращение не найдено.",
+                                      attachments=[kbds.op_back_to_menu_keyboard()])
+            return
+        owner_id = getattr(appeal.user, "max_user_id", None)
+        if isinstance(owner_id, int) and owner_id > 0:
+            if getattr(appeal, "content_erased_at", None) is None:
+                await personal.include(appeal_id=appeal.id)
+            else:
+                await personal.include(max_user_ids=[owner_id])
+        pages = appeal_history.pages_for(appeal, operator=True)
+        page = min(page, len(pages) - 1)
+        await send_or_edit_screen(
+            event, chat_id=cfg.admin_group_id,
+            text=f"{pages[page].render(appeal_id)}\n\nСтраница {page + 1} из {len(pages)}",
+            attachments=[kbds.appeal_history_keyboard(
+                appeal_id, page, len(pages), operator=True,
+                attachments=bool(admin_relay.collect_appeal_attachments(appeal)),
+                message_id=pages[page].message_id if pages[page].attachments else None,
+            )],
+        )
+
+
+async def _op_reply_attempt(event, payload: str) -> None:
+    """Display the saved response without sending or changing its state."""
+    from maxapi.types import CallbackButton
+    from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
+
+    from aemr_bot.db.models import OperatorReplyAttempt
+    from aemr_bot.utils.text_pages import split_text_units
+    from aemr_bot.utils.url_defang import defang_for_admin
+
+    await ack_callback(event)
+    if not await ensure_operator(event):
+        return
+    try:
+        attempt_id, page = map(int, payload.removeprefix("op:reply_attempt:").split(":"))
+        if attempt_id <= 0 or page < 0:
+            return
+    except ValueError:
+        return
+    async with data_erasure.personal_view() as personal:
+        async with session_scope() as session:
+            attempt = await session.get(OperatorReplyAttempt, attempt_id)
+        if not attempt or attempt.state not in {"sending", "unknown", "confirmed", "not_delivered"}:
+            await send_or_edit_screen(event, chat_id=cfg.admin_group_id,
+                                     text="Ответ уже обработан или недоступен.",
+                                     attachments=[kbds.op_back_to_menu_keyboard()])
+            return
+        async with session_scope() as session:
+            owner = await appeals_service.get_by_id_with_messages(session, attempt.appeal_id)
+        if owner and owner.user and owner.user.max_user_id > 0:
+            await personal.include(appeal_id=owner.id)
+        safe_text = (defang_for_admin(attempt.text or "") or "Без текста").replace("🆔 №", "🆔 \u200b№")
+        pages = split_text_units(safe_text, 2600)
+        page = min(page, len(pages) - 1)
+        status = ("MAX подтвердил отправку; запись истории восстанавливается."
+                  if attempt.state == "confirmed" else
+                  "Сотрудник отметил, что ответ не доставлен. Можно подготовить новый ответ."
+                  if attempt.state == "not_delivered" else
+                  "Результат отправки неизвестен. Проверьте переписку перед повтором.")
+        transport = list(attempt.delivery_parts or [])
+        confirmed_parts = sum(1 for part in transport if part.get("state") == "confirmed")
+        status += f"\nТранспортных частей подтверждено: {confirmed_parts}; начато: {len(transport)}."
+        if transport and transport[-1].get("state") != "confirmed":
+            status += f" Последняя часть № {len(transport)} требует сверки."
+        keyboard = InlineKeyboardBuilder()
+        nav = []
+        if page:
+            nav.append(CallbackButton(text="◀️ Назад", payload=f"op:reply_attempt:{attempt_id}:{page - 1}"))
+        if page + 1 < len(pages):
+            nav.append(CallbackButton(text="Далее ▶️", payload=f"op:reply_attempt:{attempt_id}:{page + 1}"))
+        if nav:
+            keyboard.row(*nav)
+        if attempt.attachments:
+            keyboard.row(CallbackButton(text="📎 Вложения", payload=f"op:reply_attempt_atts:{attempt_id}"))
+        if attempt.state in {"sending", "unknown"}:
+            keyboard.row(CallbackButton(text="✅ Доставлен", payload=f"op:reply_resolve:{attempt_id}:delivered"),
+                         CallbackButton(text="❌ Не доставлен", payload=f"op:reply_resolve:{attempt_id}:not_delivered"))
+        if attempt.state == "not_delivered":
+            keyboard.row(CallbackButton(text="🗑 Удалить черновик", payload=f"op:reply_resolve:{attempt_id}:discard"))
+        keyboard.row(CallbackButton(text="📂 Карточка", payload=f"op:open_card:{attempt.appeal_id}"))
+        keyboard.row(CallbackButton(text="↩️ К списку", payload="op:reply_issues:0"))
+        await send_or_edit_screen(event, chat_id=cfg.admin_group_id,
+            text=(f"✉️ Ответ по обращению № {attempt.appeal_id} · часть {page + 1}/{len(pages)}\n"
+                  f"{status}\n📎 Вложений: {len(attempt.attachments or [])}\n\n{pages[page]}"),
+            attachments=[keyboard.as_markup()])
+
+
+async def _op_reply_attempt_atts(event, attempt_id: int) -> None:
+    """Explicitly show the attachment references saved with an attempt."""
+    from aemr_bot.db.models import OperatorReplyAttempt
+    from aemr_bot.services import privacy_epoch
+
+    await ack_callback(event)
+    if not await ensure_operator(event):
+        return
+    async with session_scope() as barrier:
+        await privacy_epoch.hold_delivery(barrier)
+        async with session_scope() as session:
+            attempt = await session.get(OperatorReplyAttempt, attempt_id)
+            appeal = (await appeals_service.get_by_id_with_messages(session, attempt.appeal_id)
+                      if attempt else None)
+        if not attempt or not appeal or attempt.state not in {"sending", "unknown", "confirmed", "not_delivered"}:
+            await send_or_edit_screen(event, chat_id=cfg.admin_group_id, text="Вложения недоступны.",
+                                      attachments=[kbds.op_back_to_menu_keyboard()])
+            return
+        await admin_relay.render_appeal_attachments(
+            event.bot, chat_id=cfg.admin_group_id, user_id=None, appeal=appeal,
+            header_template="Вложения ответа по обращению #{appeal_id}",
+            attachments_override=attempt.attachments,
+        )
+
+
+async def _op_reply_resolve(event, payload: str) -> None:
+    """Confirm a human's explicit reconciliation, never send automatically."""
+    from maxapi.types import CallbackButton
+    from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
+
+    from aemr_bot.db.models import OperatorReplyAttempt
+    from aemr_bot.services import appeal_locks, operator_reply_attempts, privacy_epoch
+    from aemr_bot.utils.event import get_user_id
+
+    await ack_callback(event)
+    if not await ensure_operator(event):
+        return
+    bits = payload.split(":")
+    if len(bits) != 4 or not bits[2].isdigit() or bits[3] not in {"delivered", "not_delivered", "discard"}:
+        return
+    attempt_id, choice = int(bits[2]), bits[3]
+    if bits[1] == "reply_resolve":
+        keyboard = InlineKeyboardBuilder()
+        keyboard.row(CallbackButton(text="✅ Подтвердить", payload=f"op:reply_confirm:{attempt_id}:{choice}"))
+        keyboard.row(CallbackButton(text="↩️ Назад", payload=f"op:reply_attempt:{attempt_id}:0"))
+        conclusion = ("ответ действительно доставлен жителю" if choice == "delivered"
+                      else "ответ жителю не доставлен")
+        prompt = ("Удалить сохранённый черновик недоставленного ответа?"
+                  if choice == "discard" else
+                  f"Вы проверили переписку и установили, что {conclusion}?\n\n"
+                  "Подтверждайте только после проверки. Бот не отправит ответ повторно.")
+        await send_or_edit_screen(event, chat_id=cfg.admin_group_id,
+            text=prompt,
+            attachments=[keyboard.as_markup()])
+        return
+    actor = get_user_id(event)
+    if actor is None:
+        return
+    async with session_scope() as barrier:
+        await privacy_epoch.hold_delivery(barrier)
+        async with session_scope() as session:
+            attempt = await session.get(OperatorReplyAttempt, attempt_id)
+            appeal_id = attempt.appeal_id if attempt else None
+        if appeal_id is None:
+            changed = False
+        else:
+            await appeal_locks.hold(barrier, appeal_id)
+            async with session_scope() as session:
+                if choice == "discard":
+                    changed = await operator_reply_attempts.discard_not_delivered(
+                        session, attempt_id, actor_max_id=actor,
+                    )
+                else:
+                    changed = await operator_reply_attempts.resolve_unknown(
+                        session, attempt_id, delivered=choice == "delivered", actor_max_id=actor,
+                    )
+        text = ("✅ Отметка сохранена. Повторной отправки не было." if changed else
+                "Состояние уже изменилось или ответ недоступен. Обновите список.")
+        await send_or_edit_screen(event, chat_id=cfg.admin_group_id, text=text,
+                                  attachments=[kbds.op_back_to_menu_keyboard()])
+
+
+async def _op_consent(event, payload: str) -> None:
+    """Show only captured evidence; older consent text may be unavailable."""
+    from maxapi.types import CallbackButton
+    from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
+
+    await ack_callback(event)
+    if not await ensure_operator(event):
+        return
+    try:
+        appeal_id, page = map(int, payload.removeprefix("op:consent:").split(":"))
+        if appeal_id <= 0 or page < 0:
+            return
+    except ValueError:
+        return
+    async with data_erasure.personal_view() as personal:
+        async with session_scope() as session:
+            appeal = await appeals_service.get_by_id_with_messages(session, appeal_id)
+        if not appeal or not appeal.user:
+            await send_or_edit_screen(event, chat_id=cfg.admin_group_id,
+                                      text="Данные жителя недоступны.",
+                                      attachments=[kbds.op_back_to_menu_keyboard()])
+            return
+        owner_id = getattr(appeal.user, "max_user_id", None)
+        if isinstance(owner_id, int) and owner_id > 0:
+            if getattr(appeal, "content_erased_at", None) is None:
+                await personal.include(appeal_id=appeal.id)
+            else:
+                await personal.include(max_user_ids=[owner_id])
+        pages = consent_history.pages_for(getattr(appeal.user, "consent_records", None) or [])
+        keyboard = InlineKeyboardBuilder()
+        if not pages:
+            text = ("🔐 Согласие жителя\n\nТекст ранее данного согласия не сохранился. "
+                    "Восстановить его по текущим настройкам нельзя.")
+        else:
+            page = min(page, len(pages) - 1)
+            item = pages[page]
+            text = (f"🔐 Согласие жителя · редакция {item.edition} из {item.editions}\n"
+                    f"Подтверждено: {item.date}\nЧасть {item.part} из {item.parts}\n\n"
+                    f"{item.text.replace('🆔 №', '🆔 \u200b№')}")
+            nav = []
+            if page:
+                nav.append(CallbackButton(text="◀️ Назад", payload=f"op:consent:{appeal_id}:{page - 1}"))
+            if page + 1 < len(pages):
+                nav.append(CallbackButton(text="Далее ▶️", payload=f"op:consent:{appeal_id}:{page + 1}"))
+            if nav:
+                keyboard.row(*nav)
+        keyboard.row(CallbackButton(text="↩️ К обращению", payload=f"op:open_card:{appeal_id}"))
+        await send_or_edit_screen(event, chat_id=cfg.admin_group_id, text=text,
+                                  attachments=[keyboard.as_markup()])
+
+
+async def _op_word(event, appeal_id: int) -> None:
+    """Export one appeal only after checking the actor's operator role."""
+    import asyncio
+
+    from aemr_bot.services import appeal_word, uploads
+    from aemr_bot.utils.resident_lifecycle import guard
+
+    await ack_callback(event, "Готовлю документ…")
     if not await ensure_operator(event):
         return
     async with session_scope() as session:
-        appeal = await appeals_service.get_by_id_with_messages(
-            session, appeal_id
-        )
-    if appeal is None:
-        await ack_callback(event, "Не найдено")
-        await send_or_edit_screen(
-            event,
-            chat_id=cfg.admin_group_id,
-            text=f"⚠️ Обращение #{appeal_id} не найдено (возможно, удалено).",
-            attachments=[kbds.op_back_to_menu_keyboard()],
-        )
+        appeal = await appeals_service.get_by_id_with_messages(session, appeal_id)
+    if not appeal:
+        await send_or_edit_screen(event, chat_id=cfg.admin_group_id,
+                                  text="Обращение не найдено.",
+                                  attachments=[kbds.op_back_to_menu_keyboard()])
         return
-    await ack_callback(event, "Открываю…")
-    await admin_card_service.render(event.bot, appeal, force_new=True)
+    resident_id = getattr(appeal.user, "max_user_id", None)
+    try:
+        async with guard(resident_id), data_erasure.personal_view(appeal_id=appeal_id):
+            # Erasure shares this guard. Re-read after acquiring it, and do not
+            # send a document built from a snapshot taken before deletion.
+            async with session_scope() as session:
+                current = await appeals_service.get_by_id_with_messages(session, appeal_id)
+            if not current or getattr(current.user, "max_user_id", None) != resident_id:
+                await send_or_edit_screen(event, chat_id=cfg.admin_group_id,
+                                          text="Данные обращения изменились. Откройте карточку заново.",
+                                          attachments=[kbds.op_back_to_menu_keyboard()])
+                return
+            document = await asyncio.to_thread(appeal_word.build_appeal_docx, current)
+            token = await uploads.upload_bytes(event.bot, document, suffix=".docx")
+            if not token:
+                await send_or_edit_screen(event, chat_id=cfg.admin_group_id,
+                                          text="Не удалось загрузить документ. Попробуйте позже.",
+                                          attachments=[kbds.op_back_to_menu_keyboard()])
+                return
+            sent = await data_erasure.tracked_send(event.bot, kind="export", appeal_id=appeal_id,
+                max_user_ids=[resident_id] if resident_id else [], chat_id=cfg.admin_group_id,
+                text=f"📄 История обращения № {appeal_id} · Word",
+                attachments=[uploads.file_attachment(token)], notify=False)
+            if not sent:
+                await send_or_edit_screen(
+                    event, chat_id=cfg.admin_group_id,
+                    text="Не удалось подтвердить отправку документа. Проверьте чат перед повтором.",
+                    attachments=[kbds.op_back_to_menu_keyboard()],
+                )
+    except data_erasure.PersonalDataErasedError:
+        await send_or_edit_screen(event, chat_id=cfg.admin_group_id,
+            text="Содержание обращения очищено или недоступно. Откройте карточку заново.",
+            attachments=[kbds.op_back_to_menu_keyboard()])
+
+
+async def _op_record_attachments(event, payload: str) -> None:
+    await ack_callback(event)
+    if not await ensure_operator(event):
+        return
+    try:
+        appeal_id, message_id = map(int, payload.removeprefix("op:record_atts:").split(":"))
+        if appeal_id <= 0 or message_id < 0:
+            return
+    except ValueError:
+        return
+    async with session_scope() as session:
+        appeal = await appeals_service.get_by_id_with_messages(session, appeal_id)
+    attachments = appeal_history.attachments_for(appeal, message_id, operator=True) if appeal else None
+    if not attachments:
+        await send_or_edit_screen(event, chat_id=cfg.admin_group_id,
+                                  text="Вложения этой записи недоступны.",
+                                  attachments=[kbds.op_back_to_menu_keyboard()])
+        return
+    await admin_relay.render_appeal_attachments(
+        event.bot, chat_id=cfg.admin_group_id, user_id=None, appeal=appeal,
+        header_template="📎 Вложения записи обращения #{appeal_id}",
+        attachments_override=attachments,
+    )
 
 
 # ---- Таблицы маршрутов ------------------------------------------------------
@@ -146,6 +503,7 @@ _EXACT: dict[str, ExactHandler] = {
     "op:stats_half_year": _stats_handler("half_year"),
     "op:stats_year": _stats_handler("year"),
     "op:stats_all": _stats_handler("all"),
+    "op:queue_view": _ack_then(lambda e: admin_commands.run_open_tickets(e, new=True)),
     "op:open_tickets": _ack_then(lambda e: admin_commands.run_open_tickets(e)),
     "op:diag": _ack_then(lambda e: admin_commands.run_diag(e)),
     "op:backup": _ack_then(lambda e: admin_commands.run_backup(e)),
@@ -223,7 +581,12 @@ _PREFIX_ID: tuple[tuple[str, PrefixHandler], ...] = (
         lambda e, aid: admin_commands.run_block_for_appeal(e, aid, blocked=False),
     ),
     ("op:atts:", lambda e, aid: admin_commands.run_show_attachments(e, aid)),
+    ("op:delivery_issues:", lambda e, page: admin_panel.run_delivery_issues(e, page)),
+    ("op:reply_issues:", lambda e, page: admin_panel.run_reply_issues(e, page)),
+    ("op:reply_attempt_atts:", _op_reply_attempt_atts),
+    ("op:open_page:", _op_open_page),
     ("op:open_card:", _op_open_card),
+    ("op:word:", _op_word),
     # PR G: история рассылок — карточка / клон / failed-deliveries.
     ("op:bc:open:", lambda e, bid: broadcast_handler._open_broadcast(e, bid)),
     ("op:bc:clone:", lambda e, bid: broadcast_handler._clone_broadcast(e, bid)),
@@ -254,7 +617,37 @@ async def _op_operators_action(event, payload: str) -> None:
 # (`broadcast_templates.handle_callback` → bool). Узкий `None` заставлял
 # бы оборачивать такие цели пустой обёрткой ради типа — ровно те
 # обёртки, которые здесь и убирали.
+async def _op_reply_draft(event, payload: str):
+    from aemr_bot.handlers import operator_draft
+    await operator_draft.callback(event, payload)
+
+
+async def _op_queue_recreate(event, payload: str) -> None:
+    from aemr_bot.services import queue_panel
+
+    operator = await get_operator(event)
+    if operator is None or operator.role != OperatorRole.IT.value:
+        await ack_callback(event, "Только для IT")
+        return
+    token = payload.removeprefix("op:queue_recreate:")
+    if not await queue_panel.allow_recreate(token):
+        await ack_callback(event, "Панель уже изменилась. Откройте диагностику снова.")
+        return
+    await ack_callback(event, "Восстановление разрешено после проверки MAX")
+    await queue_panel.refresh(event.bot)
+    await admin_panel._do_diag(event)
+
+
 _PREFIX_RAW: tuple[tuple[str, Callable[[object, str], Awaitable[object]]], ...] = (
+    ("op:queue_recreate:", _op_queue_recreate),
+    ("op:replydraft:", _op_reply_draft),
+    ("op:reply_cancel:", lambda e, p: admin_commands.run_reply_cancel(e, p.removeprefix("op:reply_cancel:"))),
+    ("op:reply_resolve:", _op_reply_resolve),
+    ("op:reply_confirm:", _op_reply_resolve),
+    ("op:reply_attempt:", _op_reply_attempt),
+    ("op:consent:", _op_consent),
+    ("op:history:", _op_history),
+    ("op:record_atts:", _op_record_attachments),
     ("op:aud:", lambda e, p: admin_commands.run_audience_action(e, p)),
     # Операторы — единое семейство:
     ("op:opadd:", _op_operators_action),

@@ -71,14 +71,16 @@ async def test_purge_old_appeals_content_redacts_attachments_even_without_text(s
         .where(Appeal.id == appeal.id)
         .values(
             status=AppealStatus.CLOSED.value,
+            created_at=old_closed_at,
             closed_at=old_closed_at,
+            sla_anchor_at=old_closed_at,
             summary=None,
         )
     )
     await session.execute(
         update(Message)
         .where(Message.id == msg.id)
-        .values(text=None)
+        .values(text=None, created_at=old_closed_at)
     )
     await session.flush()
 

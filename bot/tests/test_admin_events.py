@@ -32,7 +32,7 @@ async def test_notify_consent_given_sends_to_admin_group() -> None:
 
 
 @pytest.mark.asyncio
-async def test_notify_consent_revoked_points_to_final_reply() -> None:
+async def test_notify_consent_revoked_requests_review_without_promising_reply() -> None:
     from aemr_bot.services import admin_events
 
     bot = AsyncMock()
@@ -43,8 +43,14 @@ async def test_notify_consent_revoked_points_to_final_reply() -> None:
             open_appeal_ids=[10, 11],
         )
 
+    bot.send_message.assert_awaited_once()
+    assert bot.send_message.call_args.kwargs["chat_id"] == 777
     text = bot.send_message.call_args.kwargs["text"]
-    assert "финального ответа" in text.lower()
+    assert "отозвал согласие" in text.lower()
+    assert "проверьте порядок дальнейшей работы" in text.lower()
+    assert "сроки очистки данных" in text.lower()
+    assert "финального ответа" not in text.lower()
+    assert "42" in text
     assert "#10" in text
     assert "#11" in text
     assert "телефон" not in text.lower()
@@ -219,3 +225,24 @@ class TestCriticalLegalEvents:
             await admin_events.notify_consent_given(bot, max_user_id=42)
         send_mock.assert_awaited_once()
         assert send_mock.await_args.kwargs["critical"] is False
+
+
+@pytest.mark.asyncio
+async def test_erasure_notification_does_not_republish_resident_identifier():
+    from unittest.mock import AsyncMock, patch
+
+    from aemr_bot.services import admin_events
+
+    send = AsyncMock()
+    with patch.object(admin_events, '_send', send):
+        await admin_events.notify_data_erased(object(), max_user_id=918273645, closed_appeal_ids=[7])
+    message = send.await_args.args[1]
+    assert '918273645' not in message
+    assert '#7' in message
+
+
+@pytest.fixture(autouse=True)
+def _fake_personal_source_boundary(monkeypatch):
+    from aemr_bot.services import data_erasure
+    from tests._helpers import fake_personal_view
+    monkeypatch.setattr(data_erasure, "personal_view", fake_personal_view)

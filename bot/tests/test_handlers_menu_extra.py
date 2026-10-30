@@ -12,6 +12,10 @@ import pytest
 
 from tests._helpers import fake_current_user, make_event
 from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._personal_view_helpers import (
+    personal_view_boundary,  # noqa: F401
+    privacy_prompt_resident,  # noqa: F401
+)
 
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
@@ -25,6 +29,7 @@ def _make_event(*, chat_id: int = 100, user_id: int = 42) -> SimpleNamespace:
     return event
 
 
+@pytest.mark.usefixtures("personal_view_boundary")
 class TestShowConsentStatus:
     """show_consent_status зовёт keyboards.consent_status_keyboard
     (keyboards.py:178, сигнатура `*, consent_active: bool`). Патчим её
@@ -77,7 +82,10 @@ class TestShowConsentStatus:
         assert text.startswith(
             "Согласие на обработку персональных данных отозвано"
         )
-        assert "оператор даст по ним финальный ответ" in text
+        assert "Новые обращения и рассылка недоступны" in text
+        assert "очистки данных" in text
+        assert "дать согласие заново" in text
+        assert "оператор даст по ним финальный ответ" not in text
         assert text != texts.CONSENT_STATUS_NEVER
 
     @pytest.mark.asyncio
@@ -125,6 +133,7 @@ class TestShowConsentStatus:
         assert kb_active is not None and kb_revoked is not None
 
 
+@pytest.mark.usefixtures("privacy_prompt_resident")
 class TestAskForgetConfirm:
     """ask_forget_confirm обращается к keyboards.forget_confirm_keyboard
     (keyboards.py:165). Патчим её на MagicMock для изоляции логики —
@@ -183,6 +192,7 @@ class TestFormatDtLocal:
         assert ":" in result
 
 
+@pytest.mark.usefixtures("privacy_prompt_resident")
 class TestAskGoodbye:
     @pytest.mark.asyncio
     async def test_revoke_confirm_sends_text(self) -> None:
@@ -309,6 +319,14 @@ class TestOpenDispatchers:
         assert "8 800 200" in text
 
 
+@pytest.fixture
+def callback_resident(monkeypatch):
+    monkeypatch.setattr("aemr_bot.handlers.menu.session_scope", _fake_session_scope)
+    monkeypatch.setattr("aemr_bot.services.users.find_by_max_id",
+                        AsyncMock(return_value=SimpleNamespace(dialog_state="idle", appeal_draft=None, dialog_data={})))
+
+
+@pytest.mark.usefixtures("callback_resident")
 class TestHandleCallback:
     """Маршрутизатор payload-ов меню."""
 
@@ -442,7 +460,7 @@ class TestHandleCallback:
         with patch("aemr_bot.handlers.menu.do_consent_revoke", AsyncMock()) as fn:
             handled = await menu.handle_callback(event, "settings:consent_revoke_yes", max_user_id=42)
         assert handled is True
-        fn.assert_called_once()
+        fn.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_settings_forget_yes(self) -> None:
@@ -452,7 +470,7 @@ class TestHandleCallback:
         with patch("aemr_bot.handlers.menu.do_forget", AsyncMock()) as fn:
             handled = await menu.handle_callback(event, "settings:forget_yes", max_user_id=42)
         assert handled is True
-        fn.assert_called_once()
+        fn.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_unknown_payload_returns_false(self) -> None:
@@ -492,7 +510,7 @@ class TestHandleCallback:
         fn.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_user_required_route_falls_through_without_max_user_id(self) -> None:
+    async def test_destructive_route_without_actor_is_rejected(self) -> None:
         from aemr_bot.handlers import menu
 
         event = _make_event()
@@ -500,8 +518,8 @@ class TestHandleCallback:
             handled = await menu.handle_callback(
                 event, "settings:forget_yes", max_user_id=None
             )
-        # User-маршрут без жителя — управление проваливается дальше.
-        assert handled is False
+        # Неидентифицированный destructive callback поглощён без мутации.
+        assert handled is True
         fn.assert_not_called()
 
     @pytest.mark.asyncio

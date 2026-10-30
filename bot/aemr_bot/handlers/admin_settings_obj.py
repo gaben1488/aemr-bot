@@ -28,10 +28,11 @@ from aemr_bot.services import operators as ops_svc
 from aemr_bot.services import settings_store
 
 
-async def _show_obj_card(event, key: str, *, notice: str = "") -> None:
+async def _show_obj_card(event, key: str, *, notice: str = "", page: int = 0) -> None:
 
     async with session_scope() as session:
-        items = await settings_store.get(session, key) or []
+        items, version = await settings_store.get_versioned(session, key)
+        items = items or []
     if not isinstance(items, list):
         items = []
     title_map = {
@@ -41,7 +42,13 @@ async def _show_obj_card(event, key: str, *, notice: str = "") -> None:
     title = title_map.get(key, key)
     # Pure-функция в services/settings_store — там же и юнит-тесты
     # без зависимости от maxapi.
-    body = settings_store.format_obj_list(items)
+    page = max(0, min(page, max(0, (len(items) - 1) // 8)))
+    body = "\n".join(
+        f"{i + 1}. {item.get('name') or item.get('routes') or 'Без названия'}"
+        f" — {item.get('phone') or 'телефон не указан'}"
+        + (f" · {item['section']}" if item.get("section") else "")
+        for i, item in enumerate(items[page * 8:page * 8 + 8], page * 8)
+    ) or "(список пуст)"
     hint = ""
     if key == "emergency_contacts":
         hint = (
@@ -63,11 +70,11 @@ async def _show_obj_card(event, key: str, *, notice: str = "") -> None:
     await op_screen(
         event,
         (f"{notice}\n\n" if notice else "")
-        + f"{title} ({len(items)})\n"
+        + f"{title} ({len(items)}) · страница {page + 1} из {max(1, (len(items) + 7) // 8)}\n"
         f"· · · · · · · ·\n"
         f"{body}"
         f"{hint}",
-        kbds.op_settings_obj_keyboard(key, items),
+        kbds.op_settings_obj_keyboard(key, items, version, page),
     )
 
 
@@ -78,10 +85,11 @@ async def _show_obj_item(event, suffix: str) -> None:
         return
     key, idx, revision = parsed
     async with session_scope() as session:
-        items = await settings_store.get(session, key) or []
+        items, version = await settings_store.get_versioned(session, key)
+        items = items or []
     if not isinstance(items, list):
         items = []
-    if revision != settings_store.value_revision(items):
+    if revision != f"v{version}":
         await _show_obj_card(
             event, key, notice="Список изменён другим оператором. Выберите запись заново.",
         )
@@ -94,7 +102,8 @@ async def _show_obj_item(event, suffix: str) -> None:
         )
         return
     item = items[idx]
-    lines = [f"{k}: {v}" for k, v in item.items()]
+    labels = {"name": "Название", "routes": "Маршруты", "phone": "Телефон", "section": "Раздел"}
+    lines = [f"{labels.get(k, k)}: {v}" for k, v in item.items()]
     await op_screen(
         event,
         "\n".join(lines),
@@ -133,9 +142,9 @@ async def _obj_delete(event, operator_id: int, suffix: str) -> None:
     key, idx, revision = parsed
     try:
         async with session_scope() as session:
-            previous = await settings_store.get(session, key)
+            previous, version = await settings_store.get_versioned(session, key)
             items = list(previous) if isinstance(previous, list) else []
-            if revision != settings_store.value_revision(items):
+            if revision != f"v{version}":
                 raise settings_store.SettingConflictError(key)
             if idx < 0 or idx >= len(items):
                 await op_screen(
@@ -153,7 +162,7 @@ async def _obj_delete(event, operator_id: int, suffix: str) -> None:
                     kbds.op_back_to_settings_keyboard(),
                 )
                 return
-            await settings_store.set_value(session, key, items, expected_value=previous)
+            await settings_store.set_value(session, key, items, expected_revision=version)
             await ops_svc.write_audit(
                 session,
                 operator_max_user_id=operator_id,
@@ -209,7 +218,7 @@ async def _apply_obj_add(
         return False
     try:
         async with session_scope() as session:
-            previous = await settings_store.get(session, key)
+            previous, version = await settings_store.get_versioned(session, key)
             items = list(previous) if isinstance(previous, list) else []
             items.append(item)
             ok, msg = settings_store.validate(key, items)
@@ -218,7 +227,7 @@ async def _apply_obj_add(
                     event, f"❌ {msg}", kbds.op_settings_text_cancel_keyboard(key)
                 )
                 return False
-            await settings_store.set_value(session, key, items, expected_value=previous)
+            await settings_store.set_value(session, key, items, expected_revision=version)
             await ops_svc.write_audit(
                 session,
                 operator_max_user_id=operator_id,

@@ -3,6 +3,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from contextlib import asynccontextmanager
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 import pytest_asyncio
@@ -121,6 +124,8 @@ async def test_sdk_update_diagnostics_do_not_persist_resident_payload(tmp_path):
 
 @pytest.mark.parametrize("parallel", [False, True])
 async def test_wrapped_polling_keeps_timeout_marker_and_valid_events(transport, monkeypatch, parallel):
+    # SQL confirmation invalidation has real MessageCreated coverage with PostgreSQL.
+    monkeypatch.setattr("aemr_bot.handlers.menu.invalidate_privacy_confirmation", AsyncMock())
     bot, requests, state = transport
     state["updates"] = [None, {"update_type": "message_created", "timestamp": 1700000000000,
                                "message": message()}]
@@ -150,7 +155,15 @@ async def test_wrapped_polling_keeps_timeout_marker_and_valid_events(transport, 
         await dp.shutdown()
 
 
-async def test_existing_message_edit_callback_and_file_adapters(transport):
+async def test_existing_message_edit_callback_and_file_adapters(transport, monkeypatch):
+    # Preserve the installed edit hook while isolating its external inventory query.
+    @asynccontextmanager
+    async def edit_inventory():
+        yield SimpleNamespace(bind=SimpleNamespace(dialect=SimpleNamespace(name="sqlite")),
+                              scalar=AsyncMock(return_value=None))
+
+    monkeypatch.setattr("aemr_bot.services.data_erasure.session_scope", edit_inventory)
+
     from aemr_bot.services.uploads import file_attachment, upload_bytes
     from aemr_bot.utils.event import ack_callback, get_ids
 

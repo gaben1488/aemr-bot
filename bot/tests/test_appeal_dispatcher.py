@@ -84,7 +84,8 @@ def captured_handlers(monkeypatch):
     """Регистрирует appeal.register на mock dp и возвращает (callback, message)."""
     from aemr_bot.handlers import appeal
 
-    # Routing unit tests isolate the two pre-routing gates. Their real database,
+    monkeypatch.setattr("aemr_bot.handlers.menu.invalidate_privacy_confirmation", AsyncMock())
+    # Routing unit tests isolate the SQL-backed pre-routing gates. Their real database,
     # stale-state and name-repair behavior is exercised in dedicated regressions
     # (test_funnel_state_hardening and test_resident_name_resume), not by relying
     # on missing tables or connections from an earlier pytest event loop.
@@ -140,7 +141,7 @@ class TestCallbackConsent:
         # SEC #1: _cb_consent_yes теперь читает user перед set_consent,
         # чтобы blocked житель не мог снять блок через старую кнопку.
         # Мокаем get_or_create → активный (не-blocked) пользователь.
-        unblocked_user = SimpleNamespace(is_blocked=False, max_user_id=7, dialog_data={"consent_prompt_hash": "a" * 64})
+        unblocked_user = SimpleNamespace(is_blocked=False, max_user_id=7, dialog_data={"consent_prompt_hash": "a" * 64, "consent_prompt_text": "Displayed consent", "consent_prompt_mid": "m-1"})
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
              patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.appeal.users_service.get_or_create",
@@ -169,7 +170,7 @@ class TestCallbackConsent:
         set_consent = AsyncMock(return_value=False)
         ask_contact = AsyncMock()
         notify = AsyncMock()
-        unblocked_user = SimpleNamespace(is_blocked=False, max_user_id=7, dialog_data={"consent_prompt_hash": "a" * 64})
+        unblocked_user = SimpleNamespace(is_blocked=False, max_user_id=7, dialog_data={"consent_prompt_hash": "a" * 64, "consent_prompt_text": "Displayed consent", "consent_prompt_mid": "m-1"})
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
              patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.appeal.users_service.get_or_create",
@@ -251,7 +252,7 @@ class TestCallbackCancel:
         # отличать live-отмену от stale тапа на старой 5/5 после
         # finalize. Mockуем active-state, чтобы handler пошёл по
         # обычной reset-ветке.
-        active_user = SimpleNamespace(dialog_state="awaiting_summary")
+        active_user = SimpleNamespace(dialog_state="awaiting_summary", dialog_data={})
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
              patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.appeal.users_service.find_by_max_id",
@@ -524,7 +525,7 @@ class TestCallbackTopic:
 
 class TestCallbackAppealSubmit:
     @pytest.mark.asyncio
-    async def test_appeal_submit_finalizes(self, captured_handlers) -> None:
+    async def test_legacy_appeal_submit_does_not_finalize(self, captured_handlers) -> None:
         on_callback, _ = captured_handlers
         event = _make_callback_event(payload="appeal:submit")
         finalize = AsyncMock()
@@ -533,7 +534,27 @@ class TestCallbackAppealSubmit:
                    finalize), \
              patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
             await on_callback(event)
-        finalize.assert_called_once()
+        finalize.assert_not_called()
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("button_token", ["current-token", "stale-token"])
+    async def test_draft_submit_requires_current_token(self, captured_handlers, button_token):
+        on_callback, _ = captured_handlers
+        event = _make_callback_event(payload=f"draft:submit:{button_token}")
+        user = SimpleNamespace(dialog_state="awaiting_summary",
+                               dialog_data={"draft_token": "current-token"})
+        finalize = AsyncMock()
+        with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
+             patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.appeal.users_service.find_by_max_id", AsyncMock(return_value=user)), \
+             patch("aemr_bot.handlers.appeal.appeal_funnel.finalize_appeal", finalize), \
+             patch("aemr_bot.utils.event.ack_callback", AsyncMock()):
+            await on_callback(event)
+        if button_token == "current-token":
+            finalize.assert_awaited_once_with(event, 7, draft_token="current-token")
+        else:
+            finalize.assert_not_awaited()
 
 
 class TestCallbackFallthroughToMenu:
@@ -568,6 +589,12 @@ class TestMessageNoChatId:
 
 
 class TestMessageAdminCancel:
+    @pytest.fixture(autouse=True)
+    def active_operator(self, monkeypatch):
+        monkeypatch.setattr("aemr_bot.services.operators.get", AsyncMock(return_value=SimpleNamespace(id=1, role="operator")))
+        monkeypatch.setattr("aemr_bot.handlers.appeal.session_scope", _fake_session_scope)
+        monkeypatch.setattr("aemr_bot.services.operator_drafts.get", AsyncMock(return_value=None))
+
     @pytest.mark.asyncio
     async def test_cancel_in_admin_chat_clears_wizards(
         self, captured_handlers
@@ -587,7 +614,7 @@ class TestMessageAdminCancel:
             await on_message(event)
         event.bot.send_message.assert_called_once()
         text = event.bot.send_message.call_args.kwargs["text"]
-        assert "сброшены" in text
+        assert "отменены" in text
 
     @pytest.mark.asyncio
     async def test_cancel_clears_settings_templates_audience_intents(
@@ -633,7 +660,7 @@ class TestMessageAdminCancel:
         assert 7 not in tmpl_wizards
         assert 7 not in audience_intents
         text = event.bot.send_message.call_args.kwargs["text"]
-        assert "сброшены" in text
+        assert "отменены" in text
 
 
 class TestMessageCitizenUnknownCommand:
@@ -715,8 +742,8 @@ def _registered_resident_name(monkeypatch):
     """Routing unit cases start with a registered resident; name-gate cases
     are exercised with persisted state in test_resident_name_resume.py.
     """
-    from tests._helpers import fake_current_user
     from aemr_bot.handlers import resident_name_gate
+    from tests._helpers import fake_current_user
     user = SimpleNamespace(first_name="Анна", is_blocked=False, consent_pdn_at=True,
                            dialog_data={}, dialog_state="idle")
     monkeypatch.setattr(resident_name_gate, "current_user", fake_current_user(user))

@@ -18,7 +18,7 @@ async def settings_session():
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     async with engine.begin() as connection:
         await connection.execute(text(
-            "CREATE TABLE settings (key VARCHAR(64) PRIMARY KEY, value JSON, "
+            "CREATE TABLE settings (key VARCHAR(64) PRIMARY KEY, value JSON, revision BIGINT NOT NULL DEFAULT 1, "
             "updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, synced_at DATETIME)"
         ))
     try:

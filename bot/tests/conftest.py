@@ -132,3 +132,19 @@ async def session() -> AsyncIterator:
         yield s
         await s.rollback()
     await engine.dispose()
+
+
+@pytest.fixture(autouse=True)
+def _isolate_work_schedule_cache(monkeypatch):
+    """Each test has its own database/calendar; runtime snapshots cannot cross it."""
+    from aemr_bot.services import work_schedule
+
+    monkeypatch.setattr(work_schedule, "_active", None)
+    monkeypatch.setattr(work_schedule, "_legacy", None)
+
+
+@pytest.fixture(autouse=True)
+def _isolate_erasure_journal(monkeypatch, tmp_path):
+    """External deletion tombstones must never touch production/shared paths."""
+    from aemr_bot.config import settings
+    monkeypatch.setattr(settings, "erasure_state_dir", str(tmp_path / "erasure"))

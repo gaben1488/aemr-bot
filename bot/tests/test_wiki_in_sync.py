@@ -1,7 +1,7 @@
 """Anti-drift тест: собранная вика `docs/site/index.html` обязана точно
 совпадать со сборкой из фрагментов `docs/site/_kb2/*.html`.
 
-Зачем. Источник истины вики — десять фрагментов в `_kb2/`. Единый
+Зачем. Источник истины вики — 15 фрагментов в `_kb2/`. Единый
 `index.html` НЕ правится руками: его собирает `docs/site/_kb/_assemble.py`
 (каркас `_shell.html` + фрагменты). Раньше сборка запускалась вручную и
 ничем не проверялась, поэтому `index.html` однажды разошёлся с `_kb2`
@@ -13,7 +13,7 @@
     python docs/site/_kb/_assemble.py
 и закоммитить обновлённый `docs/site/index.html`.
 
-Заодно проверяем целостность сборки: все десять фрагментов на месте и ни
+Заодно проверяем целостность сборки: все 15 фрагментов на месте и ни
 одна внутренняя ссылка (`data-go`/`href="#..."`) не висит в пустоту.
 """
 
@@ -37,7 +37,7 @@ def _load_assemble():
 
 
 def test_assembler_finds_all_fragments() -> None:
-    """Все десять фрагментов `_kb2/*.html` на месте — сборка не «дырявая»."""
+    """Все 15 фрагментов `_kb2/*.html` на месте — сборка не «дырявая»."""
     _, missing, _ = _load_assemble().build()
     assert not missing, (
         "Отсутствуют фрагменты вики: " + ", ".join(missing) + ". Проверь docs/site/_kb2/."
@@ -56,10 +56,11 @@ def test_index_html_matches_assembled_fragments() -> None:
     """`index.html` на диске = сборка из текущих `_kb2`. Ловит дрейф."""
     expected, _, _ = _load_assemble().build()
     actual = INDEX_HTML.read_text(encoding="utf-8")
-    assert actual == expected, (
-        "docs/site/index.html рассинхронен с фрагментами docs/site/_kb2/*.\n"
-        "Источник истины — фрагменты; index.html собирается из них.\n"
-        "Почини так:\n"
-        "    python docs/site/_kb/_assemble.py\n"
-        "и закоммить обновлённый docs/site/index.html."
-    )
+    # Avoid pytest's quadratic multi-megabyte HTML/SVG diff on a mismatch.
+    # Equality remains byte-for-byte; only failure presentation is bounded.
+    if actual != expected:
+        raise AssertionError(
+            "docs/site/index.html рассинхронен с фрагментами docs/site/_kb2/*.\n"
+            "Пересоберите: python docs/site/_kb/_assemble.py\n"
+            "и закоммитьте docs/site/index.html."
+        )

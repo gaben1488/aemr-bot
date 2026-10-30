@@ -132,11 +132,13 @@ async def build_xlsx(session: AsyncSession, period: str) -> tuple[bytes, str, in
     operator_replies = await _load_last_operator_replies(
         session, [a.id for a in appeals]
     )
+    from aemr_bot.services.appeals import first_operator_reply_times
+    first_replies = await first_operator_reply_times(session, [a.id for a in appeals])
 
     # Построение workbook — синхронный CPU/IO-bound код (openpyxl).
     # На потолке в 10k строк это ощутимо; выносим в поток, чтобы не
     # блокировать event-loop бота на время генерации отчёта.
-    content = await asyncio.to_thread(_render_workbook, appeals, operator_replies)
+    content = await asyncio.to_thread(_render_workbook, appeals, operator_replies, first_replies)
     return content, title, len(appeals)
 
 
@@ -188,6 +190,7 @@ async def _load_last_operator_replies(
 def _render_workbook(
     appeals: list[Appeal],
     operator_replies: dict[int, str | None] | None = None,
+    first_replies: dict[int, datetime] | None = None,
 ) -> bytes:
     """Синхронная сборка XLSX. Работает только с уже загруженными
     данными (selectinload отработал в build_xlsx) — сессию не трогает,
@@ -198,7 +201,11 @@ def _render_workbook(
     материализации всей переписки). Если не передан (None) — поведение
     откатывается к чтению `a.messages`: так продолжают работать прямые
     вызовы _render_workbook (например, security-тесты formula-injection,
-    собирающие appeal со списком .messages вручную)."""
+        собирающие appeal со списком .messages вручную).
+    `first_replies` содержит времена первых ответов текущего периода,
+    выбранные одним агрегатным запросом. Без словаря используются только
+    уже загруженные сообщения; answered_at не заменяет время первого ответа.
+    """
     wb = Workbook()
     ws = wb.active
     ws.title = "Обращения"
@@ -215,8 +222,8 @@ def _render_workbook(
         "Суть",
         "Статус",
         "Ответ оператора",
-        "Время ответа, ч",
-        "В SLA (4ч)",
+        "До первого ответа, календарных ч",
+        "Первый ответ в срок периода",
         "Согласие на ПДн",
         "Согласие отозвано",
         "Подписан на рассылку",
@@ -244,20 +251,30 @@ def _render_workbook(
                 (m.text for m in reversed(a.messages) if m.direction == "from_operator"),
                 None,
             )
-        if a.answered_at and a.created_at:
-            # elapsed_hours — календарное время до ответа (факт «сколько
-            # реально прошло», интересен сам по себе). "В SLA" же —
-            # оценка просрочки и считается по РАБОЧЕМУ времени
-            # (services/sla.py), той же логикой, что и live-напоминалки
-            # cron'а: обращение, поступившее в пятницу вечером и
-            # отвеченное в понедельник утром, календарно «висело» почти
-            # трое суток, но по рабочим часам могло уложиться в SLA.
-            elapsed = (a.answered_at - a.created_at).total_seconds()
+        anchor = getattr(a, "sla_anchor_at", None) or a.created_at
+        if first_replies is not None:
+            first_reply = first_replies.get(a.id)
+        else:
+            # Only loaded messages are evidence; never lazy-load from this
+            # worker thread or infer a first reply from the final answered_at.
+            first_reply = min((m.created_at for m in getattr(a, "__dict__", {}).get("messages", [])
+                               if getattr(m, "direction", None) == "from_operator"
+                               and getattr(m, "created_at", None) is not None
+                               and anchor is not None and m.created_at >= anchor), default=None)
+        if first_reply is not None and anchor is not None:
+            elapsed = (first_reply - anchor).total_seconds()
             elapsed_hours = round(elapsed / 3600, 2)
-            overdue = sla_service.is_overdue(
-                a.created_at, a.answered_at, settings.sla_response_hours
-            )
-            in_sla = "нет" if overdue else "да"
+            from aemr_bot.services import work_schedule
+            from aemr_bot.services.appeals import response_hours_for
+            if getattr(a, "sla_hours_at_start", None) is None or getattr(a, "sla_schedule_at_start", None) is None:
+                in_sla = "Нет снимка срока или календаря"
+            else:
+                overdue = sla_service.is_overdue(
+                    anchor, first_reply,
+                    response_hours_for(a, settings.sla_response_hours),
+                    schedule=work_schedule.for_appeal(a),
+                )
+                in_sla = "нет" if overdue else "да"
         else:
             elapsed_hours = None
             in_sla = ""

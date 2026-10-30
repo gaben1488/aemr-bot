@@ -58,6 +58,11 @@ class TestParseArg:
 
 
 class TestShowOpMenu:
+    @pytest.fixture(autouse=True)
+    def _no_active_draft(self):
+        with patch("aemr_bot.services.operator_drafts.get", AsyncMock(return_value=None)):
+            yield
+
     @pytest.mark.asyncio
     async def test_no_operator_refused_menu_not_rendered(self) -> None:
         """P3-2 authz-гейт: нет операторской записи (не-оператор или вне
@@ -102,7 +107,7 @@ class TestShowOpMenu:
         event.bot.send_message.return_value = SimpleNamespace(
             message=SimpleNamespace(body=SimpleNamespace(mid="m-pin"))
         )
-        op = SimpleNamespace(role=OperatorRole.IT.value)
+        op = SimpleNamespace(id=7, role=OperatorRole.IT.value)
         with patch("aemr_bot.handlers.admin_panel.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.admin_panel.get_operator",
@@ -123,7 +128,7 @@ class TestShowOpMenu:
         event = _make_event()
         # Валидная операторская запись проводит через authz-гейт к
         # count/render-логике, которую этот тест и проверяет.
-        op = SimpleNamespace(role=OperatorRole.IT.value)
+        op = SimpleNamespace(id=7, role=OperatorRole.IT.value)
         kb = MagicMock(name="op_help_keyboard")
         with patch("aemr_bot.handlers.admin_panel.session_scope",
                    _fake_session_scope), \
@@ -152,7 +157,7 @@ class TestShowOpMenu:
         event.bot.pin_message.side_effect = RuntimeError("pin failed")
         # Оператор есть → гейт пройден, доходим до pin-логики (она и
         # проверяется этим тестом).
-        op = SimpleNamespace(role=OperatorRole.IT.value)
+        op = SimpleNamespace(id=7, role=OperatorRole.IT.value)
         with patch("aemr_bot.handlers.admin_panel.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.admin_panel.get_operator",
@@ -197,7 +202,7 @@ class TestRunOpenTickets:
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.admin_panel._do_open_tickets", do_open):
             await admin_panel.run_open_tickets(event)
-        do_open.assert_called_once_with(event)
+        do_open.assert_awaited_once_with(event, new=False)
 
 
 class TestRunDiag:
@@ -349,6 +354,7 @@ class TestDoOpenTickets:
         scalars_result = MagicMock()
         scalars_result.all = MagicMock(return_value=[])
         session = MagicMock()
+        session.scalar = AsyncMock(return_value=0)
         session.scalars = AsyncMock(return_value=scalars_result)
 
         @asynccontextmanager

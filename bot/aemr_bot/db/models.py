@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import StrEnum
+from uuid import uuid4
 
 from sqlalchemy import (
     DDL,
@@ -134,9 +135,12 @@ class User(Base):
     # «Согласен». 152-ФЗ ст. 9 ч. 3 возлагает доказывание согласия на
     # оператора; текст согласия правится через админ-UI, поэтому без
     # привязки к редакции доказать, под чем именно подписался житель,
-    # невозможно. Хеш даёт компактную несомненную привязку. NULL —
+    # невозможно. Хеш позволяет сверить редакции, но без сохранённого текста не восстанавливает его. NULL —
     # у согласий, данных до миграции 0022.
     consent_pdn_text_sha256: Mapped[str | None] = mapped_column(String(64))
+    # Only future acceptances can be reconstructed reliably. Existing users
+    # start with an empty list: never infer an old text from today's seed.
+    consent_records: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
     # Когда житель явно отозвал согласие через сценарий «Уйти из бота».
     # Используется как точка отсечения: по обращениям, принятым до отзыва,
     # оператор может дать финальный ответ через бот; новые обращения после
@@ -152,6 +156,8 @@ class User(Base):
     )
     dialog_state: Mapped[str] = mapped_column(String(32), default=DialogState.IDLE.value, server_default=DialogState.IDLE.value)
     dialog_data: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")
+    # A paused appeal draft survives /menu and is erased with its user.
+    appeal_draft: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
@@ -232,6 +238,11 @@ class Appeal(Base):
     address: Mapped[str | None] = mapped_column(String(500))
     topic: Mapped[str | None] = mapped_column(String(120))
     summary: Mapped[str | None] = mapped_column(Text)
+    content_erased_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    related_appeal_id: Mapped[int | None] = mapped_column(
+        ForeignKey("appeals.id", name="fk_appeals_related_appeal_id", ondelete="SET NULL"),
+        nullable=True,
+    )
     attachments: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
     # admin_message_id = mid ПЕРВОЙ публикации карточки (finalize).
     # Используется только как reply-link для relay вложений.
@@ -251,6 +262,15 @@ class Appeal(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
     answered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # An explicit reopen starts a new first-response period; NULL retains the
+    # original creation timestamp for rows predating this feature.
+    sla_anchor_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # First explicit taking-in-work is retention activity, not a new SLA period.
+    work_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # NULL for pre-existing periods whose original setting is unknown.
+    sla_hours_at_start: Mapped[int | None] = mapped_column()
+    sla_schedule_at_start: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    sla_history: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
     # True, если обращение закрыто из-за отзыва согласия или удаления
     # данных. Используется чтобы не показывать оператору кнопку
     # «🔁 Возобновить» — гард доставки всё равно откажет.
@@ -278,6 +298,13 @@ class Message(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     appeal_id: Mapped[int] = mapped_column(ForeignKey("appeals.id", ondelete="CASCADE"), index=True)
     direction: Mapped[str] = mapped_column(String(32))
+    # NULL means the historical response kind was not recorded.
+    response_kind: Mapped[str | None] = mapped_column(String(16))
+    # Only new records can distinguish MAX confirmation from human review.
+    delivery_source: Mapped[str | None] = mapped_column(String(16))
+    # NULL for historical records; follow-ups use pending/sending/sent/
+    # partial/unknown and warning states to avoid replaying uncertain requests.
+    admin_notice_state: Mapped[str | None] = mapped_column(String(16), index=True)
     text: Mapped[str | None] = mapped_column(Text)
     attachments: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
     max_message_id: Mapped[str | None] = mapped_column(String(64))
@@ -287,6 +314,36 @@ class Message(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     appeal: Mapped[Appeal] = relationship(back_populates="messages")
+
+
+class OperatorReplyDraft(Base):
+    """One durable composition per operator; a send claim is never auto-replayed."""
+
+    __tablename__ = "operator_reply_drafts"
+    operator_id: Mapped[int] = mapped_column(ForeignKey("operators.id", ondelete="CASCADE"), primary_key=True)
+    appeal_id: Mapped[int] = mapped_column(ForeignKey("appeals.id", ondelete="CASCADE"), index=True)
+    token: Mapped[str] = mapped_column(String(32), unique=True)
+    is_final: Mapped[bool] = mapped_column(Boolean)
+    state: Mapped[str] = mapped_column(String(16), default="editing", server_default="editing")
+    data: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class OperatorReplyAttempt(Base):
+    __tablename__ = "operator_reply_attempts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    appeal_id: Mapped[int] = mapped_column(ForeignKey("appeals.id", ondelete="CASCADE"), index=True)
+    operator_id: Mapped[int | None] = mapped_column(ForeignKey("operators.id", ondelete="SET NULL"))
+    source_key: Mapped[str | None] = mapped_column(String(255), unique=True)
+    text: Mapped[str | None] = mapped_column(Text)
+    attachments: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
+    is_final: Mapped[bool] = mapped_column(Boolean)
+    state: Mapped[str] = mapped_column(String(16), index=True)
+    max_message_id: Mapped[str | None] = mapped_column(String(64))
+    delivery_parts: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class Event(Base):
@@ -334,6 +391,7 @@ class Setting(Base):
 
     key: Mapped[str] = mapped_column(String(64), primary_key=True)
     value: Mapped[dict | list | str | int | float | bool | None] = mapped_column(JSONB)
+    revision: Mapped[int] = mapped_column(BigInteger, default=1, server_default="1")
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     # Время последней успешной выгрузки этого ключа в репозиторий через
     # services/repo_sync. NULL = «никогда не выгружался» или «изменён
@@ -341,6 +399,13 @@ class Setting(Base):
     # следующий PR. См. миграцию 0013_settings_synced_at и
     # docs/RUNBOOK.md.
     synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class PrivacyEpoch(Base):
+    """Non-identifying counter used to invalidate exports after erasure."""
+    __tablename__ = "privacy_epoch"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    generation: Mapped[int] = mapped_column(BigInteger, default=0, server_default="0")
 
 
 class BroadcastStatus(StrEnum):
@@ -501,3 +566,31 @@ class BroadcastTemplate(Base):
     last_used_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True)
     )
+
+
+class ErasureTombstone(Base):
+    """Pseudonymous deletion instruction; also mirrored outside database dumps."""
+
+    __tablename__ = "erasure_tombstones"
+    subject_digest: Mapped[str] = mapped_column(String(64), primary_key=True)
+    erased_before: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    backups_state: Mapped[str] = mapped_column(String(16), default="pending", server_default="pending")
+    last_error: Mapped[str | None] = mapped_column(String(64))
+
+
+class ResidentDataCopy(Base):
+    """Durable inventory of outbound MAX copies; never stores message bodies."""
+
+    __tablename__ = "resident_data_copies"
+    __table_args__ = (UniqueConstraint("message_id", name="uq_resident_data_copy_mid"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    external_key: Mapped[str] = mapped_column(String(36), default=lambda: str(uuid4()), unique=True)
+    subjects: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
+    appeal_id: Mapped[int | None] = mapped_column(index=True)
+    kind: Mapped[str] = mapped_column(String(32))
+    message_id: Mapped[str | None] = mapped_column(String(255))
+    # reserved precedes send; unresolved sends without an id remain visible.
+    state: Mapped[str] = mapped_column(String(16), default="reserved", server_default="reserved", index=True)
+    erase_requested: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    last_error: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

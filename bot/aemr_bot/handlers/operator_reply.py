@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
 import re
 import time as _time
@@ -19,6 +20,11 @@ from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import card_format, idempotency
 from aemr_bot.services import operators as operators_service
 from aemr_bot.utils import image_attachments as _image_attachments
+from aemr_bot.utils.attachments import (
+    _raw_attachments,
+    collect_attachments,
+    has_unsupported_appeal_attachments,
+)
 from aemr_bot.utils.event import (
     extract_message_id,
     get_chat_id,
@@ -69,21 +75,26 @@ async def _safe_admin_notice(event, text: str) -> None:
 
 def remember_reply_intent(
     operator_id: int, appeal_id: int, *, is_final: bool = True
-) -> None:
+) -> str:
     """Запомнить, что оператор собирается отвечать на обращение.
 
     is_final=True — финальный ответ, обращение перейдёт в ANSWERED.
     is_final=False — промежуточный ответ (диалог/уточнение), статус
     остаётся IN_PROGRESS.
     """
+    from secrets import token_hex
+
     from aemr_bot.services import wizard_registry as _wr
 
+    token = token_hex(8)
     _wr.set_reply_intent(
         operator_id,
         appeal_id,
         _time.monotonic() + _REPLY_INTENT_TTL_SEC,
         is_final=is_final,
+        token=token,
     )
+    return token
 
 
 def consume_reply_intent(
@@ -151,6 +162,17 @@ def _remember_successful_reply(operator_id: int, appeal_id: int, text: str) -> N
             _, t = _recent_replies[k]
             if t < cutoff:
                 _recent_replies.pop(k, None)
+
+
+def _reply_dedupe_text(event, text: str) -> str:
+    """Одинаковый текст с разными вложениями — разные ответы."""
+    body = getattr(getattr(event, "message", None), "body", None)
+    attachments = collect_attachments(body)
+    if not attachments:
+        return text
+    serialized = json.dumps(attachments, ensure_ascii=False, sort_keys=True, default=str)
+    digest = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+    return f"{text}\0{digest}"
 
 
 def _is_duplicate_reply(operator_id: int, appeal_id: int, text: str) -> bool:
@@ -248,23 +270,21 @@ def _reply_rejection_before_delivery(*, fresh_appeal, appeal_id: int) -> str | N
     перевешивает appeals на anonymous-user и физически удаляет запись
     жителя — объект в памяти оператора остался бы устаревшим.
 
-    Логика согласия (152-ФЗ ст. 21 ч. 5): после отзыва оператор может
-    дать финальный ответ только по обращению, ПРИНЯТОМУ до отзыва.
-      - is_blocked (включая заглушку удалённого жителя) — жёсткий отказ;
-      - нет согласия и обращение подано ПОСЛЕ revoked_at — отказ;
-      - согласия не было никогда — отказ;
-      - нет согласия, но обращение подано ДО revoked_at — доставка
-        разрешена как финальный ответ.
+    Автоматическая доставка требует действующего согласия. Дата подачи
+    обращения до отзыва сама по себе не доказывает иное правовое основание;
+    такую работу уполномоченный сотрудник рассматривает отдельно.
     """
     if fresh_appeal is None or fresh_appeal.user is None:
         return (
             f"⚠️ Не могу доставить ответ по обращению #{appeal_id}: "
             f"обращение или его автор не найдены."
         )
-    if fresh_appeal.status == AppealStatus.CLOSED.value:
+    if getattr(fresh_appeal, "content_erased_at", None) is not None:
+        return f"⚠️ Содержание обращения #{appeal_id} очищено. Создайте новое обращение."
+    if fresh_appeal.status in {AppealStatus.CLOSED.value, AppealStatus.ANSWERED.value}:
         return (
             f"⚠️ Не могу доставить ответ по обращению #{appeal_id}: "
-            f"обращение уже закрыто. Если ответ всё же нужен, "
+            f"обращение уже завершено. Если ответ всё же нужен, "
             f"сначала возобновите обращение через /reopen {appeal_id}."
         )
     user = fresh_appeal.user
@@ -275,21 +295,12 @@ def _reply_rejection_before_delivery(*, fresh_appeal, appeal_id: int) -> str | N
     # Легаси-записи стёртых жителей блокирует миграция 0024, служебная
     # заглушка создаётся заблокированной.
     hard_forbidden = user.is_blocked
-    revoked_after_appeal = (
-        user.consent_pdn_at is None
-        and user.consent_revoked_at is not None
-        and fresh_appeal.created_at is not None
-        and fresh_appeal.created_at >= user.consent_revoked_at
-    )
-    no_consent_ever = (
-        user.consent_pdn_at is None and user.consent_revoked_at is None
-    )
-    if hard_forbidden or revoked_after_appeal or no_consent_ever:
+    if hard_forbidden or user.consent_pdn_at is None:
         return (
             f"⚠️ Не могу доставить ответ по обращению #{appeal_id}: "
-            f"у жителя нет действующего согласия или данные уже удалены. "
-            f"Ответ через бот возможен только по обращению, принятому "
-            f"до отзыва согласия."
+            "нет действующего согласия, житель заблокирован или данные удалены. "
+            "Иное основание дальнейшей работы уполномоченный сотрудник "
+            "рассматривает отдельно; автоматическая отправка через бот остановлена."
         )
     return None
 
@@ -305,7 +316,7 @@ async def _check_reply_dedupe(
     проверок сохранён: сначала окно recent-success, затем persisted
     source-update.
     """
-    if _has_recent_successful_reply(operator.id, appeal.id, text):
+    if _has_recent_successful_reply(operator.id, appeal.id, _reply_dedupe_text(event, text)):
         log.info(
             "operator_reply: дубль за %.1fс отбит (recent-success) — "
             "operator=%s appeal=%s",
@@ -326,10 +337,10 @@ async def _check_reply_dedupe(
 
 
 async def _send_reply_to_citizen(
-    event, *, fresh_appeal, appeal_id: int, text: str
-) -> tuple[bool, str | None]:
-    """Доставить отформатированный ответ жителю. Возвращает
-    ``(delivered_ok, delivered_mid)``.
+    event, *, fresh_appeal, appeal_id: int, text: str, before_send=None,
+    stored_attachments: list | None = None, on_part=None
+) -> tuple[bool, str | None, list[dict]]:
+    """Доставить ответ и вернуть результат, ID и состав вложений.
 
     delivered_ok=False означает, что доставка не удалась и оператору
     уже отправлено предупреждение — вызывающему остаётся вернуть True.
@@ -350,9 +361,8 @@ async def _send_reply_to_citizen(
             (
                 f"⚠️ Ответ по обращению #{appeal_id} НЕ доставлен жителю: "
                 f"в тексте найдены ссылки на сторонние сайты "
-                f"({', '.join(bad_urls[:3])}{'…' if len(bad_urls) > 3 else ''}). "
-                f"Разрешены только официальные ресурсы: elizovomr.ru, "
-                f"kamgov.ru, gosuslugi.ru, kamchatka.gov.ru. "
+                f"(найдено: {len(bad_urls)}). "
+                "Используйте разрешённые ссылки из памятки оператора. "
                 f"Удалите ссылку или замените на гос-домен и повторите."
             ),
         )
@@ -361,74 +371,78 @@ async def _send_reply_to_citizen(
             "appeal=%s (count=%d)",
             appeal_id, len(bad_urls),
         )
-        return False, None
+        return False, None, []
 
     formatted_text = card_format.citizen_reply(fresh_appeal, text)
-    # Картинки оператора, если приложил — пробрасываем жителю рядом
-    # с inline-клавиатурой. Раньше здесь было жёсткое [:1] («один
-    # кадр-пояснение, не галерея») — снято по запросу владельца:
-    # оператору нужно прикладывать несколько фото к одному ответу
-    # (например, «было / стало» или несколько ракурсов проблемы).
-    # deserialize_for_relay в build_outbound устойчив к отсутствию
-    # maxapi (вернёт []), бот не падает.
-    #
-    # Лимит — cfg.attachments_per_relay_message (10), а НЕ полный
-    # безлимит: это одно сообщение MAX (текст + клавиатура + вложения),
-    # а не relay-поток из admin_relay.py, который умеет чанковать на
-    # несколько сообщений. Резать на несколько сообщений здесь
-    # означало бы либо дублировать клавиатуру/текст в каждом чанке,
-    # либо оторвать кнопки от части картинок — оба варианта хуже
-    # простого потолка в 10 картинок на один ответ, чего с огромным
-    # запасом хватает на любой реалистичный случай.
-    all_operator_images = _image_attachments.image_attachments_from_event(
-        event, limit=0
-    )
-    operator_images = all_operator_images[: cfg.attachments_per_relay_message]
-    outbound_images = _image_attachments.build_outbound_image_attachments(
-        operator_images
-    )
-    try:
-        # ВАЖНО: доставляем по user_id (а не chat_id) — chat_id личного
-        # диалога жителя мы не храним, только MAX user_id.
-        sent = await event.bot.send_message(
-            user_id=target_user_id,
-            text=formatted_text,
-            attachments=[*outbound_images, keyboards.back_to_menu_keyboard()],
-        )
-    except Exception as exc:
-        # В админ-чат — только имя класса исключения: `repr(exc)` из
-        # maxapi часто содержит тело запроса (текст ответа, user_id),
-        # которое осело бы в истории админ-группы. Полный стек — в логах.
-        log.exception(
-            "operator_reply: delivery failed for appeal=%s user_id=%s",
-            appeal_id, target_user_id,
-        )
+    from aemr_bot.utils.text_pages import fits_max_message
+    if not fits_max_message(formatted_text):
         await _safe_admin_notice(
-            event,
-            (
-                f"⚠️ Не удалось доставить ответ жителю по обращению "
-                f"#{appeal_id} ({type(exc).__name__}). Возможно, житель "
-                f"удалил диалог или заблокировал бота. Обращение остаётся "
-                f"в работе."
-            ),
+            event, f"⚠️ Ответ по обращению #{appeal_id} не отправлен: вместе с "
+            "заголовком он превышает размер сообщения MAX. Сократите текст и отправьте заново.",
         )
-        return False, None
-    # Уведомление оператору, если он приложил больше, чем уходит одним
-    # сообщением (cfg.attachments_per_relay_message). Шлём ПОСЛЕ
-    # успешной доставки, чтобы не блокировать сам ответ при сбое
-    # admin-канала; _safe_admin_notice проглатывает свои исключения.
-    if len(all_operator_images) > len(operator_images):
-        await _safe_admin_notice(
-            event,
-            (
-                f"ℹ️ К ответу по обращению #{appeal_id} были приложены "
-                f"{len(all_operator_images)} картинок — жителю ушли первые "
-                f"{len(operator_images)} (лимит одного сообщения). Если "
-                f"нужно отправить остальные — пришлите их отдельным ответом "
-                f"на карточку обращения."
-            ),
-        )
-    return True, extract_message_id(sent)
+        return False, None, []
+    body = getattr(getattr(event, "message", None), "body", None)
+    operator_attachments = (collect_attachments(body) if stored_attachments is None
+                            else stored_attachments)
+    if stored_attachments is None and (
+        has_unsupported_appeal_attachments(body)
+        or len(operator_attachments) != len(_raw_attachments(body))
+    ):
+        await _safe_admin_notice(event, "Ответ не отправлен: приложите фото, видео или документы.")
+        return False, None, []
+    if len(operator_attachments) > 20:
+        await _safe_admin_notice(event, "Ответ не отправлен: можно приложить до 20 файлов.")
+        return False, None, []
+    outbound_attachments = _image_attachments.deserialize_for_relay(operator_attachments)
+    if len(outbound_attachments) != len(operator_attachments):
+        await _safe_admin_notice(event, "Ответ не отправлен: часть вложений недоступна. Приложите их заново.")
+        return False, None, []
+    from aemr_bot.services.admin_relay import _chunk_relayable
+    batches = _chunk_relayable(outbound_attachments, media_limit=11) or [[]]
+    if before_send is not None:
+        try:
+            reserved = await before_send(operator_attachments)
+        except Exception as exc:
+            log.warning("operator reply could not be reserved (%s)", type(exc).__name__)
+            await _safe_admin_notice(event, f"⚠️ Ответ по обращению #{appeal_id} не отправлен: не удалось сохранить попытку. Попробуйте позже.")
+            return False, None, []
+        if not reserved:
+            await _safe_admin_notice(event, f"⚠️ Этот ответ по обращению #{appeal_id} уже обрабатывался. Проверьте историю и диагностику перед повтором.")
+            return False, None, []
+    first_mid = None
+    for index, batch in enumerate(batches):
+        try:
+            # Commit the part claim before MAX. A timeout or crash must leave
+            # the exact uncertain part visible, without sending later parts.
+            if on_part is not None:
+                await on_part(index, "sending", None)
+            from aemr_bot.services import data_erasure
+            sent = await data_erasure.tracked_send(event.bot, kind="operator_part",
+                appeal_id=appeal_id, max_user_ids=[target_user_id],
+                user_id=target_user_id,
+                text=formatted_text if index == 0 else (
+                    f"📎 Вложения к ответу по обращению № {appeal_id} · "
+                    f"часть {index + 1}/{len(batches)}"
+                ),
+                attachments=[*batch, keyboards.back_to_menu_keyboard()],
+            )
+            delivered_mid = extract_message_id(sent)
+            if not delivered_mid:
+                raise RuntimeError("missing_message_id")
+            if on_part is not None:
+                await on_part(index, "confirmed", delivered_mid)
+            first_mid = first_mid or delivered_mid
+        except Exception as exc:
+            log.warning("operator reply part %d/%d uncertain for appeal=%s (%s)",
+                        index + 1, len(batches), appeal_id, type(exc).__name__)
+            await _safe_admin_notice(
+                event, f"⚠️ Результат доставки части {index + 1}/{len(batches)} ответа "
+                f"по обращению #{appeal_id} неизвестен. Ранее подтверждено частей: {index}. "
+                "Следующие части не отправлены. Проверьте переписку и журнал доставки "
+                "перед повторной отправкой; статус обращения пока не изменён.",
+            )
+            return False, None, []
+    return True, first_mid, operator_attachments
 
 
 async def _persist_reply_and_card(
@@ -439,7 +453,9 @@ async def _persist_reply_and_card(
     operator,
     audit_action: str,
     delivered_mid: str | None,
+    attachments: list[dict],
     is_final: bool = True,
+    attempt_id: int | None = None,
 ):
     """Записать доставленный ответ в БД + audit_log, подготовить данные
     для обновления админ-карточки.
@@ -451,6 +467,14 @@ async def _persist_reply_and_card(
     """
     try:
         async with session_scope() as session:
+            if attempt_id is not None:
+                from aemr_bot.services import operator_reply_attempts
+                recorded = await operator_reply_attempts.record_confirmed(
+                    session, attempt_id, mid=delivered_mid, audit_action=audit_action,
+                )
+                if not recorded:
+                    raise RuntimeError("confirmed reply could not be recorded")
+                return True
             appeal_full = await appeals_service.get_by_id(session, appeal_id)
             if appeal_full is None:
                 log.warning(
@@ -473,6 +497,7 @@ async def _persist_reply_and_card(
                 operator_id=operator.id,
                 max_message_id=delivered_mid,
                 is_final=is_final,
+                attachments=attachments,
             )
             await operators_service.write_audit(
                 session,
@@ -512,6 +537,33 @@ async def _deliver_operator_reply(
     text: str,
     audit_action: str,
     is_final: bool = True,
+    composition: dict | None = None,
+) -> bool:
+    # Erasure takes the local resident gate then the exclusive privacy lock.
+    # Use the same order here and hold the shared database lock through MAX
+    # delivery and the local write, including across independent processes.
+    from aemr_bot.services import appeal_locks, privacy_epoch
+    from aemr_bot.utils.resident_lifecycle import guard
+
+    resident_id = getattr(getattr(appeal, "user", None), "max_user_id", None)
+    async with guard(resident_id), session_scope() as privacy_session:
+        await privacy_epoch.hold_delivery(privacy_session)
+        await appeal_locks.hold(privacy_session, appeal.id)
+        return await _deliver_operator_reply_guarded(
+            event, appeal=appeal, operator=operator, text=text,
+            audit_action=audit_action, is_final=is_final, composition=composition,
+        )
+
+
+async def _deliver_operator_reply_guarded(
+    event,
+    *,
+    appeal,
+    operator,
+    text: str,
+    audit_action: str,
+    is_final: bool = True,
+    composition: dict | None = None,
 ) -> bool:
     """Общий путь доставки ответа оператора жителю.
 
@@ -563,11 +615,16 @@ async def _deliver_operator_reply(
     # Используем свежую запись оператора во всех дальнейших шагах.
     operator = live_operator
 
-    is_dupe, success_key = await _check_reply_dedupe(
-        event, operator=operator, appeal=appeal, text=text
-    )
-    if is_dupe:
-        return True
+    if composition is not None:
+        success_key = "reply_draft:" + composition["token"]
+        if await _is_reply_success_recorded(success_key):
+            return True
+    else:
+        is_dupe, success_key = await _check_reply_dedupe(
+            event, operator=operator, appeal=appeal, text=text
+        )
+        if is_dupe:
+            return True
 
     # Перечитываем обращение свежей сессией прямо перед отправкой —
     # защита от гонки с erase_pdn / закрытием, пока оператор печатал.
@@ -582,11 +639,41 @@ async def _deliver_operator_reply(
         )
         return True
 
-    delivered_ok, delivered_mid = await _send_reply_to_citizen(
-        event, fresh_appeal=fresh_appeal, appeal_id=appeal.id, text=text
+    from aemr_bot.services import operator_reply_attempts
+    attempt_id = None
+
+    async def reserve_attempt(attachments):
+        nonlocal attempt_id
+        attempt_id = await operator_reply_attempts.reserve(
+            appeal_id=appeal.id, operator_id=operator.id, source_key=success_key,
+            text=text, attachments=attachments, is_final=is_final,
+        )
+        return attempt_id is not None
+
+    async def note_part(index, state, mid):
+        if attempt_id is not None:
+            await operator_reply_attempts.note_part(attempt_id, index, state, mid)
+
+    delivered_ok, delivered_mid, delivered_attachments = await _send_reply_to_citizen(
+        event, fresh_appeal=fresh_appeal, appeal_id=appeal.id, text=text,
+        before_send=reserve_attempt,
+        stored_attachments=composition.get("attachments", []) if composition is not None else None,
+        on_part=note_part,
     )
     if not delivered_ok:
+        if attempt_id is not None:
+            try:
+                await operator_reply_attempts.mark_unknown(attempt_id)
+            except Exception:
+                log.warning("could not mark reply attempt outcome unknown", exc_info=True)
         return True
+    if attempt_id is not None and delivered_mid:
+        try:
+            await operator_reply_attempts.mark_confirmed(attempt_id, delivered_mid)
+        except Exception:
+            # The local write below can still record the confirmed response;
+            # if it also fails the saved attempt remains visibly uncertain.
+            log.warning("could not mark reply attempt confirmed", exc_info=True)
 
     persisted = await _persist_reply_and_card(
         event,
@@ -595,13 +682,16 @@ async def _deliver_operator_reply(
         operator=operator,
         audit_action=audit_action,
         delivered_mid=delivered_mid,
+        attachments=delivered_attachments,
         is_final=is_final,
+        attempt_id=attempt_id,
     )
     if persisted is None:
         return True
 
     await _mark_reply_success_recorded(success_key)
-    _remember_successful_reply(operator.id, appeal.id, text)
+    if composition is None:
+        _remember_successful_reply(operator.id, appeal.id, _reply_dedupe_text(event, text))
 
     # DDD sacred event log (2026-05-26): ответ оператора — это **event**
     # в timeline'е обращения. Должна быть НОВАЯ карточка внизу чата с
@@ -643,48 +733,28 @@ async def _deliver_operator_reply(
             "operator_reply: admin_card.render failed for #%s", appeal.id
         )
 
-    # Развязка финального и промежуточного ответа. До этого фикса
-    # промежуточный ответ показывал «обращение #N закрыто» — регрессия,
-    # путала оператора (житель остаётся в работе, но карточка говорит
-    # обратное).
-    #
-    # is_final=True: отдельная карточка-подтверждение (ADMIN_REPLY_
-    # DELIVERED_FINAL, «Финальный ответ отправлен жителю…») убрана по
-    # решению владельца — она дублировала свежий event_header карточки
-    # обращения выше (`reply_event_header`, «✉️ Финальный ответ отправлен
-    # по обращению #N — статус «Завершено»», строка ~629), который
-    # `admin_card_service.render` уже опубликовал только что. Оператору
-    # достаточно ОДНОГО подтверждения, не двух карточек подряд с одним
-    # и тем же смыслом. Перевод статуса, обновление карточки обращения
-    # и запись в audit_log происходят раньше (см. `_persist_reply_and_card`
-    # выше) и этой правкой не затронуты.
-    #
-    # is_final=False: отдельное сообщение оставлено — оно несёт другую
-    # информацию («остаётся в работе, можно дослать уточнения»), которой
-    # нет в event_header промежуточного ответа.
-    if not is_final:
-        confirm_text = texts.ADMIN_REPLY_DELIVERED_INTERMEDIATE.format(
-            number=appeal.id
-        )
-        await event.bot.send_message(
-            chat_id=get_chat_id(event),
-            text=confirm_text,
-            attachments=[keyboards.op_back_to_menu_keyboard()],
-        )
+    # Событийная карточка уже содержит тип ответа и актуальный статус.
+    # Дополнительное подтверждение дублировало её в служебном чате.
+    # При неизвестном исходе публикации карточки не повторяем запрос MAX.
     return True
 
 
 async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
-    """Оператор ответил на карточку в админ-группе свайпом/«Ответить».
+    """Обработать сообщение оператора в служебной группе.
 
-    Возвращает True, если обработано, и False, если сообщение вообще не было
-    ответом (чтобы диспетчер мог перенаправить его дальше — на данный момент никуда).
+    Сначала operator_draft.collect сохраняет часть активного устойчивого
+    черновика. Доставка такого ответа требует отдельного подтверждения
+    с актуальным токеном. Затем обрабатываются совместимые старые
+    reply-intent и свайп-ответы на карточки; для них сохраняются проверки
+    цели, роли и дедупликации перед доставкой.
 
-    Сначала смотрим, есть ли «намерение ответить» от кнопки «✉️ Ответить»
-    под карточкой обращения. Если есть — следующий текст оператора в
-    админ-группе уходит как ответ по этому обращению, без свайпа и без
-    /reply N. Это третий путь ответа после свайпа и команды.
+    True означает обработанное сообщение, False позволяет диспетчеру
+    продолжить маршрутизацию.
     """
+    from aemr_bot.handlers import operator_draft
+    if await operator_draft.collect(event, body, text):
+        return True
+
     author_id = get_user_id(event)
     if author_id is not None:
         intent = consume_reply_intent(author_id)

@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import functools
+import hashlib
+import json
 import logging
 from collections.abc import Awaitable, Callable
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -25,13 +27,11 @@ from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import sla as sla_service
-from aemr_bot.services import stats as stats_service
 from aemr_bot.services import threat_intel
 from aemr_bot.services import users as users_service
 from aemr_bot.services.backup_verify import (
     verify_latest_backup as _verify_latest_backup,
 )
-from aemr_bot.services.calendar_ru import is_workday
 from aemr_bot.services.db_backup import backup_db as _backup_db
 
 log = logging.getLogger(__name__)
@@ -78,33 +78,30 @@ _SELFCHECK_HEALTHY = {"healthy": True}
 # параметр безвреден — там тик раз в 86400 сек.
 _MISFIRE_GRACE_SEC = 120
 
-_ADMIN_SEND_RETRY_DELAYS_SEC = (2, 5, 10)
-
 
 # ---- Module-level helpers (вынесены из build_scheduler для тестируемости) ----
 
 
-def _format_appeal_lines(appeals: list, *, max_rows: int = 10) -> list[str]:
-    """Унифицированный рендер строк «# id · имя · локалити · висит Nч»
-    для напоминалок. Список ограничен max_rows; если приходится
-    обрезать — добавляется хвостик «… ещё K».
-    """
+def _format_appeal_lines(appeals: list, *, max_rows: int = 10,
+                         anchors: dict[int, datetime] | None = None) -> list[str]:
+    """Show elapsed working time, with the relevant response-period anchor."""
+    from aemr_bot.services import work_schedule
+
     now = datetime.now(TZ)
     lines: list[str] = []
     for ap in appeals[:max_rows]:
-        created_local = (
-            ap.created_at.astimezone(TZ) if ap.created_at else now
-        )
-        age_h = int((now - created_local).total_seconds() // 3600)
+        anchor = ((anchors or {}).get(ap.id) or getattr(ap, "sla_anchor_at", None)
+                  or ap.created_at or now)
+        elapsed = sla_service.business_seconds_between(
+            anchor, now, schedule=work_schedule.for_appeal(ap),
+        ) / 3600
         name = (ap.user.first_name or "—") if ap.user else "—"
-        lines.append(
-            f"• #{ap.id} · {name} · {ap.locality or '—'} · "
-            f"висит {age_h}ч"
-        )
+        description = "после первого ответа" if anchors and ap.id in anchors else "с начала периода"
+        lines.append(f"• #{ap.id} · {name} · {ap.locality or '—'} · "
+                     f"{description}: {elapsed:.1f} рабочих ч")
     if len(appeals) > max_rows:
         lines.append(f"… ещё {len(appeals) - max_rows}.")
     return lines
-
 
 async def _send_with_open_tickets_button(bot, text: str) -> None:
     """Сообщение в админ-группу с кнопкой «📋 Открытые обращения»
@@ -137,6 +134,19 @@ async def _send_with_open_tickets_button(bot, text: str) -> None:
         log.exception("send admin reminder with button failed")
 
 
+async def _claim_reminder_snapshot(name: str, groups: list[list[int]], total: int) -> bool:
+    """Notify on changed queue or once on a new working day, never every tick."""
+    from aemr_bot.services import alert_state
+
+    if not settings.admin_group_id:
+        return False
+    signature = hashlib.sha256(json.dumps(
+        [datetime.now(TZ).date().isoformat(), total, groups], separators=(",", ":"),
+    ).encode()).hexdigest()
+    async with session_scope() as session:
+        return await alert_state.claim_snapshot(session, name, signature)
+
+
 async def _send_admin_text_with_retry(
     send_admin_text,
     text: str,
@@ -144,12 +154,7 @@ async def _send_admin_text_with_retry(
     context: str,
     critical: bool = False,
 ) -> bool:
-    """Отправить служебное сообщение в админ-группу с коротким retry.
-
-    Пульс и сообщение о рестарте не должны теряться из-за одного
-    сетевого сбоя MAX, короткого rate-limit или задержки сразу после
-    старта контейнера. Если все попытки не удались, job не роняет
-    scheduler-loop, но оставляет понятный лог.
+    """Однократная отправка с подтверждением по идентификатору MAX.
 
     `critical=True` пробрасывается в `send_admin_text` и заставляет
     `admin_bus.send` игнорировать quiet режим. Используется для алёртов
@@ -158,27 +163,16 @@ async def _send_admin_text_with_retry(
     потерянный бэкап замолчат до утра понедельника.
     См. SECURITY_REVIEW_2026-05-28 §A1.
     """
-    attempts = len(_ADMIN_SEND_RETRY_DELAYS_SEC) + 1
-    for attempt in range(1, attempts + 1):
-        try:
-            await send_admin_text(text, critical=critical)
-            return True
-        except Exception:
-            if attempt >= attempts:
-                log.exception(
-                    "%s: не удалось отправить служебное сообщение после %d попыток",
-                    context, attempts,
-                )
-                return False
-            delay = _ADMIN_SEND_RETRY_DELAYS_SEC[attempt - 1]
-            log.warning(
-                "%s: отправка служебного сообщения не удалась, повтор через %s сек. "
-                "Попытка %d/%d",
-                context, delay, attempt, attempts,
-                exc_info=True,
-            )
-            await asyncio.sleep(delay)
-    return False
+    # A timeout can mean MAX accepted the message but the response was lost.
+    # Repeating a changing request blindly would create duplicates.
+    try:
+        confirmed = bool(await send_admin_text(text, critical=critical))
+    except Exception:
+        log.exception("%s: результат отправки не подтверждён", context)
+        return False
+    if not confirmed:
+        log.warning("%s: результат отправки не подтверждён", context)
+    return confirmed
 
 
 # ============================================================================
@@ -468,7 +462,15 @@ async def _job_threat_intel_refresh(send_admin_text) -> None:
     # оператору важнее всего узнать о проблеме.
     try:
         store = threat_intel.get_store()
-        if store.is_stale() and not getattr(store, "outage_notified", False):
+        from aemr_bot.services import alert_state
+
+        if store.is_stale():
+            # Commit the claim before sending: even a process crash during
+            # the request must not result in an automatic duplicate.
+            async with session_scope() as session:
+                claimed = await alert_state.claim(session, "threat_intel")
+            if not claimed:
+                return
             sent = await _send_admin_text_with_retry(
                 send_admin_text,
                 (
@@ -482,10 +484,13 @@ async def _job_threat_intel_refresh(send_admin_text) -> None:
                 context="threat-intel-stale",
                 critical=True,
             )
-            if sent:
-                store.outage_notified = True
-                await asyncio.to_thread(threat_intel.save_cache, store)
-        elif not store.is_stale():
+            async with session_scope() as session:
+                await alert_state.finish(session, "threat_intel", confirmed=sent)
+            store.outage_notified = sent
+            await asyncio.to_thread(threat_intel.save_cache, store)
+        else:
+            async with session_scope() as session:
+                await alert_state.clear(session, "threat_intel")
             store.outage_notified = False
     except Exception:
         log.exception("threat-intel staleness alert failed")
@@ -651,25 +656,41 @@ async def _job_monthly_report(send_admin_document) -> None:
         if not notify_toggles.is_enabled("admin_notify_monthly_stats"):
             log.debug("monthly-stats: admin_notify_monthly_stats disabled, suppressed")
             return
+        from datetime import UTC, timedelta
+
+        from aemr_bot.services import complete_stats, privacy_epoch
+
+        now = datetime.now(TZ)
+        current_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        previous_month = (current_month - timedelta(days=1)).replace(day=1)
+        title = f"за {previous_month:%m.%Y}"
+        window = (previous_month.astimezone(UTC), current_month.astimezone(UTC), title)
         async with session_scope() as session:
-            content, title, count = await stats_service.build_xlsx(session, "month")
-        filename = f"appeals_month_{datetime.now(TZ):%Y-%m-%d}.xlsx"
-        await send_admin_document(
-            filename=filename,
-            content=content,
-            caption=f"📊 Статистика {title} ({count} обращений)",
-        )
+            content, title, count, epoch = await complete_stats.build_xlsx_with_epoch(
+                session, "month", window=window
+            )
+        filename = f"appeals_month_{previous_month:%Y-%m}.xlsx"
+        async with session_scope() as guard_session:
+            if not await privacy_epoch.hold_export_if_current(guard_session, epoch):
+                log.warning("monthly report suppressed: data erased while preparing")
+                return
+            await send_admin_document(
+                filename=filename,
+                content=content,
+                caption=f"📊 Статистика {title} ({count} обращений)",
+            )
     except Exception:
         log.exception("monthly report failed")
 
 
 async def _job_pulse(send_admin_text) -> None:
-    """Шлёт в служебную группу короткое подтверждение «бот жив».
+    """Шлёт включённый пульс в группу не чаще одного раза в сутки.
 
     Текущее расписание (после унификации 2026-05-22):
     • `pulse-hourly` — каждый час 24/7 в `:05` (базовый heartbeat).
-    • `pulse-workhours-extra` — пн–пт 09:00–17:59 в `:35`
-      (дополнительный пинг в рабочее время).
+    • `pulse-workhours-extra` — пн–пт 09:00–17:59 в `:35`.
+    Оба задания проверяют общую суточную отметку, а не отправляют два
+    сообщения каждый час.
 
     Это второй контур мониторинга поверх selfcheck: selfcheck ловит
     зависший event-loop, а пульс показывает дежурному, что процесс
@@ -715,6 +736,15 @@ async def _job_pulse(send_admin_text) -> None:
         # обновиться. Пульс всё равно шлём (fail-open — недоступность
         # хуже, чем лишнее уведомление).
         log.warning("pulse: quiet_hours check failed, отправляем", exc_info=True)
+    # The two scheduler ticks provide catch-up opportunities, not two
+    # chat messages per hour. Reserve the daily notification before the
+    # request: an unknown MAX result must not trigger an automatic resend.
+    try:
+        if not await _claim_reminder_snapshot("daily-pulse", [], 0):
+            return
+    except Exception:
+        log.warning("pulse: unable to reserve daily notification", exc_info=True)
+        return
     now = datetime.now(TZ).strftime("%H:%M")
     sent = await _send_admin_text_with_retry(
         send_admin_text,
@@ -786,10 +816,8 @@ async def _job_appeals_5y_retention(send_admin_text) -> None:
 async def _warn_about_approaching_pdn_deadline(send_admin_text) -> None:
     """Предупредить оператора о жителях, чей срок уничтожения ПДн близок.
 
-    Уничтожение по истечении 30 дней после отзыва согласия безусловно и
-    закрывает открытые обращения БЕЗ ответа. Само по себе это законно
-    (152-ФЗ ст. 21 ч. 5 не даёт продлевать срок), но узнавать об этом
-    постфактум оператору незачем: пока неделя есть, ответить ещё можно.
+    Запланированная очистка закроет открытые обращения без ответа. Наличие
+    иных оснований обработки и порядок ответа оценивает ответственное лицо.
 
     Предупреждаем только по тем, у кого реально остались открытые
     обращения — иначе алёрт превратится в шум и его перестанут читать.
@@ -805,67 +833,60 @@ async def _warn_about_approaching_pdn_deadline(send_admin_text) -> None:
             )
         if not approaching:
             return
-        pending: list[int] = []
-        for max_user_id in approaching:
-            async with session_scope() as session:
-                user = await users_service.find_by_max_id(session, max_user_id)
-                if user is None:
-                    continue
-                if await users_service.has_open_appeals(session, user.id):
-                    pending.append(max_user_id)
-        if not pending:
+        from sqlalchemy import func, select
+
+        from aemr_bot.db.models import Appeal, AppealStatus, User
+
+        async with session_scope() as session:
+            condition = (
+                User.max_user_id.in_(approaching),
+                Appeal.status.in_([AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]),
+            )
+            count = await session.scalar(
+                select(func.count()).select_from(Appeal).join(User).where(*condition)
+            ) or 0
+            appeal_ids = list(await session.scalars(
+                select(Appeal.id).join(User).where(*condition).order_by(Appeal.id).limit(20)
+            ))
+        if not count:
             return
-        ids = ", ".join(str(uid) for uid in pending[:20])
-        more = f" и ещё {len(pending) - 20}" if len(pending) > 20 else ""
+        ids = ", ".join(f"№ {appeal_id}" for appeal_id in appeal_ids)
+        more = f" и ещё {count - 20}" if count > 20 else ""
         await send_admin_text(
             f"⏳ Скоро истекает срок хранения данных по отозванным "
             f"согласиям — осталось не больше {PDN_DEADLINE_WARN_DAYS} дней.\n"
-            f"У этих жителей есть неотвеченные обращения: {ids}{more}.\n"
-            f"Если не ответить, обращения закроются без ответа: по закону "
-            f"данные придётся уничтожить.",
+            f"Открытые обращения: {ids}{more}.\n"
+            f"Проверьте порядок дальнейшей работы: при очистке рабочей базы "
+            f"открытые обращения будут закрыты без ответа.",
             critical=True,
         )
     except Exception:
         log.exception("pdn_deadline_warning failed")
 
 
-async def _job_pdn_retention_check(send_admin_text) -> None:
-    """152-ФЗ ст. 21 ч. 5: после отзыва согласия оператор обязан
-    прекратить обработку и уничтожить ПДн в срок 30 дней.
+async def _job_pdn_retention_check(send_admin_text, *, warn: bool = True) -> None:
+    """Очищать отозванные данные в рабочей базе с запасом до 30 дней.
 
-    Раз в сутки ищем жителей, у которых consent_revoked_at старше 30
-    дней, и уничтожаем их персоналку (erase_pdn).
-
-    ПРО ОТКРЫТЫЕ ОБРАЩЕНИЯ. Раньше житель с обращением в NEW/IN_PROGRESS
-    пропускался «до следующего дня» — и так бессрочно, пока оператор не
-    ответит. Замысел был добрый (дать дослать финальный ответ тому, кто
-    выбрал «попрощаться, но дождаться ответа»), но результат — нарушение:
-    выборка берёт тех, у кого 30 дней УЖЕ истекли, значит пропуск тянул
-    срок за пределы, отведённые законом. Причём тихо: ни ошибки, ни
-    алёрта, просто счётчик skipped_open в логе.
-
-    Закон не даёт продлевать срок из-за того, что оператор не успел.
-    Тридцать дней — это и есть окно на финальный ответ. Поэтому теперь
-    уничтожаем безусловно: erase_pdn сам закроет открытые обращения
-    (closed_due_to_revoke=True), а оператор получит отдельный critical-
-    алёрт со списком — чтобы знал, что обращения закрылись без ответа
-    из-за истечения срока, и мог сделать выводы о скорости работы.
+    По установленной конфигурации поиск начинается через 29 дней и
+    повторяется каждый час. Открытые обращения закрываются без ответа;
+    оператор получает предупреждение. Недоступность сервиса может задержать
+    выполнение, поэтому срок требует организационного контроля. Наличие
+    самостоятельного правового основания обработки оценивается отдельно.
     """
     # Pre-deadline warnings must not depend on already overdue rows or cleanup.
-    await _warn_about_approaching_pdn_deadline(send_admin_text)
+    if warn:
+        await _warn_about_approaching_pdn_deadline(send_admin_text)
     try:
 
         async with session_scope() as session:
             candidates = await users_service.find_pending_pdn_retention(
-                session, days_after_revoke=30
+                session, days_after_revoke=29
             )
         if not candidates:
             return
         log.info("pdn_retention: %d жителей под обезличивание", len(candidates))
         erased = 0
-        erased_ids: list[int] = []
         skipped_open = 0
-        closed_unanswered: list[int] = []
         for max_user_id in candidates:
             try:
                 async with session_scope() as session:
@@ -887,25 +908,22 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
                     had_open = await users_service.has_open_appeals(
                         session, user.id
                     )
-                    if had_open:
-                        skipped_open += 1
-                        closed_unanswered.append(max_user_id)
-                    ok = await users_service.erase_pdn(session, max_user_id)
+                    ok = await users_service.erase_pdn(
+                        session, max_user_id, revoked_before=datetime.now(TZ) - timedelta(days=29),
+                    )
                     if ok:
                         await operators_service.write_audit(
                             session,
                             operator_max_user_id=None,
                             action="auto_erase_pdn_retention",
-                            target=f"user max_id={max_user_id}",
-                            details={"reason": "152-FZ ст.21 ч.5, 30 дней после отзыва"},
+                            target=None,
+                            details={"reason": "очистка после отзыва согласия; запас до предельного срока"},
                         )
                         erased += 1
-                        erased_ids.append(max_user_id)
+                        if had_open:
+                            skipped_open += 1
             except Exception:
-                log.exception(
-                    "pdn_retention: не удалось обезличить max_user_id=%s",
-                    max_user_id,
-                )
+                log.exception("pdn_retention: не удалось очистить запись жителя")
         # critical=True (sec/A1): уничтожение ПДн по отзыву согласия —
         # compliance-критичное событие. Cron 0 6 * * * попадает в default
         # quiet окно [18, 9). Без critical ответственный не узнает, что
@@ -914,36 +932,20 @@ async def _job_pdn_retention_check(send_admin_text) -> None:
         # ст. 21 ч. 5 задаёт срок уничтожения (30 дней), но требования
         # уведомлять ответственное лицо в ней нет — не приписываем закону
         # того, чего он не говорит.
-        for erased_id in erased_ids:
-            unanswered_note = (
-                "\n⚠️ У жителя оставались открытые обращения — они закрыты "
-                "БЕЗ ответа, потому что 30-дневный срок уничтожения истёк."
-                if erased_id in closed_unanswered
-                else ""
-            )
-            await _send_admin_text_with_retry(
-                send_admin_text,
-                (
-                    "🛡 Данные по отозванному согласию уничтожены.\n"
-                    f"MAX user id: {erased_id}\n"
-                    "Основание: 152-ФЗ ст. 21 ч. 5 — прошло 30 дней после "
-                    "отзыва согласия." + unanswered_note
-                ),
-                context="pdn_retention",
-                critical=True,
-            )
-        if erased:
+        if skipped_open:
             tail = (
                 f" Из них {skipped_open} — с обращениями, закрытыми без "
-                f"ответа: не успели ответить в отведённые 30 дней."
+                f"ответа после отзыва согласия."
                 if skipped_open
                 else ""
             )
             await send_admin_text(
                 f"🛡 Очистка ПДн по сроку отзыва согласия: "
-                f"уничтожено {erased}.{tail}",
+                f"очищено записей в рабочей базе: {erased}.{tail}",
                 critical=True,
             )
+        elif erased:
+            log.info("pdn_retention: очищено записей: %d", erased)
 
     except Exception:
         log.exception("pdn_retention_check crashed")
@@ -986,8 +988,20 @@ async def _job_funnel_watchdog(bot, send_admin_text) -> None:
         reset_ok = 0
         for max_user_id, _state in stuck:
             try:
-                async with session_scope() as session:
-                    await users_service.reset_state(session, max_user_id)
+                from aemr_bot.services import resident_drafts
+                from aemr_bot.utils.resident_lifecycle import guard
+                async with guard(max_user_id), session_scope() as session:
+                    user = await users_service.find_by_max_id(session, max_user_id, for_update=True)
+                    cutoff = datetime.now(UTC) - timedelta(seconds=cutoff_seconds)
+                    if (user is None or user.dialog_state != _state or user.updated_at > cutoff
+                            or (user.dialog_data or {}).get("_name_resume")):
+                        continue
+                    if user.appeal_draft:
+                        # Do not overwrite a previously paused draft.
+                        continue
+                    paused = await resident_drafts.pause(session, user)
+                    if not paused:
+                        await users_service.reset_state(session, max_user_id)
                 # Perf «2 RPS»: watchdog шлёт жителям напрямую через
                 # bot.send_message (хукнутый инстанс) → каждое уведомление
                 # проходит глобальный лимитер исходящих
@@ -997,11 +1011,11 @@ async def _job_funnel_watchdog(bot, send_admin_text) -> None:
                 # уведомления растягиваются под общий бюджет ~1.5 msg/s.
                 await bot.send_message(
                     user_id=max_user_id,
-                    text=(
-                        "Похоже, вы начали оформлять обращение, но не "
-                        "закончили. Я сбросил черновик — если хотите "
-                        "снова, откройте меню кнопкой ниже."
-                    ),
+                    text=("Вы начали обращение, но пока не отправили его. "
+                          "Черновик сохранён: продолжить можно из главного меню."
+                          if paused else
+                          "Вы начали оформление, но не завершили его. "
+                          "Чтобы начать снова, откройте главное меню."),
                     attachments=[kbds.back_to_menu_keyboard()],
                 )
                 reset_ok += 1
@@ -1034,97 +1048,31 @@ async def _job_funnel_watchdog(bot, send_admin_text) -> None:
         log.exception("funnel_watchdog crashed")
 
 
+async def _refresh_working_hours_queue(bot, toggle: str) -> None:
+    from aemr_bot.services import notify_toggles, queue_panel, work_schedule
+    from aemr_bot.services.quiet_hours import is_quiet_hours_now
+
+    if is_quiet_hours_now() or not notify_toggles.is_enabled(toggle):
+        return
+    async with session_scope() as session:
+        await work_schedule.refresh(session)
+    if not sla_service.is_working_time(datetime.now(TZ)):
+        return
+    await queue_panel.refresh(bot)
+
+
 async def _job_working_hours_open_reminder(bot) -> None:
-    """Раз в час, ТОЛЬКО в рабочее время АЕМО:
-    пн–пт 09:00–11:59 и 13:00–17:59 Камчатка, не в праздники РФ.
-
-    Напоминание о всех неответленных обращениях — без разделения на
-    «в SLA» и «просрочено». Если открытых нет — тишина (по нулям не
-    пишем, чтобы оператор не привык игнорировать).
-
-    Под сообщением кнопка «📋 Открытые обращения» — тап открывает
-    полный список с кнопками действий по каждому.
-
-    Гейт `admin_notify_open_reminder` (services/notify_toggles.py):
-    выключен — напоминалка не считается и не отправляется.
-    """
+    """Refresh the shared queue in working hours; preserve the existing toggle."""
     try:
-        from aemr_bot.services import notify_toggles
-
-        if not notify_toggles.is_enabled("admin_notify_open_reminder"):
-            log.debug("open-reminder: admin_notify_open_reminder disabled, suppressed")
-            return
-        if not is_workday(datetime.now(TZ).date()):
-            return
-
-        async with session_scope() as session:
-            appeals = await appeals_service.list_unanswered(session)
-        if not appeals:
-            return
-        # Просрочка — по рабочему времени (services/sla.py), не
-        # календарному: обращение из пятничного вечера не «горит» в
-        # субботу. Раньше здесь же соседствовали datetime.now(timezone.utc)
-        # и datetime.now(TZ) в одной функции (находка ревью) — унифицировано
-        # на TZ (локальное время бота), т.к. sla_service сам приводит к TZ
-        # внутри, а now(TZ) читается счётчиком возраста ниже без конверсии.
-        now = datetime.now(TZ)
-        # is_overdue() итерирует по рабочим дням от created_at до now — для
-        # годовалого обращения это сотни итераций. Считаем один раз на
-        # обращение и переиспользуем флаг, а не зовём дважды на каждое.
-        flags = [
-            (a, sla_service.is_overdue(a.created_at, now, settings.sla_response_hours))
-            for a in appeals
-        ]
-        in_sla = [a for a, is_od in flags if not is_od]
-        overdue = [a for a, is_od in flags if is_od]
-        header = (
-            f"📋 Открытых обращений: {len(appeals)} "
-            f"(в SLA — {len(in_sla)}, просрочено — {len(overdue)})"
-        )
-        lines = [header, ""]
-        if overdue:
-            lines.append(f"⚠️ Просрочено по SLA ({settings.sla_response_hours}ч):")
-            lines.extend(_format_appeal_lines(overdue))
-            lines.append("")
-        if in_sla:
-            lines.append("🆕 В SLA:")
-            lines.extend(_format_appeal_lines(in_sla))
-        await _send_with_open_tickets_button(bot, "\n".join(lines).rstrip())
+        await _refresh_working_hours_queue(bot, "admin_notify_open_reminder")
     except Exception:
         log.exception("working_hours_open_reminder crashed")
 
 
 async def _job_working_hours_overdue_reminder(bot) -> None:
-    """Раз в час на :40 — отдельное напоминание ТОЛЬКО о просроченных.
-    Вместе с :10 даёт «каждые полчаса для просрочки». Если нет
-    просроченных — тишина. В госпраздники РФ молчит.
-
-    Гейт `admin_notify_overdue_reminder` (services/notify_toggles.py):
-    выключен — напоминалка не считается и не отправляется.
-    """
+    """The second tick refreshes the same message, including overdue changes."""
     try:
-        from aemr_bot.services import notify_toggles
-
-        if not notify_toggles.is_enabled("admin_notify_overdue_reminder"):
-            log.debug(
-                "overdue-reminder: admin_notify_overdue_reminder disabled, suppressed"
-            )
-            return
-        if not is_workday(datetime.now(TZ).date()):
-            return
-
-        async with session_scope() as session:
-            overdue = await appeals_service.find_overdue_unanswered(
-                session, settings.sla_response_hours
-            )
-        if not overdue:
-            return
-        lines = [
-            (f"⚠️ Просрочено по SLA ({settings.sla_response_hours}ч): "
-            f"{len(overdue)} обращений.")
-        ]
-        lines.extend(_format_appeal_lines(overdue))
-        await _send_with_open_tickets_button(bot, "\n".join(lines))
+        await _refresh_working_hours_queue(bot, "admin_notify_overdue_reminder")
     except Exception:
         log.exception("working_hours_overdue_reminder crashed")
 
@@ -1374,6 +1322,11 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> GracefulAsyncI
             CronTrigger(hour=4, minute=30, timezone=TZ),
             "pdn-retention",
         ),
+        (
+            functools.partial(_job_pdn_retention_check, send_admin_text, warn=False),
+            CronTrigger(minute=20, timezone=TZ),
+            "pdn-retention-hourly",
+        ),
         # Funnel watchdog: сброс зависших воронок + admin-alert при
         # массовом зашпиле (≥5/час) — нужен send_admin_text в партиале.
         (
@@ -1381,27 +1334,20 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> GracefulAsyncI
             CronTrigger(minute=15, timezone=TZ),
             "funnel-watchdog",
         ),
-        # Напоминалки операторам по неотвеченным/просроченным обращениям.
-        # Расписание соответствует фактическому рабочему времени АЕМО:
-        # пн-пт 09:00-18:00 с обеденным перерывом 12:00-13:00 (Регламент
-        # v7 §39 + уточнение в v8-draft: пн-пт + обед). В Сб бот не дёргает
-        # оператора — он не на смене. В обед — не дёргает тоже: hour=12
-        # выпадает из расписания (`hour="9-11,13-17"`).
-        #
-        # Pulse-задачи (см. выше) намеренно остаются пн-пт + 24/7 — это
-        # технический heartbeat «бот живой», а не уведомление оператора.
-        # Heartbeat в обед и в субботу полезен (мониторинг непрерывный).
+        # Both ticks update one shared queue panel. All-hour triggers allow
+        # committed schedule changes to apply immediately; each job reloads
+        # the schedule and gates on live working time and quiet mode.
         (
             functools.partial(_job_working_hours_open_reminder, bot),
             CronTrigger(
-                day_of_week="mon-fri", hour="9-11,13-17", minute=10, timezone=TZ
+                hour="*", minute=10, timezone=TZ
             ),
             "open-reminder-workhours",
         ),
         (
             functools.partial(_job_working_hours_overdue_reminder, bot),
             CronTrigger(
-                day_of_week="mon-fri", hour="9-11,13-17", minute=40, timezone=TZ
+                hour="*", minute=40, timezone=TZ
             ),
             "overdue-reminder-workhours",
         ),

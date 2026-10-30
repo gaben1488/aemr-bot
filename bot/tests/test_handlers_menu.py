@@ -24,6 +24,7 @@ import pytest
 
 from tests._helpers import fake_current_user, make_event
 from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._personal_view_helpers import personal_view_boundary  # noqa: F401
 
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
@@ -60,14 +61,16 @@ def _make_callback_event(*, chat_id: int = 100, user_id: int = 42) -> SimpleName
     return event
 
 
+@pytest.mark.usefixtures("personal_view_boundary")
 class TestOpenMainMenu:
     @pytest.mark.asyncio
     async def test_blocked_user_gets_blocked_menu(self) -> None:
         from aemr_bot.handlers import menu
 
         event = _make_event()
-        user = SimpleNamespace(is_blocked=True)
+        user = SimpleNamespace(is_blocked=True, dialog_state="idle", appeal_draft=None)
         with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
+             patch("aemr_bot.handlers.menu.users_service.find_by_max_id", AsyncMock(return_value=user)), \
              patch("aemr_bot.handlers.menu.settings_store.get",
                    AsyncMock(return_value="https://reception")), \
              patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
@@ -82,13 +85,14 @@ class TestOpenMainMenu:
         from aemr_bot.handlers import menu
 
         event = _make_event()
-        user = SimpleNamespace(is_blocked=False)
+        user = SimpleNamespace(is_blocked=False, dialog_state="idle", appeal_draft=None)
         # 2026-05-27: patch'им и `settings_store.get_text_with_fallback`,
         # чтобы тест не зависел от живого Postgres pool — `open_main_menu`
         # для незаблокированного жителя читает `welcome_text` из БД, и
         # под CI это иногда упирается в `Event loop is closed` при
         # connection acquire (race с другими async-фикстурами).
         with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
+             patch("aemr_bot.handlers.menu.users_service.find_by_max_id", AsyncMock(return_value=user)), \
              patch("aemr_bot.handlers.menu.broadcasts_service.is_subscribed",
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.menu.settings_store.get_text_with_fallback",
@@ -97,6 +101,7 @@ class TestOpenMainMenu:
         event.bot.send_message.assert_called_once()
 
 
+@pytest.mark.usefixtures("personal_view_boundary")
 class TestOpenMyAppeals:
     @pytest.mark.asyncio
     async def test_empty_list_shows_empty_text(self) -> None:
@@ -137,13 +142,16 @@ class TestOpenMyAppeals:
         assert "всего 12" in text
 
 
+@pytest.mark.usefixtures("personal_view_boundary")
 class TestStartAppealFollowup:
     @pytest.mark.asyncio
     async def test_appeal_not_found(self) -> None:
         from aemr_bot.handlers import menu
 
         event = _make_event()
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
+        with patch("aemr_bot.services.resident_drafts.offer_saved", AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.resident_name_gate.require_name", AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.menu.appeals_service.get_by_id",
                    AsyncMock(return_value=None)):
             await menu.start_appeal_followup(event, appeal_id=99, max_user_id=42)
@@ -157,7 +165,9 @@ class TestStartAppealFollowup:
         event = _make_event()
         appeal = MagicMock()
         appeal.user.max_user_id = 999  # другой житель
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
+        with patch("aemr_bot.services.resident_drafts.offer_saved", AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.resident_name_gate.require_name", AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.menu.appeals_service.get_by_id",
                    AsyncMock(return_value=appeal)):
             await menu.start_appeal_followup(event, appeal_id=1, max_user_id=42)
@@ -173,7 +183,9 @@ class TestStartAppealFollowup:
         appeal = MagicMock()
         appeal.user.max_user_id = 42
         appeal.status = AppealStatus.CLOSED.value
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
+        with patch("aemr_bot.services.resident_drafts.offer_saved", AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.resident_name_gate.require_name", AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.menu.appeals_service.get_by_id",
                    AsyncMock(return_value=appeal)):
             await menu.start_appeal_followup(event, appeal_id=1, max_user_id=42)
@@ -190,7 +202,9 @@ class TestStartAppealFollowup:
         appeal.user.max_user_id = 42
         appeal.status = AppealStatus.ANSWERED.value
         set_state = AsyncMock()
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
+        with patch("aemr_bot.services.resident_drafts.offer_saved", AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.resident_name_gate.require_name", AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.menu.appeals_service.get_by_id",
                    AsyncMock(return_value=appeal)), \
              patch("aemr_bot.handlers.menu.users_service.set_state", set_state):
@@ -202,13 +216,16 @@ class TestStartAppealFollowup:
         assert "Подать похожее" in text
 
 
+@pytest.mark.usefixtures("personal_view_boundary")
 class TestStartAppealRepeat:
     @pytest.mark.asyncio
     async def test_appeal_not_found(self) -> None:
         from aemr_bot.handlers import menu
 
         event = _make_event()
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
+        with patch("aemr_bot.services.resident_drafts.offer_saved", AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.resident_name_gate.require_name", AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.menu.appeals_service.get_by_id",
                    AsyncMock(return_value=None)):
             await menu.start_appeal_repeat(event, appeal_id=1, max_user_id=42)
@@ -224,7 +241,9 @@ class TestStartAppealRepeat:
         appeal.user.max_user_id = 42
         appeal.locality = None
         appeal.address = None
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
+        with patch("aemr_bot.services.resident_drafts.offer_saved", AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.resident_name_gate.require_name", AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.menu.appeals_service.get_by_id",
                    AsyncMock(return_value=appeal)), \
              patch("aemr_bot.handlers.appeal_funnel.start_appeal_flow",
@@ -246,7 +265,9 @@ class TestStartAppealRepeat:
         appeal.topic = "Дороги"
         appeal.status = AppealStatus.ANSWERED.value
         set_state = AsyncMock()
-        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
+        with patch("aemr_bot.services.resident_drafts.offer_saved", AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.resident_name_gate.require_name", AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.menu.appeals_service.get_by_id",
                    AsyncMock(return_value=appeal)), \
              patch("aemr_bot.handlers.menu.users_service.set_state", set_state):
@@ -261,6 +282,7 @@ class TestStartAppealRepeat:
         assert data["repeat_source_status"] == AppealStatus.ANSWERED.value
 
 
+@pytest.mark.usefixtures("personal_view_boundary")
 class TestShowAppeal:
     @pytest.mark.asyncio
     async def test_not_found_responds(self) -> None:
@@ -520,7 +542,7 @@ class TestConsentAndEraseNotifications:
         notify.assert_called_once_with(event.bot, max_user_id=42, open_appeal_ids=[])
 
     @pytest.mark.asyncio
-    async def test_consent_revoke_reposts_open_cards_for_final_reply(self) -> None:
+    async def test_consent_revoke_notifies_open_cards_without_duplicate_reposts(self) -> None:
         from aemr_bot.handlers import menu
 
         event = _make_event()
@@ -554,10 +576,7 @@ class TestConsentAndEraseNotifications:
             await menu.do_consent_revoke(event, max_user_id=42)
 
         notify.assert_called_once_with(event.bot, max_user_id=42, open_appeal_ids=[9])
-        repost.assert_called_once()
-        # render(bot, appeal, force_new=True)
-        assert repost.call_args.args[1] is appeal
-        assert repost.call_args.kwargs.get("force_new") is True
+        repost.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_forget_notifies_admin_about_deleted_data(self) -> None:
@@ -567,10 +586,11 @@ class TestConsentAndEraseNotifications:
         user = SimpleNamespace(id=1)
         appeal = SimpleNamespace(id=9, user_id=1)
         notify = AsyncMock()
-        with patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
+        with patch("aemr_bot.services.data_erasure.tracked_send", AsyncMock()), \
+             patch("aemr_bot.handlers.menu.current_user", fake_current_user(user)), \
              patch("aemr_bot.services.appeals.list_unanswered_for_user",
                    AsyncMock(return_value=[appeal])), \
-             patch("aemr_bot.handlers.menu.users_service.erase_pdn", AsyncMock()), \
+             patch("aemr_bot.handlers.menu.users_service.erase_pdn_detailed", AsyncMock(return_value=[9])), \
              patch("aemr_bot.services.operators.write_audit", AsyncMock()), \
              patch("aemr_bot.handlers.menu.admin_events.notify_data_erased",
                    notify):
@@ -627,7 +647,11 @@ class TestSimpleScreens:
         from aemr_bot.handlers import menu
 
         event = _make_event()
-        with patch("aemr_bot.handlers.menu.ack_callback", AsyncMock()) as ack:
+        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.menu.users_service.find_by_max_id",
+                   AsyncMock(return_value=SimpleNamespace(dialog_state="idle", appeal_draft=None, dialog_data={}))), \
+             patch("aemr_bot.services.resident_drafts.offer_saved", AsyncMock(return_value=False)), \
+             patch("aemr_bot.handlers.menu.ack_callback", AsyncMock()) as ack:
             handled = await menu.handle_callback(
                 event,
                 payload="settings:rules",
@@ -675,7 +699,9 @@ class TestSimpleScreens:
         from aemr_bot.handlers import menu
 
         event = _make_event()
-        await menu.open_goodbye(event)
+        with patch("aemr_bot.handlers.menu.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.menu.settings_store.get", AsyncMock(return_value=None)):
+            await menu.open_goodbye(event)
         event.bot.send_message.assert_called_once()
 
 
@@ -684,8 +710,20 @@ def _registered_resident_name(monkeypatch):
     """Routing unit cases start with a registered resident; name-gate cases
     are exercised with persisted state in test_resident_name_resume.py.
     """
-    from tests._helpers import fake_current_user
     from aemr_bot.handlers import resident_name_gate
+    from tests._helpers import fake_current_user
     user = SimpleNamespace(first_name="Анна", is_blocked=False, consent_pdn_at=True,
                            dialog_data={}, dialog_state="idle")
     monkeypatch.setattr(resident_name_gate, "current_user", fake_current_user(user))
+
+
+@pytest.mark.asyncio
+async def test_menu_does_not_treat_rejected_edit_as_success():
+    from aemr_bot.handlers import menu
+
+    event = _make_callback_event(chat_id=188, user_id=42)
+    event.bot.edit_message = AsyncMock(return_value=SimpleNamespace(success=False))
+    event.bot.send_message = AsyncMock(return_value=SimpleNamespace(body=SimpleNamespace(mid='replacement')))
+    await menu._send_or_edit_menu(event, text='Экран')
+    event.bot.send_message.assert_awaited_once()
+    assert event.bot.edit_message.await_args.kwargs['notify'] is False

@@ -31,6 +31,7 @@ from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator
 from aemr_bot.handlers._common import op_send
 from aemr_bot.services import appeals as appeals_service
+from aemr_bot.services import data_erasure
 from aemr_bot.services import operators as ops_svc
 from aemr_bot.services import users as users_service
 from aemr_bot.services.admin_events import _mask_phone
@@ -139,23 +140,43 @@ async def run_find_resident(event, query: str) -> None:
     # broadcast_wizard). Best-effort: mark_typing глушит любую ошибку MAX.
     await mark_typing(event, cfg.admin_group_id)
 
-    audit_target = _mask_query_for_audit(kind, value)
-    async with session_scope() as session:
-        if kind == "max_user_id":
-            try:
-                max_id_int = int(value)
-            except ValueError:
-                await op_send(event, texts.OP_FIND_RESIDENT_USAGE)
-                return
-            user = await users_service.find_by_max_id(session, max_id_int)
-        else:  # phone
-            user = await users_service.find_by_phone(session, value)
-            # find_by_phone возвращает None и при множественном совпадении,
-            # и при отсутствии. Различить через прямой повторный count —
-            # дорого; вместо этого даём отдельную подсказку только когда
-            # явно telephone-формат + None.
-            if user is None and value.lstrip("+").isdigit() and len(value) >= 11:
-                # Audit: фиксируем попытку поиска независимо от результата.
+    async with data_erasure.personal_view(aggregate=True):
+        audit_target = _mask_query_for_audit(kind, value)
+        async with session_scope() as session:
+            if kind == "max_user_id":
+                try:
+                    max_id_int = int(value)
+                except ValueError:
+                    await op_send(event, texts.OP_FIND_RESIDENT_USAGE)
+                    return
+                user = await users_service.find_by_max_id(session, max_id_int)
+            else:  # phone
+                user = await users_service.find_by_phone(session, value)
+                # find_by_phone возвращает None и при множественном совпадении,
+                # и при отсутствии. Различить через прямой повторный count —
+                # дорого; вместо этого даём отдельную подсказку только когда
+                # явно telephone-формат + None.
+                if user is None and value.lstrip("+").isdigit() and len(value) >= 11:
+                    # Audit: фиксируем попытку поиска независимо от результата.
+                    await ops_svc.write_audit(
+                        session,
+                        operator_max_user_id=operator_max_user_id,
+                        action="resident_search_not_found",
+                        target=audit_target,
+                        details={"kind": kind},
+                    )
+                    # Не различаем not-found vs ambiguous: пишем общий
+                    # not-found текст (для оператора результат всё равно
+                    # один — «нужен max_user_id»).
+                    await op_send(
+                        event,
+                        texts.OP_FIND_RESIDENT_NOT_FOUND.format(
+                            query_masked=audit_target,
+                        ),
+                    )
+                    return
+
+            if user is None:
                 await ops_svc.write_audit(
                     session,
                     operator_max_user_id=operator_max_user_id,
@@ -163,9 +184,6 @@ async def run_find_resident(event, query: str) -> None:
                     target=audit_target,
                     details={"kind": kind},
                 )
-                # Не различаем not-found vs ambiguous: пишем общий
-                # not-found текст (для оператора результат всё равно
-                # один — «нужен max_user_id»).
                 await op_send(
                     event,
                     texts.OP_FIND_RESIDENT_NOT_FOUND.format(
@@ -174,54 +192,38 @@ async def run_find_resident(event, query: str) -> None:
                 )
                 return
 
-        if user is None:
+            # Found. Audit + расчёт последнего обращения.
             await ops_svc.write_audit(
                 session,
                 operator_max_user_id=operator_max_user_id,
-                action="resident_search_not_found",
+                action="resident_search_found",
                 target=audit_target,
-                details={"kind": kind},
+                details={
+                    "kind": kind,
+                    "found_max_user_id": user.max_user_id,
+                },
             )
-            await op_send(
-                event,
-                texts.OP_FIND_RESIDENT_NOT_FOUND.format(
-                    query_masked=audit_target,
-                ),
+            last_appeals = await appeals_service.list_for_user(
+                session, user.id, limit=1
             )
-            return
+            count = await appeals_service.count_for_user(session, user.id)
+            last_appeal = last_appeals[0] if last_appeals else None
 
-        # Found. Audit + расчёт последнего обращения.
-        await ops_svc.write_audit(
-            session,
-            operator_max_user_id=operator_max_user_id,
-            action="resident_search_found",
-            target=audit_target,
-            details={
-                "kind": kind,
-                "found_max_user_id": user.max_user_id,
-            },
+        name = (user.first_name or "—").strip() or "—"
+        blocked_line = ""
+        if getattr(user, "is_blocked", False):
+            blocked_line = "🚫 Заблокирован: да\n"
+        text_out = texts.OP_FIND_RESIDENT_CARD.format(
+            name=name,
+            phone_masked=_mask_phone(user.phone),
+            max_user_id=user.max_user_id,
+            consent_status=_format_consent_status(user),
+            subscribe_status=_format_subscribe_status(user),
+            blocked_line=blocked_line,
+            last_appeal=_format_last_appeal(last_appeal),
+            appeals_count=count,
         )
-        last_appeals = await appeals_service.list_for_user(
-            session, user.id, limit=1
-        )
-        count = await appeals_service.count_for_user(session, user.id)
-        last_appeal = last_appeals[0] if last_appeals else None
-
-    name = (user.first_name or "—").strip() or "—"
-    blocked_line = ""
-    if getattr(user, "is_blocked", False):
-        blocked_line = "🚫 Заблокирован: да\n"
-    text_out = texts.OP_FIND_RESIDENT_CARD.format(
-        name=name,
-        phone_masked=_mask_phone(user.phone),
-        max_user_id=user.max_user_id,
-        consent_status=_format_consent_status(user),
-        subscribe_status=_format_subscribe_status(user),
-        blocked_line=blocked_line,
-        last_appeal=_format_last_appeal(last_appeal),
-        appeals_count=count,
-    )
-    await op_send(event, text_out)
+        await op_send(event, text_out)
 
 
 def register(dp) -> None:

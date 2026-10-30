@@ -249,6 +249,7 @@ def _make_user(max_user_id: int = 7):
         consent_pdn_at=datetime(2026, 1, 1, tzinfo=UTC),
         dialog_state=DialogState.AWAITING_SUMMARY.value,
         dialog_data={
+            "draft_token": "draft-1",
             "summary_chunks": ["Яма во дворе"],
             "attachments": [{"type": "image", "payload": {"token": "T"}}],
             "topic": "Дороги",
@@ -266,6 +267,7 @@ def _patched_runtime(mod, *, user, order: list[str]):
     @asynccontextmanager
     async def _current_user(max_user_id, *, first_name=None):
         yield session, user
+        order.append("commit")
 
     @asynccontextmanager
     async def _sub_scope():
@@ -274,7 +276,7 @@ def _patched_runtime(mod, *, user, order: list[str]):
     created_appeal = SimpleNamespace(id=555)
 
     async def _create_appeal(*_a, **_k):
-        order.append("commit")  # appeal создан (в рамках транзакции)
+        order.append("create")
         return created_appeal
 
     async def _render(*_a, **_k):
@@ -313,6 +315,7 @@ def _patched_runtime(mod, *, user, order: list[str]):
         "scheduled": scheduled,
         "patches": [
             patch.object(mod, "current_user", _current_user),
+            patch.object(mod.users_service, "find_by_max_id", AsyncMock(return_value=user)),
             patch.object(mod, "get_user_lock",
                          MagicMock(return_value=_FakeLock())),
             patch.object(mod, "drop_user_lock", MagicMock()),
@@ -364,7 +367,7 @@ class TestPersistAcksBeforeRelay:
         bot.send_message = _send_message
 
         with _apply(setup["patches"]):
-            result = await mod.persist_and_dispatch_appeal(bot, user.max_user_id)
+            result = await mod.persist_and_dispatch_appeal(bot, user.max_user_id, draft_token="draft-1")
             # Дренируем фоновый relay-task (он запланирован на loop в
             # spawn-моке) — иначе его тело не выполнится в рамках теста.
             import asyncio
@@ -401,7 +404,7 @@ class TestPersistAcksBeforeRelay:
         bot.send_message = _send_message
 
         with _apply(setup["patches"]):
-            await mod.persist_and_dispatch_appeal(bot, user.max_user_id)
+            await mod.persist_and_dispatch_appeal(bot, user.max_user_id, draft_token="draft-1")
             import asyncio
 
             await asyncio.gather(*setup["scheduled"])
@@ -428,7 +431,7 @@ class TestPersistAcksBeforeRelay:
         bot.send_message = AsyncMock()
 
         with _apply(setup["patches"]):
-            await mod.persist_and_dispatch_appeal(bot, user.max_user_id)
+            await mod.persist_and_dispatch_appeal(bot, user.max_user_id, draft_token="draft-1")
             import asyncio
 
             await asyncio.gather(*setup["scheduled"])
@@ -454,7 +457,7 @@ class TestPersistAcksBeforeRelay:
         bot.send_message = _send_message
 
         with _apply(setup["patches"]):
-            result = await mod.persist_and_dispatch_appeal(bot, user.max_user_id)
+            result = await mod.persist_and_dispatch_appeal(bot, user.max_user_id, draft_token="draft-1")
             import asyncio
 
             await asyncio.gather(*setup["scheduled"])
@@ -506,12 +509,12 @@ class TestPersistGuardsUnchanged:
         bot.send_message = AsyncMock()
 
         with _apply(setup["patches"]):
-            result = await mod.persist_and_dispatch_appeal(bot, user.max_user_id)
+            result = await mod.persist_and_dispatch_appeal(bot, user.max_user_id, draft_token="draft-1")
 
         assert result == getattr(mod, expected)
         bot.send_message.assert_not_awaited()
         # Ни создания обращения, ни рендера карточки, ни relay.
-        assert order == []
+        assert order == ["commit"]
         setup["reset_state"].assert_awaited_once()
 
     @pytest.mark.asyncio
@@ -527,18 +530,18 @@ class TestPersistGuardsUnchanged:
         bot.send_message = AsyncMock()
 
         with _apply(setup["patches"]):
-            result = await mod.persist_and_dispatch_appeal(bot, user.max_user_id)
+            result = await mod.persist_and_dispatch_appeal(bot, user.max_user_id, draft_token="draft-1")
 
         assert result is None
         bot.send_message.assert_not_awaited()
-        assert order == []
+        assert order == ["commit"]
 
     @pytest.mark.asyncio
     async def test_empty_appeal_returns_false_no_ack(self) -> None:
         from aemr_bot.handlers import appeal_runtime as mod
 
         user = _make_user()
-        user.dialog_data = {"summary_chunks": [], "attachments": []}
+        user.dialog_data = {"draft_token": "draft-1", "summary_chunks": [], "attachments": []}
         order: list[str] = []
         setup = _patched_runtime(mod, user=user, order=order)
 
@@ -546,7 +549,7 @@ class TestPersistGuardsUnchanged:
         bot.send_message = AsyncMock()
 
         with _apply(setup["patches"]):
-            result = await mod.persist_and_dispatch_appeal(bot, user.max_user_id)
+            result = await mod.persist_and_dispatch_appeal(bot, user.max_user_id, draft_token="draft-1")
 
         assert result is False
         bot.send_message.assert_not_awaited()
@@ -577,3 +580,20 @@ class _apply:
         for p in reversed(self._entered):
             p.__exit__(*exc)
         return False
+
+
+@pytest.mark.asyncio
+async def test_appeal_persistence_keeps_whitespace_from_received_text():
+    import asyncio
+
+    from aemr_bot.handlers import appeal_runtime as mod
+
+    user = _make_user()
+    user.dialog_data['summary_chunks'] = ['\n  Яма\n\n']
+    setup = _patched_runtime(mod, user=user, order=[])
+    create = AsyncMock(return_value=SimpleNamespace(id=555))
+    bot = MagicMock(send_message=AsyncMock())
+    with _apply(setup['patches']), patch.object(mod.appeals_service, 'create_appeal', create):
+        await mod.persist_and_dispatch_appeal(bot, user.max_user_id, draft_token="draft-1")
+        await asyncio.gather(*setup['scheduled'])
+    assert create.await_args.kwargs['summary'] == '\n  Яма\n\n'

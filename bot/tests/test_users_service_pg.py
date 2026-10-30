@@ -26,7 +26,9 @@ from aemr_bot.db.models import (
     ANONYMOUS_MAX_USER_ID,
     Appeal,
     AppealStatus,
+    AuditLog,
     DialogState,
+    Event,
     Message,
     User,
 )
@@ -191,6 +193,65 @@ class TestErasePdnByPhone:
 
 class TestErasePdn:
     @pytest.mark.asyncio
+    async def test_erasure_clears_legacy_event_id_without_matching_prefix(self, session) -> None:
+        from sqlalchemy import select
+
+        await users_service.get_or_create(session, max_user_id=777)
+        session.add_all([
+            Event(idempotency_key="message|mid=a|user=777", update_type="message", payload={}),
+            Event(idempotency_key="message|mid=b", update_type="message", payload={"user_id": 777}),
+            Event(idempotency_key="message|mid=c|user=7770", update_type="message", payload={"user_id": 7770}),
+        ])
+        await session.flush()
+        assert await users_service.erase_pdn(session, 777)
+        remaining = set(await session.scalars(select(Event.idempotency_key)))
+        assert "message|mid=a|user=777" not in remaining
+        assert "message|mid=b" not in remaining
+        assert "message|mid=c|user=7770" in remaining
+
+    @pytest.mark.asyncio
+    async def test_retention_rechecks_consent_before_erasing(self, session) -> None:
+        from sqlalchemy import select, update
+
+        await users_service.get_or_create(session, max_user_id=777)
+        await users_service.set_consent(session, 777)
+        await users_service.revoke_consent(session, 777)
+        await session.execute(
+            update(User).where(User.max_user_id == 777).values(
+                consent_revoked_at=datetime.now(UTC) - timedelta(days=31),
+            )
+        )
+        assert 777 in await users_service.find_pending_pdn_retention(session, days_after_revoke=30)
+        # Consent was renewed after the candidate scan but before deletion.
+        await users_service.set_consent(session, 777)
+        assert await users_service.erase_pdn(
+            session, 777, revoked_before=datetime.now(UTC) - timedelta(days=30)
+        ) is False
+        assert await session.scalar(select(User).where(User.max_user_id == 777)) is not None
+
+    @pytest.mark.asyncio
+    async def test_erasure_cleans_resident_audit_without_erasing_operator_history(self, session) -> None:
+        await users_service.get_or_create(session, max_user_id=777)
+        rows = [
+            AuditLog(action="self_consent_revoke", operator_max_user_id=777, target="user max_id=777"),
+            AuditLog(action="block", operator_max_user_id=12, target="user max_id=777"),
+            AuditLog(action="operator_upsert", operator_max_user_id=12, target="user max_id=777"),
+            AuditLog(action="self_consent_revoke", operator_max_user_id=778, target="user max_id=778"),
+            AuditLog(action="auto_erase_pdn_retention", operator_max_user_id=None, target="user max_id=777"),
+        ]
+        session.add_all(rows)
+        await session.flush()
+
+        assert await users_service.erase_pdn(session, 777)
+        for row in rows:
+            await session.refresh(row)
+        assert (rows[0].operator_max_user_id, rows[0].target) == (None, None)
+        assert (rows[1].operator_max_user_id, rows[1].target) == (12, None)
+        assert (rows[2].operator_max_user_id, rows[2].target) == (12, "user max_id=777")
+        assert (rows[3].operator_max_user_id, rows[3].target) == (778, "user max_id=778")
+        assert rows[4].target is None
+
+    @pytest.mark.asyncio
     async def test_erases_user_and_redacts_appeal_payloads(self, session) -> None:
         from sqlalchemy import select
 
@@ -237,8 +298,8 @@ class TestErasePdn:
         assert stored_appeal.address is None
         assert stored_appeal.summary is None
         assert stored_appeal.attachments == []
-        # Метаданные для муниципальной статистики остаются — это не ПДн
-        # после отвязки от жителя.
+        # Метаданные остаются для статистики; их анонимность зависит от
+        # возможности сопоставления с другими источниками.
         assert stored_appeal.topic == "Дороги"
         assert stored_appeal.locality == "Елизово"
         assert stored_appeal.closed_due_to_revoke is True
@@ -499,6 +560,7 @@ async def test_name_cleanup_migration_preserves_pg_appeal_and_messages(session):
     import importlib
     from types import SimpleNamespace
     from unittest.mock import patch
+
     from sqlalchemy import select
 
     migration = importlib.import_module(

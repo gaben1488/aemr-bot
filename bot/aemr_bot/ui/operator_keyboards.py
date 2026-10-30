@@ -19,12 +19,13 @@ from aemr_bot.db.models import AppealStatus
 from aemr_bot.handlers import callback_payloads as cp
 
 
-def cancel_reply_intent_keyboard():
+def cancel_reply_intent_keyboard(token: str = ""):
     """Кнопка «❌ Отменить» под подсказкой ввода ответа. Без неё intent
     мог жить 5 минут, и любой следующий текст оператора уходил жителю —
     в т.ч. случайные «окей», текст для другого обращения, ввод wizard'а."""
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="❌ Отменить ответ", payload=cp.OP_REPLY_CANCEL))
+    payload = cp.op_reply_cancel(token) if token else cp.OP_REPLY_CANCEL
+    kb.row(CallbackButton(text="❌ Отменить ответ", payload=payload))
     return kb.as_markup()
 
 
@@ -69,7 +70,7 @@ def op_help_security_keyboard():
     return kb.as_markup()
 
 
-def open_tickets_listing_keyboard(items):
+def open_tickets_listing_keyboard(items, *, page=0, pages=1):
     """Listing открытых обращений в одном сообщении.
 
     Каждое обращение — одна кнопка-строка: «#N · 🆕 · тема (фрагмент)»
@@ -98,6 +99,13 @@ def open_tickets_listing_keyboard(items):
                 payload=cp.op_open_card(appeal_id),
             )
         )
+    nav = []
+    if page > 0:
+        nav.append(CallbackButton(text="◀️ Ранее", payload=f"op:open_page:{page - 1}"))
+    if page + 1 < pages:
+        nav.append(CallbackButton(text="Далее ▶️", payload=f"op:open_page:{page + 1}"))
+    if nav:
+        kb.row(*nav)
     kb.row(CallbackButton(text="↩️ В админ-меню", payload=cp.OP_MENU))
     return kb.as_markup()
 
@@ -323,7 +331,7 @@ def appeal_admin_actions(
     """Кнопки действий под карточкой обращения в админ-группе.
 
     Набор кнопок зависит от статуса:
-    - new / in_progress: «✉️ Ответить», «⛔ Закрыть без ответа»
+    - new / in_progress: «✉️ Ответить», «⛔ Закрыть без итога»
     - answered / closed: «🔁 Возобновить»
     Для роли it дополнительно: «🚫 Заблокировать жителя» (или
     «✅ Разблокировать», если уже заблокирован) и «🗑 Удалить ПДн жителя».
@@ -356,13 +364,13 @@ def appeal_admin_actions(
         )
         kb.row(
             CallbackButton(
-                text="💬 Ответить промежуточно (не закрывая)",
+                text="💬 Промежуточный",
                 payload=cp.op_replyint(appeal_id),
             ),
         )
         kb.row(
             CallbackButton(
-                text="⛔ Закрыть без ответа", payload=cp.op_close(appeal_id)
+                text="⛔ Закрыть без итога", payload=cp.op_close(appeal_id)
             ),
         )
     elif status in closed_states and not closed_due_to_revoke:
@@ -371,6 +379,9 @@ def appeal_admin_actions(
                 text="🔁 Возобновить", payload=cp.op_reopen(appeal_id)
             ),
         )
+    kb.row(CallbackButton(text="📖 История", payload=cp.op_history(appeal_id, 0)))
+    kb.row(CallbackButton(text="📄 История в Word", payload=f"op:word:{appeal_id}"))
+    kb.row(CallbackButton(text="🔐 Согласие жителя", payload=f"op:consent:{appeal_id}:0"))
     if attachment_count > 0:
         kb.row(
             CallbackButton(
@@ -398,6 +409,7 @@ def op_help_keyboard(
     open_count: int | None = None,
     is_it: bool = False,
     can_broadcast: bool = False,
+    reply_draft_token: str | None = None,
 ):
     """Клавиатура быстрых действий, закреплённая в админ-чате: ближайший
     аналог telegram-кнопки меню, который есть в MAX. Каждое нажатие
@@ -423,6 +435,8 @@ def op_help_keyboard(
     # в две колонки на узких экранах MAX обрезаются до «...». Один ряд —
     # один смысл, ничего не теряется.
     kb = InlineKeyboardBuilder()
+    if reply_draft_token:
+        kb.row(CallbackButton(text="✍️ Сохранённый ответ", payload=f"op:replydraft:open:{reply_draft_token}"))
     open_label = "📋 Открытые обращения"
     if open_count is not None:
         open_label = f"📋 Открытые обращения ({open_count})"
@@ -462,4 +476,18 @@ __all__ = [
     "op_help_security_keyboard",
     "op_stats_menu_keyboard",
     "open_tickets_listing_keyboard",
+    "queue_panel_keyboard",
+    "queue_recovery_button",
 ]
+
+
+def queue_panel_keyboard():
+    """Shared queue opens an independent operator navigation screen."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="📋 Открыть очередь", payload="op:queue_view"))
+    return kb.as_markup()
+
+
+
+def queue_recovery_button(token: str):
+    return CallbackButton(text="Проверил MAX: создать панель заново", payload=f"op:queue_recreate:{token}")

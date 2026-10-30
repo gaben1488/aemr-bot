@@ -187,6 +187,13 @@ def get_callback_message_id(event: Any) -> str | None:
     return str(mid) if mid else None
 
 
+def check_edit_result(result: Any) -> None:
+    """MAX may return HTTP 200 with an explicit unsuccessful edit result."""
+    success = result.get("success") if isinstance(result, dict) else getattr(result, "success", None)
+    if success is False:
+        raise ValueError("MAX rejected message edit")
+
+
 async def send_or_edit_screen(
     event: Any,
     *,
@@ -251,7 +258,9 @@ async def send_or_edit_screen(
                 message_id=callback_mid,
                 text=text,
                 attachments=attachments,
+                notify=False,
             )
+            check_edit_result(result)
             # edit сохраняет mid — tracker не меняем (оба поля уже
             # указывают на этот mid).
             return result

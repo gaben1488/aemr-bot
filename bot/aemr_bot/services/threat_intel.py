@@ -100,7 +100,9 @@ def save_cache(store: ThreatIntelStore) -> None:
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         data = {
-            "version": 1, "outage_notified": store.outage_notified,
+            # Version 2 preserves www subdomains as distinct hosts. Version 1
+            # collapsed them into the apex and cannot be safely reconstructed.
+            "version": 2, "outage_notified": store.outage_notified,
             "started_at": time.time() - max(0, time.monotonic() - store.started_at),
             "sources": {name: {"updated_at": store.source_updated_at[name], "hosts": sorted(hosts)}
                         for name, hosts in store.source_hosts.items()},
@@ -129,7 +131,7 @@ def get_store() -> ThreatIntelStore:
                 if path.stat().st_size > _MAX_UNPACKED_BYTES:
                     raise ValueError("cache too large")
                 data = json.loads(path.read_text())
-                if data["version"] != 1:
+                if data["version"] != 2:
                     raise ValueError("cache version")
                 for name, item in data["sources"].items():
                     if name not in _enabled_sources():
@@ -164,7 +166,13 @@ def _normalize_host(url_or_host: str) -> str:
         except ValueError:
             pass
         parsed = urlparse(value if "://" in value else f"http://{value}")
-        host = (parsed.hostname or "").lower().removeprefix("www.").rstrip(".")
+        host = (parsed.hostname or "").lower().rstrip(".")
+        # URL authorities may spell the same IPv6 address in expanded form;
+        # use the same representation as bare indicators and cache validation.
+        try:
+            return ipaddress.ip_address(host).compressed
+        except ValueError:
+            pass
         return host.encode("idna").decode("ascii")
     except (ValueError, AttributeError, UnicodeError):
         return ""

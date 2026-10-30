@@ -35,7 +35,9 @@ async def test_deliver_operator_reply_blocks_closed_appeal() -> None:
         yield SimpleNamespace()
 
     live_op = SimpleNamespace(id=7, max_user_id=7001, is_active=True)
-    with patch("aemr_bot.handlers.operator_reply.session_scope", fake_session_scope), \
+    with patch("aemr_bot.services.privacy_epoch.hold_delivery", AsyncMock()), \
+         patch("aemr_bot.services.appeal_locks.hold", AsyncMock()), \
+         patch("aemr_bot.handlers.operator_reply.session_scope", fake_session_scope), \
          patch(
              "aemr_bot.handlers.operator_reply.operators_service.get",
              AsyncMock(return_value=live_op),
@@ -81,5 +83,5 @@ async def test_deliver_operator_reply_blocks_closed_appeal() -> None:
     event.bot.send_message.assert_awaited_once()
     kwargs = event.bot.send_message.await_args.kwargs
     assert kwargs["chat_id"] == 123
-    assert "обращение уже закрыто" in kwargs["text"]
+    assert "обращение уже завершено" in kwargs["text"]
     assert "user_id" not in kwargs

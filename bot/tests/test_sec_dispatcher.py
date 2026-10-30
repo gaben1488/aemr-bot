@@ -184,7 +184,8 @@ class TestShowOpMenuOperatorGate:
         event.message.answer = AsyncMock()
 
         send_screen = AsyncMock()
-        with patch("aemr_bot.handlers.admin_panel.get_operator",
+        with patch("aemr_bot.services.operator_drafts.get", AsyncMock(return_value=None)), \
+             patch("aemr_bot.handlers.admin_panel.get_operator",
                    AsyncMock(return_value=None)), \
              patch("aemr_bot.handlers._common.send_or_edit_screen",
                    send_screen), \
@@ -215,7 +216,8 @@ class TestShowOpMenuOperatorGate:
         event.bot.pin_message = AsyncMock()
 
         send_screen = AsyncMock()
-        with patch("aemr_bot.handlers.admin_panel.get_operator",
+        with patch("aemr_bot.services.operator_drafts.get", AsyncMock(return_value=None)), \
+             patch("aemr_bot.handlers.admin_panel.get_operator",
                    AsyncMock(return_value=None)), \
              patch("aemr_bot.handlers._common.send_or_edit_screen",
                    send_screen), \
@@ -238,9 +240,10 @@ class TestShowOpMenuOperatorGate:
         event = make_event(chat_id=ADMIN_GROUP, user_id=7)
         event.message.answer = AsyncMock()
 
-        op = SimpleNamespace(role=OperatorRole.IT.value)
+        op = SimpleNamespace(id=7, role=OperatorRole.IT.value)
         send_screen = AsyncMock(return_value=None)
-        with patch("aemr_bot.handlers.admin_panel.get_operator",
+        with patch("aemr_bot.services.operator_drafts.get", AsyncMock(return_value=None)), \
+             patch("aemr_bot.handlers.admin_panel.get_operator",
                    AsyncMock(return_value=op)), \
              patch("aemr_bot.handlers._common.send_or_edit_screen",
                    send_screen), \

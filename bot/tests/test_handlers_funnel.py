@@ -181,3 +181,18 @@ class TestOnAwaitingName:
             await appeal_funnel.on_awaiting_name(event, None, text, 42)
         save.assert_not_awaited()
         event.message.answer.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_oversized_address_is_not_saved_in_part():
+    from aemr_bot.handlers import appeal_funnel
+
+    event = _make_event()
+    save = AsyncMock()
+    with patch.object(appeal_funnel.users_service, "update_dialog_data", save):
+        await appeal_funnel.on_awaiting_address(
+            event, body=None, text_body="А" * (appeal_funnel.cfg.address_max_chars + 1), max_user_id=42,
+        )
+    save.assert_not_awaited()
+    assert "адрес" in event.message.answer.await_args.args[0].lower()
+    assert str(appeal_funnel.cfg.address_max_chars) in event.message.answer.await_args.args[0]

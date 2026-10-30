@@ -4,13 +4,14 @@
 Локально skip без maxapi; в CI работает."""
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from tests._helpers import fake_current_user, make_event
 from tests._helpers import fake_session_scope as _fake_session_scope
-from tests._helpers import make_event
 
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
@@ -57,6 +58,7 @@ class TestBuildMainMenu:
         from aemr_bot.handlers import start
 
         with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.start.users_service.find_by_max_id", AsyncMock(return_value=SimpleNamespace(appeal_draft=None))), \
              patch("aemr_bot.handlers.start.broadcasts_service.is_subscribed",
                    AsyncMock(return_value=True)):
             kb = await start._build_main_menu(max_user_id=42)
@@ -78,8 +80,8 @@ class TestResetFunnelIfStuck:
 
         user = SimpleNamespace(dialog_state=DialogState.AWAITING_NAME.value)
         reset = AsyncMock()
-        with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.start.users_service.get_or_create",
+        with patch("aemr_bot.handlers.start.current_user", fake_current_user(user)), \
+             patch("aemr_bot.handlers.start.users_service.find_by_max_id",
                    AsyncMock(return_value=user)), \
              patch("aemr_bot.handlers.start.users_service.reset_state", reset):
             await start._reset_funnel_if_stuck(42)
@@ -92,8 +94,8 @@ class TestResetFunnelIfStuck:
 
         user = SimpleNamespace(dialog_state=DialogState.IDLE.value, first_name=None, consent_pdn_at=None, is_blocked=False)
         reset = AsyncMock()
-        with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.start.users_service.get_or_create",
+        with patch("aemr_bot.handlers.start.current_user", fake_current_user(user)), \
+             patch("aemr_bot.handlers.start.users_service.find_by_max_id",
                    AsyncMock(return_value=user)), \
              patch("aemr_bot.handlers.start.users_service.reset_state", reset):
             await start._reset_funnel_if_stuck(42)
@@ -109,6 +111,23 @@ class TestResetFunnelIfStuck:
         assert result is None
         scope.assert_not_called()
 
+    @pytest.mark.asyncio
+    async def test_active_appeal_is_paused_without_losing_composition(self):
+        from aemr_bot.handlers import start
+
+        data = {"draft_token": "saved", "summary_chunks": ["Мой вопрос"], "attachments": []}
+        user = SimpleNamespace(dialog_state="awaiting_summary", dialog_data=data, appeal_draft=None)
+        session = SimpleNamespace(flush=AsyncMock())
+        with patch.object(start, "current_user", fake_current_user(user, session=session)), \
+             patch.object(start.users_service, "find_by_max_id", AsyncMock(return_value=user)) as lookup, \
+             patch.object(start.users_service, "reset_state", AsyncMock()) as reset:
+            await start._reset_funnel_if_stuck(42)
+        lookup.assert_awaited_once_with(session, 42, for_update=True)
+        reset.assert_not_awaited()
+        assert user.dialog_state == "idle" and user.dialog_data == {}
+        assert user.appeal_draft == {"state": "awaiting_summary", "data": data}
+
+
 
 class TestCmdStart:
     @pytest.mark.asyncio
@@ -122,6 +141,7 @@ class TestCmdStart:
                    AsyncMock(return_value=user)), \
              patch("aemr_bot.handlers.start.users_service.reset_state",
                    AsyncMock()), \
+             patch("aemr_bot.handlers.start.users_service.find_by_max_id", AsyncMock(return_value=SimpleNamespace(appeal_draft=None))), \
              patch("aemr_bot.handlers.start.broadcasts_service.is_subscribed",
                    AsyncMock(return_value=False)):
             await start.cmd_start(event)
@@ -135,6 +155,7 @@ class TestCmdHelp:
 
         event = _make_event()
         with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.start.users_service.find_by_max_id", AsyncMock(return_value=SimpleNamespace(appeal_draft=None))), \
              patch("aemr_bot.handlers.start.broadcasts_service.is_subscribed",
                    AsyncMock(return_value=False)):
             await start.cmd_help(event)
@@ -167,6 +188,7 @@ class TestCmdMenu:
         with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.start.users_service.get_or_create",
                    AsyncMock(return_value=user)), \
+             patch("aemr_bot.handlers.start.users_service.find_by_max_id", AsyncMock(return_value=SimpleNamespace(appeal_draft=None))), \
              patch("aemr_bot.handlers.start.broadcasts_service.is_subscribed",
                    AsyncMock(return_value=False)):
             await start.cmd_menu(event)
@@ -174,6 +196,41 @@ class TestCmdMenu:
 
 
 class TestCmdPolicy:
+    @pytest.mark.asyncio
+    async def test_names_both_distinct_documents_when_pdf_and_url_are_available(self) -> None:
+        from aemr_bot.handlers import start
+
+        event = _make_event()
+        with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.start.settings_store.get",
+                   AsyncMock(side_effect=["TOK-X", "https://policy.example/p.pdf"])), \
+             patch("aemr_bot.handlers.start.policy_service.build_file_attachment",
+                   return_value={"type": "file"}), \
+             patch("aemr_bot.handlers.start.send_or_edit_screen", AsyncMock()) as send:
+            await start.cmd_policy(event)
+        text = send.await_args.kwargs["text"]
+        assert "Политика конфиденциальности чат-бота" in text
+        assert "Политика обработки персональных данных" in text
+        assert "https://policy.example/p.pdf" in text
+        assert {"type": "file"} in send.await_args.kwargs["attachments"]
+
+    @pytest.mark.asyncio
+    async def test_missing_chatbot_pdf_is_not_described_as_municipal_policy(self) -> None:
+        from aemr_bot.handlers import start
+
+        event = _make_event()
+        with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.start.settings_store.get",
+                   AsyncMock(side_effect=[None, "https://policy.example/p.pdf"])), \
+             patch("aemr_bot.handlers.start.policy_service.ensure_uploaded",
+                   AsyncMock(return_value=None)), \
+             patch("aemr_bot.handlers.start.send_or_edit_screen", AsyncMock()) as send:
+            await start.cmd_policy(event)
+        text = send.await_args.kwargs["text"]
+        assert "Политика конфиденциальности чат-бота" in text
+        assert "недоступ" in text.lower()
+        assert "https://policy.example/p.pdf" in text
+
     @pytest.mark.asyncio
     async def test_uses_cached_token_to_send_pdf(self) -> None:
         from aemr_bot.handlers import start
@@ -204,7 +261,8 @@ class TestCmdPolicy:
                    AsyncMock(return_value=None)):
             await start.cmd_policy(event)
         # Должен быть отправлен fallback с URL.
-        assert event.bot.send_message.called or event.message.answer.called
+        sent = "".join(call.kwargs.get("text", "") for call in event.bot.send_message.call_args_list)
+        assert "https://policy.example/p.pdf" in sent
 
     @pytest.mark.asyncio
     async def test_no_chat_id_returns_silently(self) -> None:
@@ -265,12 +323,15 @@ class TestCmdForget:
         write_audit = AsyncMock()
         erase = AsyncMock(return_value=[7, 12])  # 2 закрытых обращения
         notify = AsyncMock()
-        with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
+        with patch("aemr_bot.services.data_erasure.tracked_send", AsyncMock()), \
+             patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.start.ops_service.write_audit", write_audit), \
              patch("aemr_bot.handlers.start.users_service.erase_pdn_detailed", erase), \
              patch("aemr_bot.handlers.start.admin_events.notify_data_erased", notify):
             await start.cmd_forget(event)
         write_audit.assert_called_once()
+        assert write_audit.await_args.kwargs["operator_max_user_id"] is None
+        assert write_audit.await_args.kwargs["target"] is None
         erase.assert_called_once()
         notify.assert_called_once_with(
             event.bot, max_user_id=42, closed_appeal_ids=[7, 12]
@@ -285,7 +346,8 @@ class TestCmdForget:
         event = _make_event()
         erase = AsyncMock(return_value=None)
         notify = AsyncMock()
-        with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
+        with patch("aemr_bot.services.data_erasure.tracked_send", AsyncMock()), \
+             patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.start.ops_service.write_audit", AsyncMock()), \
              patch("aemr_bot.handlers.start.users_service.erase_pdn_detailed", erase), \
              patch("aemr_bot.handlers.start.admin_events.notify_data_erased", notify):
@@ -303,6 +365,7 @@ class TestCmdCancel:
         event = _make_event()
         reset = AsyncMock()
         with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
+             patch("aemr_bot.handlers.start.users_service.find_by_max_id", AsyncMock(return_value=None)), \
              patch("aemr_bot.handlers.start.users_service.reset_state", reset):
             await start.cmd_cancel(event)
         reset.assert_called_once()
@@ -323,9 +386,25 @@ class TestCmdCancel:
         reply_mock.assert_not_called()
 
 
+@asynccontextmanager
+async def _export_scope(user, appeals):
+    session = MagicMock()
+    session.bind.dialect.name = "sqlite"
+    session.scalar = AsyncMock(return_value=len(appeals))
+    session.scalars = AsyncMock(side_effect=[appeals, []] if appeals else [[]])
+
+    async def messages():
+        for appeal in appeals:
+            for message in appeal.messages:
+                yield message
+
+    session.stream_scalars = AsyncMock(side_effect=lambda query: messages())
+    yield session
+
+
 class TestCmdExport:
     @pytest.mark.asyncio
-    async def test_returns_json_with_user_data(self) -> None:
+    async def test_returns_readable_profile_when_upload_fails(self) -> None:
         from aemr_bot.handlers import start
 
         event = _make_event()
@@ -340,14 +419,19 @@ class TestCmdExport:
             consent_broadcast_at=None,
             subscribed_broadcast=False,
         )
-        with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.start.users_service.get_or_create",
+        export_appeals = []
+        with patch("aemr_bot.handlers.start.session_scope", lambda: _export_scope(user, export_appeals)), \
+             patch("aemr_bot.services.privacy_epoch.read", AsyncMock(return_value=3)), \
+             patch("aemr_bot.services.privacy_epoch.hold_export_if_current", AsyncMock(return_value=True)) as guard, \
+             patch("aemr_bot.handlers.start.users_service.find_by_max_id",
                    AsyncMock(return_value=user)), \
-             patch("aemr_bot.handlers.start.appeals_service.list_for_user",
-                   AsyncMock(return_value=[])):
+             patch("aemr_bot.handlers.start.uploads.upload_path", AsyncMock(return_value=None)):
             await start.cmd_export(event)
-        # Был ответ с json'ом.
-        assert event.bot.send_message.called or event.message.answer.called
+        guard.assert_awaited_once()
+        assert guard.await_args.args[1] == 3
+        # Fallback replies still contain the profile.
+        sent = "".join(call.kwargs.get("text", "") for call in event.bot.send_message.call_args_list)
+        assert "Иван" in sent and "79001234567" in sent
 
     @pytest.mark.asyncio
     async def test_export_goes_as_file_when_upload_works(self) -> None:
@@ -368,17 +452,20 @@ class TestCmdExport:
             consent_revoked_at=None, consent_broadcast_at=None,
             subscribed_broadcast=False,
         )
-        with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.start.users_service.get_or_create",
+        export_appeals = []
+        with patch("aemr_bot.handlers.start.session_scope", lambda: _export_scope(user, export_appeals)), \
+             patch("aemr_bot.services.privacy_epoch.read", AsyncMock(return_value=3)), \
+             patch("aemr_bot.services.privacy_epoch.hold_export_if_current", AsyncMock(return_value=True)) as guard, \
+             patch("aemr_bot.handlers.start.users_service.find_by_max_id",
                    AsyncMock(return_value=user)), \
-             patch("aemr_bot.handlers.start.appeals_service.list_for_user",
-                   AsyncMock(return_value=[])), \
              patch("aemr_bot.handlers.start.uploads.upload_path",
                    AsyncMock(return_value="TOKEN-1")) as upload, \
              patch("aemr_bot.handlers.start.uploads.file_attachment",
                    lambda token: {"type": "file", "token": token}):
             await start.cmd_export(event)
 
+        guard.assert_awaited_once()
+        assert guard.await_args.args[1] == 3
         upload.assert_awaited_once()
         # Ушло одно сообщение с вложением, без нарезки в блоках кода.
         sent = event.bot.send_message.call_args
@@ -405,7 +492,7 @@ class TestCmdExport:
             consent_broadcast_at=None, subscribed_broadcast=False,
         )
         appeal = SimpleNamespace(
-            id=7, created_at=None, status="answered", locality="Елизово",
+            id=7, related_appeal_id=None, created_at=None, status="answered", locality="Елизово",
             address="ул. Ленина, 1", topic="Дороги", summary="яма",
             attachments=[{"type": "image"}], answered_at=None, closed_at=None,
             messages=[
@@ -417,14 +504,18 @@ class TestCmdExport:
                                 text="второй ответ", attachments=[{"t": 1}]),
             ],
         )
-        with patch("aemr_bot.handlers.start.session_scope", _fake_session_scope), \
-             patch("aemr_bot.handlers.start.users_service.get_or_create",
+        export_appeals = [appeal]
+        with patch("aemr_bot.handlers.start.session_scope", lambda: _export_scope(user, export_appeals)), \
+             patch("aemr_bot.services.privacy_epoch.read", AsyncMock(return_value=3)), \
+             patch("aemr_bot.services.privacy_epoch.hold_export_if_current", AsyncMock(return_value=True)) as guard, \
+             patch("aemr_bot.handlers.start.users_service.find_by_max_id",
                    AsyncMock(return_value=user)), \
-             patch("aemr_bot.handlers.start.appeals_service.list_for_user",
-                   AsyncMock(return_value=[appeal])), \
-             patch("aemr_bot.handlers.start.reply", AsyncMock()) as reply_mock:
+             patch("aemr_bot.handlers.start.uploads.upload_path", AsyncMock(return_value=None)), \
+             patch("aemr_bot.handlers.start.reply", AsyncMock(return_value=SimpleNamespace(body=SimpleNamespace(mid="part")))) as reply_mock:
             await start.cmd_export(event)
 
+        guard.assert_awaited_once()
+        assert guard.await_args.args[1] == 3
         sent = "".join(call.args[1] for call in reply_mock.call_args_list)
         # Собственное сообщение жителя тоже в выгрузке.
         assert "уточнение жителя" in sent

@@ -18,6 +18,7 @@ from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_role
 from aemr_bot.handlers._common import op_screen, op_send
+from aemr_bot.services import data_erasure
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import users as users_service
 from aemr_bot.services.card_format import _citizen_status_line
@@ -106,81 +107,82 @@ async def _render_audience_page(
     master-listing keyboard."""
     from aemr_bot import keyboards as kbds
 
-    page = max(1, page)
-    offset = (page - 1) * _PAGE_SIZE
-
-    async with session_scope() as session:
-        if category == "subs":
-            total = await users_service.count_subscribers_audience(session)
-            items = await users_service.list_subscribers(
-                session, limit=_PAGE_SIZE, offset=offset,
-            )
-            title = "📩 Подписчики на рассылку"
-        elif category == "consent":
-            total = await users_service.count_consented(session)
-            items = await users_service.list_consented(
-                session, limit=_PAGE_SIZE, offset=offset,
-            )
-            title = "🔐 Дали согласие на ПДн"
-        elif category == "blocked":
-            total = await users_service.count_blocked(session)
-            items = await users_service.list_blocked(
-                session, limit=_PAGE_SIZE, offset=offset,
-            )
-            title = "🚫 Заблокированные"
-        else:
-            return
-
-    total_pages = max(1, (total + _PAGE_SIZE - 1) // _PAGE_SIZE)
-    # Если page «улетел» за пределы (оператор сделал bookmark на старую
-    # страницу, а жителей с тех пор стало меньше) — clamp к total_pages.
-    if page > total_pages:
-        page = total_pages
+    async with data_erasure.personal_view(aggregate=True):
+        page = max(1, page)
         offset = (page - 1) * _PAGE_SIZE
-        # Перечитываем последнюю реальную страницу.
+
         async with session_scope() as session:
             if category == "subs":
+                total = await users_service.count_subscribers_audience(session)
                 items = await users_service.list_subscribers(
                     session, limit=_PAGE_SIZE, offset=offset,
                 )
+                title = "📩 Подписчики на рассылку"
             elif category == "consent":
+                total = await users_service.count_consented(session)
                 items = await users_service.list_consented(
                     session, limit=_PAGE_SIZE, offset=offset,
                 )
-            else:
+                title = "🔐 Дали согласие на ПДн"
+            elif category == "blocked":
+                total = await users_service.count_blocked(session)
                 items = await users_service.list_blocked(
                     session, limit=_PAGE_SIZE, offset=offset,
                 )
+                title = "🚫 Заблокированные"
+            else:
+                return
 
-    if total == 0:
+        total_pages = max(1, (total + _PAGE_SIZE - 1) // _PAGE_SIZE)
+        # Если page «улетел» за пределы (оператор сделал bookmark на старую
+        # страницу, а жителей с тех пор стало меньше) — clamp к total_pages.
+        if page > total_pages:
+            page = total_pages
+            offset = (page - 1) * _PAGE_SIZE
+            # Перечитываем последнюю реальную страницу.
+            async with session_scope() as session:
+                if category == "subs":
+                    items = await users_service.list_subscribers(
+                        session, limit=_PAGE_SIZE, offset=offset,
+                    )
+                elif category == "consent":
+                    items = await users_service.list_consented(
+                        session, limit=_PAGE_SIZE, offset=offset,
+                    )
+                else:
+                    items = await users_service.list_blocked(
+                        session, limit=_PAGE_SIZE, offset=offset,
+                    )
+
+        if total == 0:
+            await op_screen(
+                event,
+                f"{title}\n"
+                "· · · · · · · ·\n"
+                "Список пуст.",
+                kbds.op_back_to_audience_keyboard(),
+            )
+            return
+
+        rows = [
+            (u.max_user_id, _format_audience_row(u))
+            for u in items
+        ]
+        header = (
+            f"{title}\n"
+            f"· · · · · · · ·\n"
+            f"Страница {page} из {total_pages} · всего: {total}\n"
+            f"\n"
+            f"Тапните строку — откроется карточка жителя\n"
+            f"с действиями (блок/удалить ПДн)."
+        )
         await op_screen(
             event,
-            f"{title}\n"
-            "· · · · · · · ·\n"
-            "Список пуст.",
-            kbds.op_back_to_audience_keyboard(),
+            header,
+            kbds.op_audience_paginated_list_keyboard(
+                category, rows, page=page, total_pages=total_pages,
+            ),
         )
-        return
-
-    rows = [
-        (u.max_user_id, _format_audience_row(u))
-        for u in items
-    ]
-    header = (
-        f"{title}\n"
-        f"· · · · · · · ·\n"
-        f"Страница {page} из {total_pages} · всего: {total}\n"
-        f"\n"
-        f"Тапните строку — откроется карточка жителя\n"
-        f"с действиями (блок/удалить ПДн)."
-    )
-    await op_screen(
-        event,
-        header,
-        kbds.op_audience_paginated_list_keyboard(
-            category, rows, page=page, total_pages=total_pages,
-        ),
-    )
 
 
 async def _dump_audience_page(
@@ -192,44 +194,45 @@ async def _dump_audience_page(
     """
     from aemr_bot import keyboards as kbds
 
-    page = max(1, page)
-    offset = (page - 1) * _PAGE_SIZE
-    async with session_scope() as session:
-        if category == "subs":
-            items = await users_service.list_subscribers(
-                session, limit=_PAGE_SIZE, offset=offset,
-            )
-        elif category == "consent":
-            items = await users_service.list_consented(
-                session, limit=_PAGE_SIZE, offset=offset,
-            )
-        elif category == "blocked":
-            items = await users_service.list_blocked(
-                session, limit=_PAGE_SIZE, offset=offset,
-            )
-        else:
+    async with data_erasure.personal_view(aggregate=True):
+        page = max(1, page)
+        offset = (page - 1) * _PAGE_SIZE
+        async with session_scope() as session:
+            if category == "subs":
+                items = await users_service.list_subscribers(
+                    session, limit=_PAGE_SIZE, offset=offset,
+                )
+            elif category == "consent":
+                items = await users_service.list_consented(
+                    session, limit=_PAGE_SIZE, offset=offset,
+                )
+            elif category == "blocked":
+                items = await users_service.list_blocked(
+                    session, limit=_PAGE_SIZE, offset=offset,
+                )
+            else:
+                return
+
+        if not items:
+            await op_send(event, "Страница пуста.", kbds.op_back_to_audience_keyboard())
             return
 
-    if not items:
-        await op_send(event, "Страница пуста.", kbds.op_back_to_audience_keyboard())
-        return
-
-    # Отдельная карточка на жителя, каждая со status-линией +
-    # action-кнопками. Это «старый» поток, но теперь по явному
-    # запросу оператора, а не по умолчанию.
-    for u in items:
-        name = u.first_name or "—"
-        phone = _mask_phone(u.phone)
-        status = _citizen_status_line(u)
-        line = (
-            f"#{u.max_user_id} · {name} · {phone}\n"
-            f"{status}"
-        )
-        await op_send(
-            event,
-            line,
-            kbds.op_audience_user_actions(u.max_user_id, blocked=u.is_blocked),
-        )
+        # Отдельная карточка на жителя, каждая со status-линией +
+        # action-кнопками. Это «старый» поток, но теперь по явному
+        # запросу оператора, а не по умолчанию.
+        for u in items:
+            name = u.first_name or "—"
+            phone = _mask_phone(u.phone)
+            status = _citizen_status_line(u)
+            line = (
+                f"#{u.max_user_id} · {name} · {phone}\n"
+                f"{status}"
+            )
+            await op_send(
+                event,
+                line,
+                kbds.op_audience_user_actions(u.max_user_id, blocked=u.is_blocked),
+            )
 
 
 async def _start_search_intent(event, category: str | None) -> None:
@@ -280,44 +283,45 @@ async def handle_audience_search_text(event, text: str) -> bool:
         )
         return True
 
-    async with session_scope() as session:
-        users = await users_service.search_audience(
-            session, query, limit=20,
-        )
+    async with data_erasure.personal_view(aggregate=True):
+        async with session_scope() as session:
+            users = await users_service.search_audience(
+                session, query, limit=20,
+            )
 
-    if not users:
+        if not users:
+            await op_send(
+                event,
+                (
+                    "🔍 По вашему запросу ничего не найдено.\n"
+                    "· · · · · · · ·\n"
+                    "Попробуйте короче или другой фрагмент."
+                ),
+                kbds.op_back_to_audience_keyboard(),
+            )
+            return True
+
+        rows = [
+            (u.max_user_id, _format_audience_row(u))
+            for u in users
+        ]
+        header = (
+            f"🔍 Найдено: {len(users)}\n"
+            f"· · · · · · · ·\n"
+            f"Тапните строку — откроется карточка жителя."
+        )
+        # Используем тот же paginated-keyboard, но без pagination
+        # (всё на одной странице). category='subs' как fallback —
+        # back-кнопка вернёт в общий audience-меню.
+        cat_fallback = state.get("category") or "subs"
         await op_send(
             event,
-            (
-                "🔍 По вашему запросу ничего не найдено.\n"
-                "· · · · · · · ·\n"
-                "Попробуйте короче или другой фрагмент."
+            header,
+            kbds.op_audience_paginated_list_keyboard(
+                cat_fallback, rows, page=1, total_pages=1,
             ),
-            kbds.op_back_to_audience_keyboard(),
         )
         return True
-
-    rows = [
-        (u.max_user_id, _format_audience_row(u))
-        for u in users
-    ]
-    header = (
-        f"🔍 Найдено: {len(users)}\n"
-        f"· · · · · · · ·\n"
-        f"Тапните строку — откроется карточка жителя."
-    )
-    # Используем тот же paginated-keyboard, но без pagination
-    # (всё на одной странице). category='subs' как fallback —
-    # back-кнопка вернёт в общий audience-меню.
-    cat_fallback = state.get("category") or "subs"
-    await op_send(
-        event,
-        header,
-        kbds.op_audience_paginated_list_keyboard(
-            cat_fallback, rows, page=1, total_pages=1,
-        ),
-    )
-    return True
 
 
 async def _render_user_card(
@@ -328,39 +332,41 @@ async def _render_user_card(
     исходный список."""
     from aemr_bot import keyboards as kbds
 
-    async with session_scope() as session:
-        user = await users_service.find_by_max_id(session, max_user_id)
-    if user is None:
+    async with data_erasure.personal_view() as personal:
+        async with session_scope() as session:
+            user = await users_service.find_by_max_id(session, max_user_id)
+        if user is None:
+            await op_screen(
+                event,
+                "Житель не найден.",
+                kbds.op_back_to_audience_keyboard(),
+            )
+            return
+
+        await personal.include(max_user_ids=[user.max_user_id])
+        name = (user.first_name or "—").strip() or "—"
+        phone = _mask_phone(user.phone)
+        status_line = _citizen_status_line(user)
+        body = (
+            f"👤 Карточка жителя\n"
+            f"· · · · · · · ·\n"
+            f"Имя:     {name}\n"
+            f"Телефон: {phone}\n"
+            f"MAX id:  {user.max_user_id}\n"
+            f"\n"
+            f"{status_line}\n"
+            f"\n"
+            f"Действия — кнопками ниже."
+        )
         await op_screen(
             event,
-            f"Житель #{max_user_id} не найден.",
-            kbds.op_back_to_audience_keyboard(),
+            body,
+            kbds.op_audience_user_card_keyboard(
+                user.max_user_id,
+                blocked=user.is_blocked,
+                category=category,
+            ),
         )
-        return
-
-    name = (user.first_name or "—").strip() or "—"
-    phone = _mask_phone(user.phone)
-    status_line = _citizen_status_line(user)
-    body = (
-        f"👤 Карточка жителя\n"
-        f"· · · · · · · ·\n"
-        f"Имя:     {name}\n"
-        f"Телефон: {phone}\n"
-        f"MAX id:  {user.max_user_id}\n"
-        f"\n"
-        f"{status_line}\n"
-        f"\n"
-        f"Действия — кнопками ниже."
-    )
-    await op_screen(
-        event,
-        body,
-        kbds.op_audience_user_card_keyboard(
-            user.max_user_id,
-            blocked=user.is_blocked,
-            category=category,
-        ),
-    )
 
 
 async def run_audience_action(event, payload: str) -> None:
@@ -450,45 +456,51 @@ async def run_audience_action(event, payload: str) -> None:
         except ValueError:
             return
         if action == "block":
-            async with session_scope() as session:
-                ok = await users_service.set_blocked(
-                    session, target_id, blocked=True
-                )
-                if ok:
-                    await operators_service.write_audit(
-                        session,
-                        operator_max_user_id=actor_id,
-                        action="block",
-                        target=f"user max_id={target_id}",
+            async with data_erasure.personal_view() as personal:
+                async with session_scope() as session:
+                    ok = await users_service.set_blocked(
+                        session, target_id, blocked=True
                     )
-            await op_screen(
-                event,
-                texts.OP_USER_BLOCKED.format(max_user_id=target_id)
-                if ok
-                else "Не удалось.",
-                kbds.op_back_to_audience_keyboard(),
-            )
-            return
+                    if ok:
+                        await operators_service.write_audit(
+                            session,
+                            operator_max_user_id=actor_id,
+                            action="block",
+                            target=f"user max_id={target_id}",
+                        )
+                if ok:
+                    await personal.include(max_user_ids=[target_id])
+                await op_screen(
+                    event,
+                    texts.OP_USER_BLOCKED.format(max_user_id=target_id)
+                    if ok
+                    else "Не удалось.",
+                    kbds.op_back_to_audience_keyboard(),
+                )
+                return
         if action == "unblock":
-            async with session_scope() as session:
-                ok = await users_service.set_blocked(
-                    session, target_id, blocked=False
-                )
-                if ok:
-                    await operators_service.write_audit(
-                        session,
-                        operator_max_user_id=actor_id,
-                        action="unblock",
-                        target=f"user max_id={target_id}",
+            async with data_erasure.personal_view() as personal:
+                async with session_scope() as session:
+                    ok = await users_service.set_blocked(
+                        session, target_id, blocked=False
                     )
-            await op_screen(
-                event,
-                texts.OP_USER_UNBLOCKED.format(max_user_id=target_id)
-                if ok
-                else "Не удалось.",
-                kbds.op_back_to_audience_keyboard(),
-            )
-            return
+                    if ok:
+                        await operators_service.write_audit(
+                            session,
+                            operator_max_user_id=actor_id,
+                            action="unblock",
+                            target=f"user max_id={target_id}",
+                        )
+                if ok:
+                    await personal.include(max_user_ids=[target_id])
+                await op_screen(
+                    event,
+                    texts.OP_USER_UNBLOCKED.format(max_user_id=target_id)
+                    if ok
+                    else "Не удалось.",
+                    kbds.op_back_to_audience_keyboard(),
+                )
+                return
         if action == "erase":
             async with session_scope() as session:
                 ok = await users_service.erase_pdn(session, target_id)
@@ -497,11 +509,11 @@ async def run_audience_action(event, payload: str) -> None:
                         session,
                         operator_max_user_id=actor_id,
                         action="erase",
-                        target=f"user max_id={target_id}",
+                        target=None,
                     )
             await op_screen(
                 event,
-                texts.OP_USER_ERASED.format(max_user_id=target_id)
+                "Данные жителя удалены из рабочей базы."
                 if ok
                 else "Не удалось.",
                 kbds.op_back_to_audience_keyboard(),

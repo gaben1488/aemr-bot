@@ -20,6 +20,7 @@ import pytest
 
 from tests._helpers import fake_session_scope as _fake_session_scope
 from tests._helpers import make_event
+from tests._reply_delivery_helpers import tracked_reply_send
 
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
@@ -235,7 +236,11 @@ def _autopatch_operators_get(request):
     with patch(
         "aemr_bot.handlers.operator_reply.operators_service.get",
         AsyncMock(return_value=live_op),
-    ):
+    ), patch("aemr_bot.services.operator_reply_attempts.reserve", AsyncMock(return_value=123)), \
+       patch("aemr_bot.services.operator_reply_attempts.note_part", AsyncMock()), \
+       patch("aemr_bot.services.operator_reply_attempts.mark_confirmed", AsyncMock()), \
+       patch("aemr_bot.services.operator_reply_attempts.mark_unknown", AsyncMock()), \
+       patch("aemr_bot.services.operator_reply_attempts.record_confirmed", AsyncMock(return_value=True)):
         yield
 
 
@@ -324,6 +329,8 @@ class TestDeliverOperatorReply:
         with patch.object(opr.cfg, "answer_max_chars", 1000), \
              patch("aemr_bot.handlers.operator_reply.session_scope",
                    _fake_session_scope), \
+             patch("aemr_bot.services.data_erasure.tracked_send",
+                   AsyncMock(side_effect=tracked_reply_send)), \
              patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
                    AsyncMock(return_value=fresh_appeal)), \
              patch("aemr_bot.handlers.operator_reply._is_reply_success_recorded",
@@ -338,49 +345,38 @@ class TestDeliverOperatorReply:
         assert "не могу доставить" in text.lower() or "Не могу" in text
 
     @pytest.mark.asyncio
-    async def test_revoked_consent_allows_final_reply_for_older_appeal(self) -> None:
+    @pytest.mark.parametrize("route", ["command_final", "command_intermediate", "swipe"])
+    async def test_revoked_consent_blocks_older_appeal_on_every_route(self, route):
         from aemr_bot.handlers import operator_reply as opr
 
-        event = _make_event()
-        event.bot.send_message = AsyncMock(
-            side_effect=[SimpleNamespace(body=SimpleNamespace(mid="out-1")), None]
-        )
-        appeal = MagicMock()
-        appeal.id = 1
-        operator = MagicMock()
-        operator.id = 7
-        operator.max_user_id = 42
-
-        fresh_user = SimpleNamespace(
-            is_blocked=False,
-            first_name="Иван",
-            consent_pdn_at=None,
-            consent_revoked_at=datetime(2026, 5, 2, 12, 0, tzinfo=UTC),
-            max_user_id=42,
-        )
-        fresh_appeal = _fresh_appeal(user=fresh_user)
+        event = _make_event(chat_id=100)
+        fresh_appeal = _fresh_appeal()
+        fresh_appeal.user.consent_pdn_at = None
+        fresh_appeal.user.consent_revoked_at = datetime(2026, 5, 2, 12, tzinfo=UTC)
+        assert fresh_appeal.created_at < fresh_appeal.user.consent_revoked_at
         opr._recent_replies.clear()
-        with patch.object(opr.cfg, "answer_max_chars", 1000), \
-             patch("aemr_bot.handlers.operator_reply.session_scope",
-                   _fake_session_scope), \
-             patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
-                   AsyncMock(return_value=fresh_appeal)), \
-             patch("aemr_bot.handlers.operator_reply.appeals_service.add_operator_message",
-                   AsyncMock()) as add_message, \
-             patch("aemr_bot.handlers.operator_reply.operators_service.write_audit",
-                   AsyncMock()), \
-             patch("aemr_bot.handlers.operator_reply._is_reply_success_recorded",
-                   AsyncMock(return_value=False)), \
-             patch("aemr_bot.handlers.operator_reply._mark_reply_success_recorded",
-                   AsyncMock()):
-            handled = await opr._deliver_operator_reply(
-                event, appeal=appeal, operator=operator,
-                text="ответ", audit_action="reply",
-            )
-
-        assert handled is True
-        assert event.bot.send_message.call_args_list[0].kwargs["user_id"] == 42
-        add_message.assert_called_once()
+        with patch.object(opr.cfg, "admin_group_id", 100), \
+             patch.object(opr, "session_scope", _fake_session_scope), \
+             patch.object(opr.appeals_service, "get_by_id", AsyncMock(return_value=fresh_appeal)), \
+             patch.object(opr.appeals_service, "get_by_admin_message_id", AsyncMock(return_value=fresh_appeal)), \
+             patch.object(opr, "consume_reply_intent", return_value=None), \
+             patch.object(opr, "_extract_reply_target_mid", return_value="appeal-card"), \
+             patch("aemr_bot.handlers.operator_draft.collect", AsyncMock(return_value=False)), \
+             patch.object(opr, "_is_reply_success_recorded", AsyncMock(return_value=False)), \
+             patch("aemr_bot.services.operator_reply_attempts.reserve", AsyncMock(return_value=123)) as reserve, \
+             patch("aemr_bot.services.operator_reply_attempts.record_confirmed", AsyncMock()) as record, \
+             patch.object(opr, "_mark_reply_success_recorded", AsyncMock()) as mark_success:
+            if route == "swipe":
+                assert await opr.handle_operator_reply(event, event.message.body, "Ответ")
+            else:
+                await opr.handle_command_reply(event, 1, "Ответ", is_final=route == "command_final")
+        reserve.assert_not_awaited()
+        record.assert_not_awaited()
+        mark_success.assert_not_awaited()
+        event.bot.send_message.assert_awaited_once()
+        assert event.bot.send_message.await_args.kwargs.get("user_id") is None
+        assert event.bot.send_message.await_args.kwargs["chat_id"] == 100
+        assert "согласи" in event.bot.send_message.await_args.kwargs["text"].lower()
 
     @pytest.mark.asyncio
     async def test_appeal_vanished_in_db_returns_handled(self) -> None:
@@ -397,6 +393,8 @@ class TestDeliverOperatorReply:
         with patch.object(opr.cfg, "answer_max_chars", 1000), \
              patch("aemr_bot.handlers.operator_reply.session_scope",
                    _fake_session_scope), \
+             patch("aemr_bot.services.data_erasure.tracked_send",
+                   AsyncMock(side_effect=tracked_reply_send)), \
              patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
                    AsyncMock(return_value=None)), \
              patch("aemr_bot.handlers.operator_reply._is_reply_success_recorded",
@@ -423,6 +421,8 @@ class TestDeliverOperatorReply:
         with patch.object(opr.cfg, "answer_max_chars", 1000), \
              patch("aemr_bot.handlers.operator_reply.session_scope",
                    _fake_session_scope), \
+             patch("aemr_bot.services.data_erasure.tracked_send",
+                   AsyncMock(side_effect=tracked_reply_send)), \
              patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
                    AsyncMock(return_value=fresh_appeal)), \
              patch("aemr_bot.handlers.operator_reply._is_reply_success_recorded",
@@ -454,9 +454,11 @@ class TestDeliverOperatorReply:
         with patch.object(opr.cfg, "answer_max_chars", 1000), \
              patch("aemr_bot.handlers.operator_reply.session_scope",
                    _fake_session_scope), \
+             patch("aemr_bot.services.data_erasure.tracked_send",
+                   AsyncMock(side_effect=tracked_reply_send)), \
              patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
                    AsyncMock(side_effect=[fresh_appeal, fresh_appeal])), \
-             patch("aemr_bot.handlers.operator_reply.appeals_service.add_operator_message",
+             patch("aemr_bot.services.operator_reply_attempts.record_confirmed",
                    AsyncMock(side_effect=RuntimeError("db write failed"))), \
              patch("aemr_bot.handlers.operator_reply.operators_service.write_audit",
                    AsyncMock()), \
@@ -493,10 +495,12 @@ class TestDeliverOperatorReply:
         with patch.object(opr.cfg, "answer_max_chars", 1000), \
              patch("aemr_bot.handlers.operator_reply.session_scope",
                    _fake_session_scope), \
+             patch("aemr_bot.services.data_erasure.tracked_send",
+                   AsyncMock(side_effect=tracked_reply_send)), \
              patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
                    AsyncMock(side_effect=[fresh_appeal, fresh_appeal])), \
-             patch("aemr_bot.handlers.operator_reply.appeals_service.add_operator_message",
-                   AsyncMock()) as add_message, \
+             patch("aemr_bot.services.operator_reply_attempts.record_confirmed",
+                   AsyncMock(return_value=True)) as record, \
              patch("aemr_bot.handlers.operator_reply.operators_service.write_audit",
                    AsyncMock()) as write_audit, \
              patch("aemr_bot.handlers.operator_reply._is_reply_success_recorded",
@@ -509,8 +513,11 @@ class TestDeliverOperatorReply:
             )
 
         assert handled is True
-        add_message.assert_called_once()
-        write_audit.assert_called_once()
+        record.assert_awaited_once()
+        assert record.await_args.args[1] == 123
+        assert record.await_args.kwargs["mid"] == "out-1"
+        write_audit.assert_not_awaited()
+        assert record.await_args.kwargs["audit_action"] == "reply"
         mark_success.assert_called_once()
         assert opr._is_duplicate_reply(operator.id, appeal.id, "ответ") is True
         # is_final по умолчанию True → нет отдельной confirm-карточки
@@ -541,6 +548,8 @@ class TestDeliverOperatorReply:
         with patch.object(opr.cfg, "answer_max_chars", 1000), \
              patch("aemr_bot.handlers.operator_reply.session_scope",
                    _fake_session_scope), \
+             patch("aemr_bot.services.data_erasure.tracked_send",
+                   AsyncMock(side_effect=tracked_reply_send)), \
              patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
                    AsyncMock(side_effect=[fresh_appeal, fresh_appeal])), \
              patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id_with_messages",
@@ -567,19 +576,7 @@ class TestDeliverOperatorReply:
 
 
 class TestIntermediateReplyConfirmText:
-    """Развязка confirm-сообщения оператора: финальный vs промежуточный.
-
-    Регрессия — раньше шёл ADMIN_REPLY_DELIVERED = «Обращение #N закрыто»
-    даже для is_final=False. Это путало оператора (он понимал, что
-    житель остаётся в работе, но карточка говорила обратное).
-
-    2026-07: для is_final=True отдельное confirm-сообщение
-    (ADMIN_REPLY_DELIVERED_FINAL, «Финальный ответ отправлен жителю…»)
-    убрано владельцем — оно дублировало event_header свежей карточки
-    обращения (`admin_card.render`, замоканный здесь). Для is_final=False
-    confirm-сообщение (ADMIN_REPLY_DELIVERED_INTERMEDIATE) сохранено —
-    несёт другую информацию, которой нет в event_header.
-    """
+    """Подтверждение содержится в событийной карточке без дубля в чате."""
 
     async def _run_deliver(self, *, is_final: bool) -> SimpleNamespace:
         from aemr_bot.handlers import operator_reply as opr
@@ -599,6 +596,8 @@ class TestIntermediateReplyConfirmText:
         with patch.object(opr.cfg, "answer_max_chars", 1000), \
              patch("aemr_bot.handlers.operator_reply.session_scope",
                    _fake_session_scope), \
+             patch("aemr_bot.services.data_erasure.tracked_send",
+                   AsyncMock(side_effect=tracked_reply_send)), \
              patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",
                    AsyncMock(side_effect=[fresh_appeal, fresh_appeal])), \
              patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id_with_messages",
@@ -644,22 +643,13 @@ class TestIntermediateReplyConfirmText:
         assert len(delivery_calls) == 1
 
     @pytest.mark.asyncio
-    async def test_intermediate_reply_says_in_progress(self) -> None:
+    async def test_intermediate_reply_sends_no_duplicate_confirmation(self) -> None:
         event = await self._run_deliver(is_final=False)
         confirm_calls = [
             c for c in event.bot.send_message.await_args_list
             if "chat_id" in c.kwargs and c.kwargs.get("text")
         ]
-        assert confirm_calls
-        text = confirm_calls[-1].kwargs.get("text", "")
-        # Главное: НЕТ слова «закрыт».
-        assert "закрыт" not in text.lower(), text
-        # И есть маркер промежуточности.
-        assert (
-            "промежуточный" in text.lower()
-            or "в работе" in text.lower()
-        ), text
-        assert "#42" in text
+        assert not confirm_calls
 
 
 class TestReplyRejectionBeforeDelivery:
@@ -703,7 +693,7 @@ class TestReplyRejectionBeforeDelivery:
         appeal = _fresh_appeal()
         appeal.status = "closed"
         msg = _reply_rejection_before_delivery(fresh_appeal=appeal, appeal_id=1)
-        assert msg is not None and "закрыто" in msg
+        assert msg is not None and "завершено" in msg
 
     def test_blocked_user_rejected(self) -> None:
         from aemr_bot.handlers.operator_reply import (
@@ -773,14 +763,14 @@ class TestReplyRejectionBeforeDelivery:
             fresh_appeal=appeal, appeal_id=1
         ) is not None
 
-    def test_revoked_after_older_appeal_allows_final_reply(self) -> None:
+    def test_revoked_after_older_appeal_rejected(self) -> None:
         from aemr_bot.handlers.operator_reply import (
             _reply_rejection_before_delivery,
         )
 
         # Обращение создано 2026-05-01, согласие отозвано позже
-        # 2026-05-10 → финальный ответ по принятому ранее обращению
-        # разрешён.
+        # 2026-05-10: дата подачи не является самостоятельным основанием
+        # для дальнейшей автоматической доставки после отзыва.
         appeal = _fresh_appeal()
         appeal.user.consent_pdn_at = None
         appeal.user.consent_revoked_at = datetime(
@@ -788,7 +778,7 @@ class TestReplyRejectionBeforeDelivery:
         )
         assert _reply_rejection_before_delivery(
             fresh_appeal=appeal, appeal_id=1
-        ) is None
+        ) is not None
 
 
 class TestHandleCommandReply:
@@ -830,6 +820,8 @@ class TestHandleCommandReply:
         with patch.object(opr.cfg, "admin_group_id", 555), \
              patch("aemr_bot.handlers.operator_reply.session_scope",
                    _fake_session_scope), \
+             patch("aemr_bot.services.data_erasure.tracked_send",
+                   AsyncMock(side_effect=tracked_reply_send)), \
              patch("aemr_bot.handlers.operator_reply.operators_service.get",
                    AsyncMock(return_value=None)):
             await opr.handle_command_reply(event, appeal_id=1, text="test")
@@ -844,6 +836,8 @@ class TestHandleCommandReply:
         with patch.object(opr.cfg, "admin_group_id", 555), \
              patch("aemr_bot.handlers.operator_reply.session_scope",
                    _fake_session_scope), \
+             patch("aemr_bot.services.data_erasure.tracked_send",
+                   AsyncMock(side_effect=tracked_reply_send)), \
              patch("aemr_bot.handlers.operator_reply.operators_service.get",
                    AsyncMock(return_value=operator)), \
              patch("aemr_bot.handlers.operator_reply.appeals_service.get_by_id",

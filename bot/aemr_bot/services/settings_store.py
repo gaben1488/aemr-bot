@@ -198,14 +198,13 @@ def _is_whitelisted_url(value: str) -> bool:
         return False
     # `parsed.netloc` — raw host (case-sensitive, с возможным
     # `user:pass@` префиксом и `:port` суффиксом). `parsed.hostname` —
-    # Python-normalized (lowercase). Берём raw для §A4-check, затем
-    # отделяем user-info и port, сравниваем с whitelist.
+    # Python-normalized (lowercase). User-info отклоняем, для host
+    # сравниваем исходный регистр; отдельно проверяем корректность порта.
     raw_netloc = parsed.netloc or ""
     if not raw_netloc:
         return False
-    # Отбрасываем `user:pass@` если есть.
     if "@" in raw_netloc:
-        raw_netloc = raw_netloc.split("@", 1)[1]
+        return False  # User-info can disguise the destination and expose credentials.
     # Отбрасываем `:port` (но `[ipv6]:port` — оставим за рамками, у нас
     # гос-домены ASCII).
     if ":" in raw_netloc:
@@ -317,8 +316,8 @@ def find_non_whitelisted_urls(text: str) -> list[str]:
     вложенный URL в querystring.
 
     Используется в operator_reply / broadcast для блокировки исходящей
-    фишинг-ссылки. Если возвращает пустой список — текст безопасен
-    с точки зрения URL. Покрывает:
+    фишинг-ссылки. Пустой список означает только отсутствие обнаруженных
+    нарушений этих правил, а не подтверждение безопасности. Покрывает:
     - Unicode-омоглифы (F9, через NFKC в `extract_urls`);
     - сторонние домены (исходный SEC #4 whitelist);
     - embedded URL внутри `?next=https://attacker` (F10).
@@ -480,8 +479,8 @@ DEFAULTS: dict[str, Any] = {
         # дополнение) в связи с уставом Елизовского муниципального
         # округа. Дефолт действует только для НОВЫХ установок: на проде
         # значение живёт в БД и обновляется через меню «Настройки бота».
-        "Приём граждан временно исполняющим полномочия Главы Елизовского "
-        "муниципального округа А.С. Гончаровым осуществляется два раза в месяц "
+        "Приём граждан главой Елизовского муниципального округа "
+        "Гончаровым Андреем Сергеевичем осуществляется два раза в месяц "
         "(1 и 3 среда каждого месяца) по предварительной записи. "
         "Запись на приём ведётся по номеру телефона 8 (415-31) 7-25-29."
     ),
@@ -504,6 +503,10 @@ DEFAULTS: dict[str, Any] = {
     # игнорируют флаг — оператор должен узнать о реальном инциденте
     # сразу. Окно по умолчанию: 18:00–09:00 (включая ночные часы).
     # Часовой пояс — `Asia/Kamchatka`, как и для всего расписания.
+    # None keeps the existing environment value until explicitly changed.
+    "sla_response_hours": None,
+    "sla_followup_hours": None,
+    "sla_work_schedule": None,
     "admin_quiet_hours_enabled": False,
     "admin_quiet_hours_start": 18,
     "admin_quiet_hours_end": 9,
@@ -601,6 +604,9 @@ SCHEMA: dict[str, dict] = {
     # ограничивает частоту, см. _send_one).
     "broadcast_max_images": {"type": int, "min": 1, "max": 20},
     # quiet hours: bool + два часа 0–23.
+    "sla_response_hours": {"type": int, "min": 1, "max": 168},
+    "sla_followup_hours": {"type": int, "min": 0, "max": 168},
+    "sla_work_schedule": {"type": dict},
     "admin_quiet_hours_enabled": {"type": bool},
     "admin_quiet_hours_start": {"type": int, "min": 0, "max": 23},
     "admin_quiet_hours_end": {"type": int, "min": 0, "max": 23},
@@ -619,6 +625,12 @@ def validate(key: str, value: Any) -> tuple[bool, str]:
     """Возвращает (ok, message). В сообщении — причина при ошибке или 'ok' при успехе."""
     if key not in SCHEMA:
         return False, f"Unknown key '{key}'. Allowed: {sorted(SCHEMA)}"
+    if key == "sla_work_schedule":
+        from aemr_bot.services.work_schedule import validate as validate_schedule
+        try:
+            validate_schedule(value)
+        except ValueError as exc:
+            return False, str(exc)
     rule = SCHEMA[key]
     expected = rule["type"]
     if not isinstance(value, expected):
@@ -731,6 +743,16 @@ async def get(session: AsyncSession, key: str) -> Any:
     if row is not None:
         return deepcopy(row.value)
     return deepcopy(DEFAULTS.get(key))
+
+
+async def get_versioned(session: AsyncSession, key: str) -> tuple[Any, int]:
+    """Value and monotonically increasing revision; 0 means no stored row."""
+    row = await session.scalar(
+        select(Setting).where(Setting.key == key).execution_options(populate_existing=True)
+    )
+    if row is None:
+        return deepcopy(DEFAULTS.get(key)), 0
+    return deepcopy(row.value), row.revision
 
 
 def _consent_template(raw: Any, fallback: str) -> str:
@@ -880,6 +902,7 @@ async def set_value(
     value: Any,
     *,
     expected_value: Any = _UNCONDITIONAL_WRITE,
+    expected_revision: int | None = None,
 ) -> None:
     """Upsert значения настройки.
 
@@ -904,6 +927,19 @@ async def set_value(
     value or its dirty marker. Missing rows are inserted, so edits based on
     DEFAULTS also work before bootstrap. This does not commit the session.
     """
+    if expected_revision is not None:
+        if expected_revision == 0:
+            revision_stmt = (pg_insert(Setting).values(key=key, value=value)
+                    .on_conflict_do_nothing(index_elements=[Setting.key])
+                    .returning(Setting.key))
+        else:
+            update_revision_stmt = (sa_update(Setting).where(Setting.key == key, Setting.revision == expected_revision)
+                    .values(value=value, revision=Setting.revision + 1,
+                            updated_at=sa_func.now(), synced_at=None).returning(Setting.key))
+        result = await session.execute(revision_stmt if expected_revision == 0 else update_revision_stmt)
+        if result.scalar_one_or_none() is None:
+            raise SettingConflictError(key)
+        return
     condition = None
     if expected_value is not _UNCONDITIONAL_WRITE:
         condition = Setting.value == bindparam(
@@ -916,6 +952,7 @@ async def set_value(
             index_elements=[Setting.key],
             set_={
                 "value": value,
+                "revision": Setting.revision + 1,
                 "updated_at": sa_func.now(),
                 "synced_at": None,
             },
@@ -932,7 +969,7 @@ async def set_value(
 
 async def list_keys(session: AsyncSession) -> list[str]:
     rows = await session.scalars(select(Setting.key))
-    in_db = set(rows)
+    in_db = {key for key in rows if not key.startswith(("__incident_alert:", "__sla_"))}
     return sorted(in_db.union(DEFAULTS.keys()))
 
 
@@ -1040,12 +1077,9 @@ async def seed_if_empty(session: AsyncSession) -> None:
     1. **Bootstrap (раньше — основной):** если ключа нет в БД, кладём
        значение из seed-файла. Это первый запуск на свежей БД.
 
-    2. **Repair (системный фикс 2026-05-26, найдено владельцем):**
-       если ключ есть в БД, но его значение **не проходит SCHEMA-validate**
-       (например, в БД лежит старая версия welcome_text без обязательной
-       подстроки «НИКОГДА не запрашиваем», добавленной позже в SCHEMA),
-       перезаписываем seed-значением. Это закрывает дрейф «код обновился,
-       БД отстала».
+    2. **Repair:** невалидные значения могут заменяться корректным seed.
+       Непустой текст согласия сохраняется для ручной проверки даже при
+       ошибке валидации: это может быть единственная копия редакции.
 
     После вставки/перезаписи помечает свежие SYNCED_KEYS как уже
     синхронизированные с репо (synced_at = now()). Логика: seed-файлы
@@ -1119,6 +1153,13 @@ async def seed_if_empty(session: AsyncSession) -> None:
             continue
         is_valid, reason = validate(k, existing[k])
         if is_valid:
+            continue
+        if k == "consent_text" and isinstance(existing[k], str) and existing[k].strip():
+            # Invalid configured text is not safe to display, but it may be
+            # the only copy of an operator-authored consent. Keep it for
+            # review instead of destroying it on restart. The consent
+            # rendering path uses its validated fallback in the meantime.
+            log.warning("seed_if_empty: consent_text needs review; stored text preserved")
             continue
         # Перед перезаписью убеждаемся что seed-значение **само**
         # проходит validate — иначе можем сломать рабочий бот

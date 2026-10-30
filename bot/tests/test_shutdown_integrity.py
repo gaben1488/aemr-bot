@@ -86,8 +86,9 @@ async def test_cron_timeout_waits_for_cancel_cleanup(monkeypatch) -> None:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("dispatcher_error", [None, RuntimeError("shutdown failed")])
+@pytest.mark.parametrize("failure_point", ["seed", "journal"])
 async def test_startup_failure_closes_resources_and_releases_lock(
-    monkeypatch, dispatcher_error,
+    monkeypatch, dispatcher_error, failure_point,
 ) -> None:
     from aemr_bot import main
     from aemr_bot.db import session
@@ -99,16 +100,23 @@ async def test_startup_failure_closes_resources_and_releases_lock(
     monkeypatch.setattr(main, "setup_logging", lambda: None)
     monkeypatch.setattr(main, "_preflight_check_token", AsyncMock())
     monkeypatch.setattr(main, "_register_bot_commands", AsyncMock())
-    monkeypatch.setattr(main, "_seed_settings", AsyncMock(side_effect=RuntimeError("db down")))
+    from aemr_bot.services import data_erasure
+    monkeypatch.setattr(data_erasure, "prepare_startup", AsyncMock(
+        side_effect=RuntimeError("journal unavailable") if failure_point == "journal" else None))
+    monkeypatch.setattr(main, "_seed_settings", AsyncMock(
+        side_effect=RuntimeError("db down") if failure_point == "seed" else None))
+    intake = AsyncMock()
+    monkeypatch.setattr(main.dp, "start_polling", intake)
     monkeypatch.setattr(main.single_instance, "acquire_single_instance_lock", AsyncMock(return_value=conn))
     monkeypatch.setattr(main.single_instance, "release_single_instance_lock", release)
     monkeypatch.setattr(main.bot, "close_session", close)
     monkeypatch.setattr(main.dp, "shutdown", AsyncMock(side_effect=dispatcher_error))
     monkeypatch.setattr(session, "engine", SimpleNamespace(dispose=dispose))
 
-    with pytest.raises(RuntimeError, match="db down"):
+    with pytest.raises(RuntimeError, match="db down" if failure_point == "seed" else "journal unavailable"):
         await main.main()
 
+    intake.assert_not_awaited()
     release.assert_awaited_once_with(conn)
     close.assert_awaited_once()
     dispose.assert_awaited_once()
@@ -137,6 +145,12 @@ async def test_shutdown_stops_producers_and_drains_before_closing_clients(monkey
         "_warm_cache", "_warm_geo_indexes", "_hydrate_wizards", "recover_stuck_funnels",
     ):
         monkeypatch.setattr(main, name, AsyncMock())
+    from aemr_bot.services import data_erasure, db_backup, work_schedule
+    monkeypatch.setattr(data_erasure, "prepare_startup", step("journal"))
+    monkeypatch.setattr(work_schedule, "initialize", step("calendar_initialize"))
+    monkeypatch.setattr(work_schedule, "refresh", step("calendar_refresh"))
+    monkeypatch.setattr(data_erasure, "recover_deletions", AsyncMock())
+    monkeypatch.setattr(db_backup, "cleanup_erased_backups", AsyncMock())
     monkeypatch.setattr(main, "session_scope", session_scope)
     monkeypatch.setattr(main.settings, "bootstrap_it_max_user_id", None)
     monkeypatch.setattr(main.settings, "bot_mode", "polling")
@@ -148,7 +162,7 @@ async def test_shutdown_stops_producers_and_drains_before_closing_clients(monkey
     monkeypatch.setattr(session, "engine", SimpleNamespace(dispose=step("database")))
     monkeypatch.setattr(main, "bot", SimpleNamespace(close_session=step("MAX")))
     monkeypatch.setattr(main, "dp", SimpleNamespace(
-        start_polling=AsyncMock(), shutdown=step("inbox"),
+        start_polling=step("polling"), shutdown=step("inbox"),
     ))
     monkeypatch.setattr(main.health, "start", AsyncMock(return_value=SimpleNamespace(
         cleanup=step("webhook"),
@@ -169,6 +183,7 @@ async def test_shutdown_stops_producers_and_drains_before_closing_clients(monkey
     monkeypatch.setattr(main, "drain_background_tasks", drain)
     await main.main()
     assert calls == [
+        "journal", "calendar_initialize", "calendar_refresh", "polling",
         "pause", "webhook", "inbox", "cron", "background", "healthcheck",
         "unlock", "database", "MAX",
     ]

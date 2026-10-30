@@ -41,6 +41,7 @@ async def test_polling_that_never_succeeds_eventually_becomes_unhealthy(monkeypa
 @pytest.mark.asyncio
 async def test_quiet_suppression_does_not_log_message_body(monkeypatch, caplog):
     import logging
+
     from aemr_bot.services import admin_bus, quiet_hours
     monkeypatch.setattr(admin_bus.cfg, 'admin_group_id', 123)
     monkeypatch.setattr(quiet_hours, 'is_quiet_hours_now', lambda: True)

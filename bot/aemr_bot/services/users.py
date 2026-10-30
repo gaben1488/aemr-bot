@@ -3,7 +3,7 @@ import logging
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import delete, select, text, update
+from sqlalchemy import delete, or_, select, text, update
 from sqlalchemy import func as sa_func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,8 +12,12 @@ from aemr_bot.db.models import (
     ANONYMOUS_MAX_USER_ID,
     Appeal,
     AppealStatus,
+    AuditLog,
     DialogState,
+    Event,
     Message,
+    OperatorReplyAttempt,
+    OperatorReplyDraft,
     User,
 )
 
@@ -81,6 +85,8 @@ async def set_consent(
     max_user_id: int,
     *,
     text_sha256: str | None = None,
+    consent_text: str | None = None,
+    prompt_mid: str | None = None,
 ) -> bool:
     """Дать (или возобновить) согласие на обработку ПДн.
 
@@ -105,37 +111,36 @@ async def set_consent(
 
     Возвращает True, если согласие дано ЗАНОВО (consent_pdn_at был
     NULL — первый раз или после отзыва): по этому признаку вызывающий
-    код шлёт уведомление оператору ровно один раз. False — согласие уже
-    действовало (повторный тап / дубль callback'а): освежаются только
-    отметка времени и хеш редакции, уведомлять не нужно. Признак
-    атомарен: conditional UPDATE под row-lock'ом — из двух конкурентных
-    транзакций ровно одна увидит переход NULL→значение.
+    код шлёт уведомление оператору ровно один раз. Повторное нажатие
+    той же кнопки не изменяет сохранённое время и не возобновляет
+    отозванное согласие. Операция выполняется под блокировкой строки.
     """
-    values = {
-        "consent_pdn_at": datetime.now(UTC),
-        "consent_pdn_text_sha256": text_sha256,
-        "consent_revoked_at": None,
-    }
-    fresh = await session.execute(
-        update(User)
-        .where(
-            User.max_user_id == max_user_id,
-            # Условие — сам механизм идемпотентности: проигравшая
-            # конкурентная транзакция после снятия row-lock'а
-            # перепроверит предикат на свежей версии строки и получит
-            # rowcount=0 (постгресовый EvalPlanQual при READ COMMITTED).
-            User.consent_pdn_at.is_(None),
-        )
-        .values(**values)
+    resident = await session.scalar(
+        select(User).where(User.max_user_id == max_user_id)
+        .with_for_update().execution_options(populate_existing=True)
     )
-    if (fresh.rowcount or 0) > 0:
-        return True
-    # Согласие уже действует — житель подтвердил актуальную редакцию
-    # текста: освежаем отметку и хеш, без уведомления.
-    await session.execute(
-        update(User).where(User.max_user_id == max_user_id).values(**values)
-    )
-    return False
+    if resident is None:
+        return False
+    records = list(resident.consent_records or [])
+    if prompt_mid is not None and any(item.get("prompt_mid") == prompt_mid for item in records):
+        # A duplicate must neither alter the time of consent nor revive a
+        # subsequently withdrawn consent.
+        return False
+    accepted_at = datetime.now(UTC)
+    newly_granted = resident.consent_pdn_at is None
+    resident.consent_pdn_at = accepted_at
+    resident.consent_pdn_text_sha256 = text_sha256
+    resident.consent_revoked_at = None
+    if consent_text is not None:
+        records.append({
+            "accepted_at": accepted_at.isoformat(),
+            "text": consent_text,
+            "template_sha256": text_sha256,
+            "prompt_mid": prompt_mid,
+        })
+        resident.consent_records = records
+    await session.flush()
+    return newly_granted
 
 
 async def set_phone(session: AsyncSession, max_user_id: int, phone: str) -> None:
@@ -172,10 +177,15 @@ async def reset_state(session: AsyncSession, max_user_id: int) -> None:
     )
 
 
+class StaleDialogStateError(Exception):
+    """A delayed message no longer belongs to the current step."""
+
+
 async def update_dialog_data(
     session: AsyncSession,
     max_user_id: int,
     patch: dict | Callable[[dict], dict],
+    *, expected_states: set[str] | None = None,
 ) -> dict:
     """Read-modify-write апдейт jsonb dialog_data с защитой от гонки.
 
@@ -206,9 +216,14 @@ async def update_dialog_data(
         # SQLite / unsupported backend — без lock-а живём, в production
         # это postgres и lock работает.
         log.debug("advisory-lock недоступен для backend тестов", exc_info=True)
-    user = await session.scalar(select(User).where(User.max_user_id == max_user_id))
+    user = await session.scalar(
+        select(User).where(User.max_user_id == max_user_id).with_for_update()
+        .execution_options(populate_existing=True)
+    )
     if user is None:
         return {}
+    if expected_states is not None and user.dialog_state not in expected_states:
+        raise StaleDialogStateError
     data = dict(user.dialog_data or {})
     data.update(patch(data) if callable(patch) else patch)
     user.dialog_data = data
@@ -350,34 +365,62 @@ async def _redact_appeal_payloads_for_user(session: AsyncSession, user_id: int) 
     населённый пункт и факт обращения.
     """
     appeal_ids = select(Appeal.id).where(Appeal.user_id == user_id)
+    await session.execute(delete(OperatorReplyDraft).where(
+        OperatorReplyDraft.appeal_id.in_(appeal_ids)
+    ))
+    await session.execute(delete(OperatorReplyAttempt).where(
+        OperatorReplyAttempt.appeal_id.in_(appeal_ids)
+    ))
     appeals_result = await session.execute(
         update(Appeal)
         .where(Appeal.user_id == user_id)
-        .values(address=None, summary=None, attachments=[])
+        .values(address=None, summary=None, attachments=[], sla_anchor_at=None, sla_hours_at_start=None, sla_history=[],
+                related_appeal_id=None)
     )
     messages_result = await session.execute(
         update(Message)
         .where(Message.appeal_id.in_(appeal_ids))
-        .values(text=None, attachments=[])
+        .values(text=None, attachments=[], admin_notice_state=None)
     )
     return appeals_result.rowcount or 0, messages_result.rowcount or 0
 
 
-async def erase_pdn(session: AsyncSession, max_user_id: int) -> bool:
+async def erase_pdn(
+    session: AsyncSession, max_user_id: int, *, revoked_before: datetime | None = None,
+) -> bool:
     """Полное удаление ПДн жителя из рабочей БД.
 
     Wrapper для backwards-compat (возвращает bool). Новый код
     использует `erase_pdn_detailed` чтобы получить список закрытых
     обращений (для уведомления оператору).
     """
-    closed_ids = await erase_pdn_detailed(session, max_user_id)
+    closed_ids = await erase_pdn_detailed(session, max_user_id, revoked_before=revoked_before)
     return closed_ids is not None
 
 
+async def _erase_legacy_resident_events(session: AsyncSession, max_user_id: int) -> None:
+    """Remove legacy dedupe records which explicitly contain this MAX ID.
+
+    Legacy keys may embed the decimal ID as a pipe-delimited field; matching
+    the full field avoids erasing a different user whose ID has this prefix.
+    Modern inbox receipts are cleared separately by erase_pending().
+    """
+    user_field = f"user={max_user_id}"
+    await session.execute(
+        delete(Event).where(or_(
+            Event.payload["user_id"].as_string() == str(max_user_id),
+            Event.idempotency_key.like(f"%|{user_field}|%"),
+            Event.idempotency_key.like(f"%|{user_field}"),
+        ))
+    )
+
+
 async def erase_pdn_detailed(
-    session: AsyncSession, max_user_id: int
+    session: AsyncSession, max_user_id: int, *, revoked_before: datetime | None = None,
 ) -> list[int] | None:
-    """Полное удаление ПДн с возвратом списка закрытых обращений.
+    """Очистка данных жителя в рабочей БД и список закрытых обращений.
+
+    Копии в MAX, журналах и резервных копиях этим вызовом не удаляются.
 
     Возвращает:
     - None — пользователь не найден (ничего не сделано);
@@ -401,12 +444,60 @@ async def erase_pdn_detailed(
     from aemr_bot.services.inbox import erase_pending
     from aemr_bot.utils.resident_lifecycle import hold_until_commit
     await hold_until_commit(session, max_user_id)
-    await erase_pending(session, max_user_id)
-    user_row = await session.scalar(
-        select(User.id).where(User.max_user_id == max_user_id)
-    )
+    # All erasure paths acquire the export barrier before row locks. Keeping
+    # this order avoids a cycle with the five-year cleanup transaction.
+    from aemr_bot.services import privacy_epoch
+    await privacy_epoch.mark_erasure(session)
+    query = select(User.id).where(User.max_user_id == max_user_id).with_for_update()
+    if revoked_before is not None:
+        # The candidate scan can race with a renewed consent. Recheck under
+        # the same row lock as deletion before touching any pending receipts.
+        query = query.where(User.consent_pdn_at.is_(None), User.consent_revoked_at <= revoked_before)
+    user_row = await session.scalar(query)
     if user_row is None:
+        if revoked_before is None:
+            await erase_pending(session, max_user_id)
+            await _erase_legacy_resident_events(session, max_user_id)
         return None
+    from aemr_bot.services import data_erasure
+    await data_erasure.request_erasure(session, max_user_id, user_row)
+    await erase_pending(session, max_user_id)
+    await _erase_legacy_resident_events(session, max_user_id)
+    # Эти записи описывают жителя; журнал управления операторами может
+    # содержать тот же MAX ID в другом качестве и должен сохраниться.
+    resident_actions = (
+        "self_subscribe_broadcast", "self_consent_revoke", "self_erase",
+        "block", "unblock", "erase", "auto_erase_pdn_retention",
+    )
+    await session.execute(
+        update(AuditLog)
+        .where(AuditLog.action.in_(resident_actions), AuditLog.target == f"user max_id={max_user_id}")
+        .values(target=None)
+    )
+    await session.execute(
+        update(AuditLog)
+        .where(
+            AuditLog.action.in_(("self_subscribe_broadcast", "self_consent_revoke", "self_erase")),
+            AuditLog.operator_max_user_id == max_user_id,
+        )
+        .values(operator_max_user_id=None)
+    )
+    # A search is a staff action, but its target and captured result identify
+    # the resident. Match only that structured association, preserving the
+    # staff actor, action and timestamp (including dual-role staff accounts).
+    search_details = AuditLog.details.op("-")("found_max_user_id")
+    for field in (
+        "query", "query_value", "phone", "phone_normalized",
+        "name", "first_name", "last_name", "found_phone", "found_name",
+    ):
+        search_details = search_details.op("-")(field)
+    await session.execute(update(AuditLog).where(
+        AuditLog.action == "resident_search_found",
+        or_(
+            AuditLog.target.in_([str(max_user_id), f"user max_id={max_user_id}"]),
+            AuditLog.details["found_max_user_id"].astext == str(max_user_id),
+        ),
+    ).values(target=None, details=search_details))
     # 1. Список открытых обращений ДО UPDATE — нужен для уведомления.
     open_appeals_result = await session.execute(
         select(Appeal.id).where(
@@ -472,6 +563,8 @@ async def revoke_consent(session: AsyncSession, max_user_id: int) -> bool:
     is_blocked НЕ ставится: житель может передумать и дать согласие
     заново через /start.
     """
+    from aemr_bot.services.data_erasure import journal_restriction
+    journal_restriction(max_user_id, "revoke")
     result = await session.execute(
         update(User)
         .where(User.max_user_id == max_user_id)
@@ -482,6 +575,7 @@ async def revoke_consent(session: AsyncSession, max_user_id: int) -> bool:
             consent_broadcast_at=None,
             dialog_state=DialogState.IDLE.value,
             dialog_data={},
+            appeal_draft=None,
         )
     )
     # rowcount может быть -1 в asyncpg для UPDATE без точного знания

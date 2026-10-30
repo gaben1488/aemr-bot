@@ -16,6 +16,13 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+
+@pytest.fixture(autouse=True)
+def _fake_personal_source_boundary(monkeypatch):
+    from aemr_bot.services import data_erasure
+    from tests._helpers import fake_personal_view
+    monkeypatch.setattr(data_erasure, "personal_view", fake_personal_view)
+
 from tests._helpers import fake_session_scope as _fake_session_scope
 from tests._helpers import make_event
 
@@ -449,8 +456,8 @@ class TestRunStats:
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.admin_stats.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.admin_stats.stats_service.build_xlsx",
-                   AsyncMock(return_value=(b"", "сегодня", 0))), \
+             patch("aemr_bot.handlers.admin_stats.stats_service.build_xlsx_with_epoch",
+                   AsyncMock(return_value=(b"", "сегодня", 0, 4))), \
              patch("aemr_bot.handlers.admin_panel.show_op_menu",
                    AsyncMock()):
             await admin_stats.run_stats(event, "today")
@@ -465,18 +472,23 @@ class TestRunStats:
         from aemr_bot.handlers import admin_stats
 
         event = _make_event()
+        event.bot.send_message.return_value = SimpleNamespace(body=SimpleNamespace(mid="stats-mid"))
         with patch("aemr_bot.handlers.admin_stats.ensure_operator",
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.admin_stats.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.admin_stats.stats_service.build_xlsx",
-                   AsyncMock(return_value=(b"data", "сегодня", 5))), \
+             patch("aemr_bot.handlers.admin_stats.stats_service.build_xlsx_with_epoch",
+                   AsyncMock(return_value=(b"data", "сегодня", 5, 4))), \
+             patch("aemr_bot.services.privacy_epoch.hold_export_if_current",
+                   AsyncMock(return_value=True)) as guard, \
              patch("aemr_bot.services.uploads.upload_bytes",
                    AsyncMock(return_value=None)), \
              patch("aemr_bot.handlers.admin_panel.show_op_menu",
                    AsyncMock()):
             await admin_stats.run_stats(event, "today")
         text = event.bot.send_message.call_args.kwargs["text"]
+        guard.assert_awaited_once()
+        assert guard.await_args.args[1] == 4
         assert "не удалось" in text.lower()
 
     @pytest.mark.asyncio
@@ -484,12 +496,17 @@ class TestRunStats:
         from aemr_bot.handlers import admin_stats
 
         event = _make_event()
+        event.bot.send_message.return_value = SimpleNamespace(body=SimpleNamespace(mid="stats-mid"))
         with patch("aemr_bot.handlers.admin_stats.ensure_operator",
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.admin_stats.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.admin_stats.stats_service.build_xlsx",
-                   AsyncMock(return_value=(b"data", "сегодня", 5))), \
+             patch("aemr_bot.handlers.admin_stats.stats_service.build_xlsx_with_epoch",
+                   AsyncMock(return_value=(b"data", "сегодня", 5, 4))), \
+             patch("aemr_bot.services.privacy_epoch.hold_export_if_current",
+                   AsyncMock(return_value=True)) as guard, \
+             patch("aemr_bot.services.data_erasure.tracked_send",
+                   AsyncMock(return_value=SimpleNamespace(body=SimpleNamespace(mid="stats-mid")))) as delivery, \
              patch("aemr_bot.services.uploads.upload_bytes",
                    AsyncMock(return_value="upload-token")), \
              patch("aemr_bot.services.uploads.file_attachment",
@@ -497,9 +514,35 @@ class TestRunStats:
              patch("aemr_bot.handlers.admin_panel.show_op_menu",
                    AsyncMock()):
             await admin_stats.run_stats(event, "today")
-        text = event.bot.send_message.call_args.kwargs["text"]
+        delivery.assert_awaited_once()
+        assert delivery.await_args.args == (event.bot,)
+        assert delivery.await_args.kwargs["kind"] == "bulk_export"
+        text = delivery.await_args.kwargs["text"]
+        guard.assert_awaited_once()
+        assert guard.await_args.args[1] == 4
         assert "Статистика" in text
         assert "5 обращений" in text
+
+    @pytest.mark.asyncio
+    async def test_erasure_during_export_prevents_upload(self) -> None:
+        from aemr_bot.handlers import admin_stats
+
+        event = _make_event()
+        with patch.object(admin_stats, "session_scope", _fake_session_scope), \
+             patch.object(admin_stats.stats_service, "build_xlsx_with_epoch",
+                          AsyncMock(return_value=(b"private", "сегодня", 5, 4))), \
+             patch("aemr_bot.services.privacy_epoch.hold_export_if_current",
+                   AsyncMock(return_value=False)) as guard, \
+             patch("aemr_bot.services.uploads.upload_bytes", AsyncMock()) as upload, \
+             patch("aemr_bot.services.data_erasure.tracked_send", AsyncMock()) as delivery:
+            sent = await admin_stats._send_stats_xlsx(event, "today", target_chat_id=123)
+        assert sent is False
+        guard.assert_awaited_once()
+        assert guard.await_args.args[1] == 4
+        upload.assert_not_awaited()
+        delivery.assert_not_awaited()
+        event.bot.send_message.assert_awaited_once()
+        assert "Отчёт не отправлен" in event.bot.send_message.await_args.kwargs["text"]
 
 
 class TestRunStatsToday:
@@ -512,8 +555,8 @@ class TestRunStatsToday:
                    AsyncMock(return_value=True)), \
              patch("aemr_bot.handlers.admin_stats.session_scope",
                    _fake_session_scope), \
-             patch("aemr_bot.handlers.admin_stats.stats_service.build_xlsx",
-                   AsyncMock(return_value=(b"", "сегодня", 0))):
+             patch("aemr_bot.handlers.admin_stats.stats_service.build_xlsx_with_epoch",
+                   AsyncMock(return_value=(b"", "сегодня", 0, 4))):
             await admin_stats.run_stats_today(event)
         event.bot.send_message.assert_called_once()
 
@@ -545,18 +588,27 @@ class TestStatsFilenameTimezone:
                 return utc_moment.astimezone(tz) if tz else utc_moment.replace(tzinfo=None)
 
         event = _make_event()
-        event.bot.send_message = AsyncMock()
+        event.bot.send_message = AsyncMock(return_value=SimpleNamespace(body=SimpleNamespace(mid="stats-mid")))
         with patch.object(admin_stats, "datetime", _FrozenDatetime), \
              patch.object(admin_stats, "session_scope", _fake_session_scope), \
-             patch("aemr_bot.services.stats.build_xlsx",
-                   AsyncMock(return_value=(b"xlsx", "2 июля", 3))), \
+             patch("aemr_bot.handlers.admin_stats.stats_service.build_xlsx_with_epoch",
+                   AsyncMock(return_value=(b"xlsx", "2 июля", 3, 4))), \
+             patch("aemr_bot.services.privacy_epoch.hold_export_if_current",
+                   AsyncMock(return_value=True)) as guard, \
+             patch("aemr_bot.services.data_erasure.tracked_send",
+                   AsyncMock(return_value=SimpleNamespace(body=SimpleNamespace(mid="stats-mid")))) as delivery, \
              patch("aemr_bot.services.uploads.upload_bytes",
                    AsyncMock(return_value="TOK")), \
              patch("aemr_bot.services.uploads.file_attachment",
                    lambda t: {"type": "file"}):
             await admin_stats._send_stats_xlsx(event, "today", target_chat_id=-1)
 
-        text = event.bot.send_message.call_args.kwargs.get("text", "")
+        guard.assert_awaited_once()
+        assert guard.await_args.args[1] == 4
+        delivery.assert_awaited_once()
+        assert delivery.await_args.kwargs["kind"] == "bulk_export"
+        assert delivery.await_args.kwargs["chat_id"] == -1
+        text = delivery.await_args.kwargs["text"]
         assert "2026-07-03" in text, (
             f"ожидалась местная дата 03.07, в имени файла: {text}"
         )

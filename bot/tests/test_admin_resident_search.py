@@ -377,3 +377,10 @@ class TestRunFindResident:
             await mod.run_find_resident(event, "12345")
         text = event.bot.send_message.await_args.kwargs["text"]
         assert "Заблокирован" in text
+
+
+@pytest.fixture(autouse=True)
+def _fake_personal_source_boundary(monkeypatch):
+    from aemr_bot.services import data_erasure
+    from tests._helpers import fake_personal_view
+    monkeypatch.setattr(data_erasure, "personal_view", fake_personal_view)

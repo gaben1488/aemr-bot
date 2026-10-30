@@ -57,6 +57,8 @@ _BUILDER_CASES: tuple[tuple[object, tuple, str, bool], ...] = (
     (cp.appeal_followup, (42,), cp.PREFIX_APPEAL_FOLLOWUP, True),
     (cp.appeal_repeat, (42,), cp.PREFIX_APPEAL_REPEAT, True),
     (cp.appeal_atts, (42,), cp.PREFIX_APPEAL_ATTS, True),
+    (cp.appeal_history, (42, 0), cp.PREFIX_APPEAL_HISTORY, False),
+    (cp.appeal_record_atts, (42, 0), cp.PREFIX_APPEAL_RECORD_ATTS, False),
     (cp.appeals_page, (2,), cp.PREFIX_APPEALS_PAGE, True),
     # BROADCAST_ADMIN — числовой хвост
     (cp.broadcast_stop, (7,), cp.PREFIX_BROADCAST_STOP, True),
@@ -76,6 +78,8 @@ _BUILDER_CASES: tuple[tuple[object, tuple, str, bool], ...] = (
     (cp.op_unblock, (11,), cp.PREFIX_OP_UNBLOCK, True),
     (cp.op_atts, (11,), cp.PREFIX_OP_ATTS, True),
     (cp.op_open_card, (11,), cp.PREFIX_OP_OPEN_CARD, True),
+    (cp.op_history, (11, 0), cp.PREFIX_OP_HISTORY, False),
+    (cp.op_record_atts, (11, 0), cp.PREFIX_OP_RECORD_ATTS, False),
     # OPERATOR_ADMIN — строковый хвост (мастер операторов)
     (cp.op_opadd, ("list",), cp.PREFIX_OP_OPADD, False),
     # OPERATOR_ADMIN — числовой хвост (max_user_id)
@@ -88,6 +92,19 @@ _BUILDER_CASES: tuple[tuple[object, tuple, str, bool], ...] = (
     (cp.op_opchrole, (123, "it"), cp.PREFIX_OP_OPCHROLE, False),
     (cp.op_setkey, ("welcome_text",), cp.PREFIX_OP_SETKEY, False),
     (cp.op_set, ("cat:texts",), cp.PREFIX_OP_SET, False),
+    (cp.op_reply_draft, ("send", "token"), cp.PREFIX_OP_REPLY_DRAFT, False),
+    (cp.op_reply_cancel, ("token",), cp.PREFIX_OP_REPLY_CANCEL, False),
+    (cp.resident_draft, ("submit", "token"), cp.PREFIX_RESIDENT_DRAFT, False),
+    (cp.op_queue_recreate, ("token",), cp.PREFIX_OP_QUEUE_RECREATE, False),
+    (cp.op_open_page, (0,), cp.PREFIX_OP_OPEN_PAGE, True),
+    (cp.op_delivery_issues, (0,), cp.PREFIX_OP_DELIVERY_ISSUES, True),
+    (cp.op_reply_issues, (0,), cp.PREFIX_OP_REPLY_ISSUES, True),
+    (cp.op_reply_attempt, (1, 0), cp.PREFIX_OP_REPLY_ATTEMPT, False),
+    (cp.op_reply_resolve, (1, "delivered"), cp.PREFIX_OP_REPLY_RESOLVE, False),
+    (cp.op_reply_confirm, (1, "delivered"), cp.PREFIX_OP_REPLY_CONFIRM, False),
+    (cp.op_reply_attempt_atts, (1,), cp.PREFIX_OP_REPLY_ATTEMPT_ATTS, True),
+    (cp.op_word, (1,), cp.PREFIX_OP_WORD, True),
+    (cp.op_consent, (1, 0), cp.PREFIX_OP_CONSENT, False),
 )
 
 

@@ -16,18 +16,18 @@ from aemr_bot.services import settings_store, uploads
 log = logging.getLogger(__name__)
 
 POLICY_PDF_REL = "PRIVACY.pdf"
-# Это ключ записи в таблице settings, а не пароль.
+# Это ключи записей в таблице settings, а не пароли.
 POLICY_TOKEN_KEY = "policy_pdf_token"  # nosec B105
-# SHA-256 загруженного PDF. Кэшируем рядом с токеном, чтобы перезаливать файл
-# ТОЛЬКО при его смене: без этого после обновления seed/PRIVACY.pdf в БД остаётся
-# старый токен, и житель получает предыдущую версию политики. Тоже ключ, не секрет.
+# SHA-256 и отображаемое имя загруженного PDF. Кэшируем рядом с токеном,
+# чтобы перезагружать файл при изменении содержимого или имени.
 POLICY_HASH_KEY = "policy_pdf_sha256"  # nosec B105
+POLICY_NAME_KEY = "policy_pdf_display_name"  # nosec B105
 
 # Отображаемое жителю имя файла в чате MAX. На диске и в Dockerfile файл
 # хранится латиницей (Docker buildkit не справляется с unicode в COPY,
 # падает на CI). Чтобы житель получал документ под человеческим именем,
 # при загрузке делаем временную копию с этим именем и загружаем её.
-POLICY_PDF_DISPLAY_NAME = "Политика обработки персональных данных.pdf"
+POLICY_PDF_DISPLAY_NAME = "Политика конфиденциальности чат-бота.pdf"
 
 
 def _resolve_pdf_path() -> Path:
@@ -56,16 +56,22 @@ async def ensure_uploaded(bot, *, force: bool = False) -> str | None:
     async with session_scope() as session:
         cached_token = await settings_store.get(session, POLICY_TOKEN_KEY)
         stored_hash = await settings_store.get(session, POLICY_HASH_KEY)
+        stored_name = await settings_store.get(session, POLICY_NAME_KEY)
 
     # Кэш валиден, только если PDF не менялся с прошлой загрузки. Обновили
     # seed/PRIVACY.pdf → хэш другой → перезаливаем и обновляем токен, иначе
     # житель получал бы старую версию политики по устаревшему токену.
-    if cached_token and stored_hash == current_hash and not force:
+    if (
+        cached_token
+        and stored_hash == current_hash
+        and stored_name == POLICY_PDF_DISPLAY_NAME
+        and not force
+    ):
         return cached_token
 
     # Копируем во временный файл под русским именем и загружаем его.
     # MAX берёт имя из basename загружаемого файла, поэтому житель в
-    # чате увидит «Политика обработки персональных данных.pdf», а не
+    # чате увидит «Политика конфиденциальности чат-бота.pdf», а не
     # «PRIVACY.pdf». Пишем в /tmp (он смонтирован как tmpfs внутри
     # контейнера, см. infra/docker-compose.yml).
     tmp_dir = Path(tempfile.mkdtemp(prefix="policy_"))
@@ -86,6 +92,7 @@ async def ensure_uploaded(bot, *, force: bool = False) -> str | None:
     async with session_scope() as session:
         await settings_store.set_value(session, POLICY_TOKEN_KEY, token)
         await settings_store.set_value(session, POLICY_HASH_KEY, current_hash)
+        await settings_store.set_value(session, POLICY_NAME_KEY, POLICY_PDF_DISPLAY_NAME)
     log.info("policy PDF uploaded; token cached (sha256=%s…)", current_hash[:12])
     return token
 

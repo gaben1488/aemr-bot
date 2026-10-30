@@ -17,12 +17,13 @@ from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._common import op_screen, op_send
 
 # intent на правку часа ставится здесь (`_start_quiet_hour_intent`).
-from aemr_bot.handlers.admin_settings_shared import _intent_set
+from aemr_bot.handlers.admin_settings_shared import _intent_get, _intent_set
 from aemr_bot.services import operators as ops_svc
 from aemr_bot.services import settings_store
+from aemr_bot.utils.event import get_user_id
 
 
-async def _show_quiet_card(event) -> None:
+async def _show_quiet_card(event, *, notice: str | None = None) -> None:
     """Карточка «🌙 Тихий режим в админ-чате».
 
     Показывает текущее состояние (enabled + окно start–end) и две
@@ -36,7 +37,7 @@ async def _show_quiet_card(event) -> None:
         # refresh cache из БД на случай если оператор только что
         # включил через `/setting` без рестарта.
         await quiet_hours.refresh_cache_from_db(session)
-        enabled = await settings_store.get(session, "admin_quiet_hours_enabled")
+        enabled, revision = await settings_store.get_versioned(session, "admin_quiet_hours_enabled")
         start = await settings_store.get(session, "admin_quiet_hours_start")
         end = await settings_store.get(session, "admin_quiet_hours_end")
     enabled = bool(enabled)
@@ -45,36 +46,57 @@ async def _show_quiet_card(event) -> None:
     if not isinstance(end, int):
         end = 9
     status_line = "🔕 включён" if enabled else "🔔 выключен"
+    if enabled and start == end:
+        active_line = "⚠️ Начало и конец совпадают: период не действует."
+    elif enabled and quiet_hours.is_quiet_hours_now():
+        active_line = "🌙 Сейчас действует."
+    elif enabled:
+        active_line = "☀️ Сейчас не действует: время вне выбранного окна."
+    else:
+        active_line = "Сейчас не действует: режим выключен."
     await op_screen(
         event,
         "🌙 Тихий режим в админ-чате\n"
+        + (f"{notice}\n\n" if notice else "") +
         "· · · · · · · ·\n"
-        f"Сейчас: {status_line}\n"
-        f"Окно: с {start:02d}:00 до {end:02d}:00 (Камчатка)\n\n"
-        "Когда включён и текущее время в окне — не приходят\n"
-        "пульс и рутинные уведомления (новые обращения,\n"
-        "followup'ы, подписки/отписки).\n\n"
-        "Отзыв согласия и удаление ПДн, а также\n"
-        "критичные алёрты (фейл бэкапа, ответы операторам,\n"
-        "сбои retention) идут всегда, тихий режим их\n"
-        "не затрагивает.\n\n"
-        "Чтобы изменить часы — кнопки ниже.",
-        kbds.op_settings_quiet_keyboard(enabled=enabled),
+        f"Настройка: {status_line}\n"
+        f"Окно: с {start:02d}:00 до {end:02d}:00 (Камчатка)\n"
+        f"{active_line}\n\n"
+        "В это время подавляются пульс, регулярные напоминания об "
+        "обращениях и часть служебных уведомлений, например о подписке. "
+        "Они не откладываются "
+        "до конца тихого режима.\n\n"
+        "Карточки новых обращений и дополнений, ответы на действия "
+        "оператора и критические предупреждения могут приходить "
+        "как обычно. Их доступность зависит от других настроек "
+        "и работы сервиса.\n\n"
+        "Если часы начала и конца совпадают, тихого периода нет. "
+        "Изменить часы можно кнопками ниже.",
+        kbds.op_settings_quiet_keyboard(enabled=enabled, revision=revision),
     )
 
 
-async def _toggle_quiet(event) -> None:
+async def _toggle_quiet(event, *, expected: bool | None = None, revision: int | None = None) -> None:
     """Переключить `admin_quiet_hours_enabled` + обновить cache."""
     from aemr_bot.services import quiet_hours
 
-    async with session_scope() as session:
-        current = await settings_store.get(session, "admin_quiet_hours_enabled")
-        new_value = not bool(current)
-        await settings_store.set_value(
-            session, "admin_quiet_hours_enabled", new_value,
-        )
-        await session.commit()
-        await quiet_hours.refresh_cache_from_db(session)
+    try:
+        async with session_scope() as session:
+            current, current_revision = await settings_store.get_versioned(session, "admin_quiet_hours_enabled")
+            if expected is None or revision is None or expected != bool(current) or revision != current_revision:
+                raise settings_store.SettingConflictError("admin_quiet_hours_enabled")
+            new_value = not bool(current)
+            await settings_store.set_value(
+                session, "admin_quiet_hours_enabled", new_value, expected_revision=revision,
+            )
+            await ops_svc.write_audit(session, operator_max_user_id=get_user_id(event),
+                                      action="setting_update", target="admin_quiet_hours_enabled",
+                                      details={"before": bool(current), "after": new_value})
+            await session.commit()
+            await quiet_hours.refresh_cache_from_db(session)
+    except settings_store.SettingConflictError:
+        await _show_quiet_card(event, notice="Настройка уже изменилась. Проверьте текущее значение.")
+        return
     await _show_quiet_card(event)
 
 
@@ -89,16 +111,21 @@ async def _start_quiet_hour_intent(
     """
     assert which in {"start", "end"}, f"unknown which={which!r}"
     label = "начала" if which == "start" else "конца"
+    async with session_scope() as session:
+        baseline, revision = await settings_store.get_versioned(session, f"admin_quiet_hours_{which}")
     _intent_set(
         operator_id,
         key=f"admin_quiet_hours_{which}",
         kind="quiet_hour",
         which=which,
+        baseline=baseline,
+        revision=revision,
     )
     await op_screen(
         event,
         f"🌙 Час {label} тихого режима\n"
         "· · · · · · · ·\n"
+        f"Текущее значение: {baseline}:00.\n"
         "Пришлите одним сообщением число от 0 до 23.\n"
         "Например: 18 — для начала в 18:00; 9 — для конца в 09:00.\n\n"
         "Окно может пересекать полночь: start=18, end=9\n"
@@ -139,16 +166,27 @@ async def _apply_quiet_hour_edit(
         )
         return False
     key = f"admin_quiet_hours_{which}"
-    async with session_scope() as session:
-        await settings_store.set_value(session, key, new_value)
-        await ops_svc.write_audit(
-            session,
-            operator_max_user_id=operator_id,
-            action="setting_update",
-            target=key,
-            details={"value": new_value},
-        )
-        await session.commit()
-        await quiet_hours.refresh_cache_from_db(session)
+    try:
+        async with session_scope() as session:
+            intent = _intent_get(operator_id)
+            if intent and intent.get("key") == key and "baseline" in intent:
+                baseline, revision = intent["baseline"], intent.get("revision")
+            else:
+                baseline, revision = await settings_store.get_versioned(session, key)
+            if revision is None:
+                raise settings_store.SettingConflictError(key)
+            await settings_store.set_value(session, key, new_value, expected_revision=revision)
+            await ops_svc.write_audit(
+                session,
+                operator_max_user_id=operator_id,
+                action="setting_update",
+                target=key,
+                details={"before": baseline, "after": new_value},
+            )
+            await session.commit()
+            await quiet_hours.refresh_cache_from_db(session)
+    except settings_store.SettingConflictError:
+        await _show_quiet_card(event, notice="Час изменён другим сотрудником. Откройте изменение заново.")
+        return True
     await _show_quiet_card(event)
     return True

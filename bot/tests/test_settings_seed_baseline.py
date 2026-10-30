@@ -18,6 +18,20 @@ from aemr_bot.services import settings_store
 
 @pytest.mark.asyncio
 class TestSeedBaseline:
+    async def test_restart_preserves_invalid_existing_consent_for_review(self, session, monkeypatch) -> None:
+        from aemr_bot.db.models import Setting
+
+        old_text = "Редакция из действующего сервиса без шаблона ссылки"
+        session.add(Setting(key="consent_text", value=old_text))
+        await session.flush()
+        original_reader = settings_store._read_seed_text
+        monkeypatch.setattr(
+            settings_store, "_read_seed_text",
+            lambda name: "Новое согласие: {policy_url}" if name == "consent.md" else original_reader(name),
+        )
+        await settings_store.seed_if_empty(session)
+        assert await settings_store.get(session, "consent_text") == old_text
+
     async def test_fresh_seed_marks_synced_keys_as_clean(self, session) -> None:
         """После первого seed_if_empty — get_dirty_keys() = []."""
         await settings_store.seed_if_empty(session)

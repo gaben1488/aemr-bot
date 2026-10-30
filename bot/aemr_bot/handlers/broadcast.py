@@ -580,14 +580,18 @@ async def _run_send_loop(
                     and menu_tracker.get_last_menu_mid(cfg.admin_group_id) == admin_mid
                 ):
                     try:
-                        await bot.edit_message(
+                        from aemr_bot.utils.event import check_edit_result
+
+                        result = await bot.edit_message(
                             message_id=admin_mid,
                             text=_format_progress(
                                 broadcast_id=broadcast_id, total=total,
                                 delivered=delivered, failed=failed,
                             ),
                             attachments=[keyboards.broadcast_stop_keyboard(broadcast_id)],
+                            notify=False,
                         )
+                        check_edit_result(result)
                     except Exception:
                         log.exception(
                             "failed to edit progress message for broadcast #%s", broadcast_id,

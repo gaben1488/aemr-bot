@@ -51,6 +51,9 @@ class Settings(BaseSettings):
 
     timezone: str = Field("Asia/Kamchatka", alias="TZ")
     sla_response_hours: int = Field(4, alias="SLA_RESPONSE_HOURS")
+    # Internal operational reminder after the last intermediate response.
+    # This is not a legal deadline; 0 disables this reminder.
+    sla_followup_hours: int = Field(8, alias="SLA_FOLLOWUP_HOURS", ge=0, le=168)
     # Границы рабочего окна для расчёта SLA-просрочки (services/sla.py) —
     # локальное время по `timezone` (Камчатка). SLA-часы копятся ТОЛЬКО
     # внутри [sla_work_start_hour, sla_work_end_hour) рабочих дней
@@ -67,13 +70,12 @@ class Settings(BaseSettings):
     sla_lunch_start_hour: int = Field(12, alias="SLA_LUNCH_START_HOUR", ge=0, le=23)
     sla_lunch_end_hour: int = Field(13, alias="SLA_LUNCH_END_HOUR", ge=1, le=24)
     appeal_collect_timeout_seconds: int = Field(60, alias="APPEAL_TIMEOUT")
-    answer_max_chars: int = Field(800, alias="ANSWER_MAX_CHARS")
+    answer_max_chars: int = Field(3000, alias="ANSWER_MAX_CHARS")
     name_max_chars: int = Field(120, alias="NAME_MAX_CHARS")
     address_max_chars: int = Field(500, alias="ADDRESS_MAX_CHARS")
-    # Жёсткие ограничения на одно обращение. summary 2000 оставляет запас
-    # внутри 4000-символьной карточки в админке; 20 вложений — с запасом
-    # для одного обращения от жителя.
-    summary_max_chars: int = Field(2000, alias="SUMMARY_MAX_CHARS")
+    # Лимит входящего сообщения не зависит от размера обзорной карточки:
+    # длинные сохранённые тексты читаются постранично.
+    summary_max_chars: int = Field(20000, alias="SUMMARY_MAX_CHARS")
     attachments_max_per_appeal: int = Field(20, alias="ATTACHMENTS_MAX_PER_APPEAL")
     # Лимит на число вложений в одном сообщении сервера MAX не задокументирован;
     # на всякий случай режем пересылку на куски.
@@ -273,6 +275,7 @@ class Settings(BaseSettings):
     # удаляются вместе с контейнером. На корневой логгер вешается и файл, и stdout,
     # поэтому в файл попадает ВСЁ Python-логирование (включая библиотеку maxapi).
     # Пусто → файловое логирование выключено (остаётся только stdout), безопасно для dev/CI.
+    erasure_state_dir: str = Field("/var/lib/aemr/erasure", alias="ERASURE_STATE_DIR")
     log_dir: str | None = Field("/var/log/aemr-bot", alias="LOG_DIR")
     log_file_max_bytes: int = Field(10_000_000, alias="LOG_FILE_MAX_BYTES", ge=0)
     log_file_backups: int = Field(10, alias="LOG_FILE_BACKUPS", ge=0, le=100)

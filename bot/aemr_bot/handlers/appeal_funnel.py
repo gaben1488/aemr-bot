@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import logging
 import re
+import secrets
 from datetime import UTC, datetime, timedelta
 
 from aemr_bot import keyboards, texts
@@ -41,6 +42,7 @@ from aemr_bot.services import users as users_service
 from aemr_bot.utils.attachments import (
     collect_attachments,
     extract_resident_contact,
+    has_unsupported_appeal_attachments,
 )
 from aemr_bot.utils.event import (
     extract_message_id,
@@ -70,6 +72,9 @@ async def start_appeal_flow(event, max_user_id: int):
     запрос согласия + клавиатуру; иначе — переход к следующему шагу
     (контакт/имя/адрес).
     """
+    from aemr_bot.services import resident_drafts
+    if await resident_drafts.offer_saved(event, max_user_id):
+        return
     async with current_user(max_user_id) as (session, user):
         if user.is_blocked:
             pass  # обработка ниже
@@ -123,7 +128,7 @@ async def start_appeal_flow(event, max_user_id: int):
             event,
             text=(
                 "Сервис временно недоступен — не настроен текст политики "
-                "обработки данных. Сообщили координатору; попробуйте позже."
+                "обработки данных. Попробуйте позже или обратитесь в администрацию."
             ),
             attachments=[keyboards.back_to_menu_keyboard()],
         )
@@ -155,16 +160,26 @@ async def start_appeal_flow(event, max_user_id: int):
                 policy_url=policy_url or "в прикреплённом файле",
                 fallback=texts.CONSENT_REQUEST,
             )
+        from aemr_bot.utils.text_pages import fits_max_message
+        if not fits_max_message(text):
+            log.error("consent text exceeds MAX transport limit; administrator action required")
+            await send_or_edit_screen(
+                event,
+                text="Текст согласия временно недоступен. Попробуйте позже или обратитесь в администрацию.",
+                attachments=[keyboards.back_to_menu_keyboard()],
+            )
+            return
         sent = await send_or_edit_screen(
             event,
             text=text,
             attachments=attachments,
+            force_new_message=True,
         )
         async with session_scope() as session:
             await users_service.set_state(
                 session, max_user_id, DialogState.AWAITING_CONSENT,
-                data={"consent_prompt_hash": consent_hash,
-                      "consent_prompt_mid": extract_message_id(sent) or get_callback_message_id(event)},
+                data={"consent_prompt_hash": consent_hash, "consent_prompt_text": text,
+                      "consent_prompt_mid": extract_message_id(sent)},
             )
         return
 
@@ -354,10 +369,16 @@ async def _show_progress_step(
     # Сохранить mid если новое сообщение (edit использовал прежний mid —
     # ничего сохранять не нужно).
     if not edited and new_mid:
-        async with session_scope() as session:
-            await users_service.update_dialog_data(
-                session, max_user_id, {"progress_message_id": new_mid}
-            )
+        try:
+            async with session_scope() as session:
+                await users_service.update_dialog_data(
+                    session, max_user_id, {"progress_message_id": new_mid},
+                    expected_states={next_state.value},
+                )
+        except users_service.StaleDialogStateError:
+            # The user moved on while MAX was responding. Do not attach an
+            # old screen to the new dialog state.
+            log.debug("progress screen arrived after its dialog step ended")
 
 
 async def ask_locality(
@@ -429,21 +450,29 @@ async def ask_summary(
     непустое сообщение (текст / фото / видео / файл) — финализация
     в on_awaiting_summary.
     """
+    async with session_scope() as session:
+        data = await users_service.update_dialog_data(
+            session, max_user_id,
+            lambda old: {"draft_token": old.get("draft_token") or secrets.token_urlsafe(12)},
+        )
+    token = data.get("draft_token")
+    if not token:
+        return
     await _show_progress_step(
         event,
         max_user_id,
         stage="summary",
         next_state=DialogState.AWAITING_SUMMARY,
-        keyboard=keyboards.cancel_keyboard(),
+        keyboard=keyboards.appeal_draft_keyboard(
+            token, has_content=bool(data.get("summary_chunks") or data.get("attachments"))
+        ),
         force_new_message=force_new_message,
     )
 
 
-async def finalize_appeal(event, max_user_id: int):
-    """Финализация. Вызывается сразу после первого непустого сообщения
-    жителя в шаге AWAITING_SUMMARY — без таймера и без отдельной
-    кнопки «Отправить». На пустой ввод отвечаем подсказкой."""
-    persisted = await persist_and_dispatch_appeal(event.bot, max_user_id)
+async def finalize_appeal(event, max_user_id: int, *, draft_token: str | None = None):
+    """Сохранить накопленный черновик после явного нажатия «Отправить»."""
+    persisted = await persist_and_dispatch_appeal(event.bot, max_user_id, draft_token=draft_token)
     if persisted == PERSIST_RATE_LIMITED:
         async with current_user(max_user_id) as (session, user):
             active = await appeals_service.find_active_for_user(session, user.id)
@@ -557,7 +586,13 @@ async def on_awaiting_name(event, body, text_body, max_user_id):
 
 
 async def on_awaiting_address(event, body, text_body, max_user_id):
-    address = text_body.strip()[: cfg.address_max_chars]
+    address = text_body.strip()
+    if len(address) > cfg.address_max_chars:
+        await event.message.answer(
+            f"Адрес не сохранён: сейчас можно до {cfg.address_max_chars} символов. "
+            "Укажите адрес короче и отправьте снова."
+        )
+        return
     if not address or not _HAS_ALNUM.search(address):
         await event.message.answer(texts.ADDRESS_EMPTY)
         return
@@ -568,37 +603,32 @@ async def on_awaiting_address(event, body, text_body, max_user_id):
     await ask_topic(event, max_user_id, force_new_message=True)
 
 
-def _truncation_tail(kept: str) -> str:
-    """Последние три слова принятой части текста.
-
-    Показываются жителю в предупреждении об обрезке («…почему не сдел…»),
-    чтобы он видел, ГДЕ именно оборвалось. Хвост дополнительно ограничен
-    60 символами — одно аномально длинное «слово» не раздует сообщение.
-    """
-    words = kept.rstrip().split()
-    tail = " ".join(words[-3:])
-    return tail[-60:]
-
-
 async def on_awaiting_summary(event, body, text_body, max_user_id):
-    """Один шаг сути: первое же непустое сообщение или вложение —
-    это и есть обращение."""
-    chunk = text_body.strip()
+    """Добавить часть текста и вложения в устойчивый черновик."""
+    chunk = text_body or ""
+    if has_unsupported_appeal_attachments(body):
+        await event.message.answer(
+            "Обращение не отправлено: можно приложить фото, видео или файл. "
+            "Удалите остальные вложения и отправьте сообщение снова.",
+            attachments=[keyboards.cancel_keyboard()],
+        )
+        return
     atts = collect_attachments(body)
-    if not chunk and not atts:
+    if not chunk.strip() and not atts:
         await event.message.answer(
             texts.APPEAL_EMPTY_REJECTED,
             attachments=[keyboards.cancel_keyboard()],
         )
         return
 
-    # Обрезка длинного текста была молчаливой: житель не знал, что
-    # оператор увидит только первые summary_max_chars символов, и был
-    # уверен, что его прочитали целиком. Теперь предупреждаем и называем
-    # последние принятые слова — видно, где оборвалось.
-    truncated_tail: str | None = None
-    if chunk and len(chunk) > cfg.summary_max_chars:
-        truncated_tail = _truncation_tail(chunk[: cfg.summary_max_chars])
+    if len(atts) > cfg.attachments_max_per_appeal:
+        await event.message.answer(
+            f"Обращение не отправлено: приложено {len(atts)} файлов, "
+            f"а сейчас можно до {cfg.attachments_max_per_appeal}. "
+            "Уменьшите число вложений и отправьте сообщение снова.",
+            attachments=[keyboards.cancel_keyboard()],
+        )
+        return
 
     def _merge_summary(data: dict) -> dict:
         """Накопить chunks/attachments поверх СВЕЖЕГО dialog_data.
@@ -610,31 +640,77 @@ async def on_awaiting_summary(event, body, text_body, max_user_id):
         копии: append не должен мутировать list, лежащий в
         SQLAlchemy-tracked user.dialog_data до flush.
         """
-        chunks = list(data.get("summary_chunks") or [])
-        attachments = list(data.get("attachments") or [])
-        if chunk:
-            chunks.append(chunk[: cfg.summary_max_chars])
-        if atts:
-            attachments.extend(atts[: cfg.attachments_max_per_appeal])
-        patch: dict = {"summary_chunks": chunks, "attachments": attachments}
+        from aemr_bot.services.resident_drafts import append_part
+        replacing = bool(data.get("replace_text") and chunk.strip())
+        source = {**data, "summary_chunks": []} if replacing else data
+        patch = append_part(source, chunk, atts, max_chars=cfg.summary_max_chars,
+                            max_files=cfg.attachments_max_per_appeal)
+        if replacing:
+            patch["replace_text"] = False
+        patch["draft_token"] = data.get("draft_token") or secrets.token_urlsafe(12)
         pending = data.get(resident_name_gate.RESUME_KEY)
         if pending and pending.get("ready"):
             patch[resident_name_gate.RESUME_KEY] = {**pending, "applied": True}
         return patch
 
-    async with session_scope() as session:
-        await users_service.update_dialog_data(
-            session, max_user_id, _merge_summary
-        )
-
-    if truncated_tail is not None:
-        await event.message.answer(
-            texts.APPEAL_TEXT_TRUNCATED.format(
-                limit=cfg.summary_max_chars, tail=truncated_tail
+    from aemr_bot.services.resident_drafts import DraftLimitError
+    try:
+        async with session_scope() as session:
+            await users_service.update_dialog_data(
+                session, max_user_id, _merge_summary,
+                expected_states={DialogState.AWAITING_SUMMARY.value,
+                                 DialogState.AWAITING_FOLLOWUP_TEXT.value},
             )
+    except DraftLimitError:
+        await event.message.answer(
+            f"Эта часть не добавлена: в черновике может быть до {cfg.summary_max_chars} "
+            f"символов и {cfg.attachments_max_per_appeal} вложений. "
+            "Ранее добавленные части сохранены. Сократите новую часть или приложите документ."
         )
+        await show_summary_draft(event, max_user_id)
+        return
+    except users_service.StaleDialogStateError:
+        await event.message.answer(
+            "Черновик уже отправлен или приостановлен. Откройте меню, чтобы продолжить."
+        )
+        return
+    await show_summary_draft(event, max_user_id)
 
-    await finalize_appeal(event, max_user_id)
+
+async def show_summary_draft(event, max_user_id: int) -> None:
+    async with current_user(max_user_id) as (_, user):
+        data = dict(user.dialog_data or {})
+        token = data.get("draft_token")
+        followup = user.dialog_state == DialogState.AWAITING_FOLLOWUP_TEXT.value
+    if not token:
+        async with session_scope() as session:
+            data = await users_service.update_dialog_data(
+                session, max_user_id,
+                lambda old: {"draft_token": old.get("draft_token") or secrets.token_urlsafe(12)},
+            )
+        token = data.get("draft_token")
+        if not token:
+            return
+    if data.get("replace_text"):
+        await send_or_edit_screen(
+            event,
+            text="Пришлите новый текст одним сообщением. Прежний текст сохранится, пока вы не пришлёте замену; вложения останутся.",
+            attachments=[keyboards.draft_edit_cancel_keyboard(token)],
+        )
+        return
+    chunks = data.get("summary_chunks") or []
+    files = data.get("attachments") or []
+    full = "\n".join(chunks)
+    preview = full[:400] + ("…" if len(full) > 400 else "")
+    title = f"Черновик дополнения к № {data.get('appeal_id')}" if followup else "Черновик обращения"
+    await send_or_edit_screen(
+        event, text=(f"📝 {title}\n\nЧастей текста: {len(chunks)} · "
+                     f"Символов: {len(full)} из {cfg.summary_max_chars}\n"
+                     f"Вложений: {len(files)} из {cfg.attachments_max_per_appeal}\n\n"
+                     + (f"{preview}\n\n" if preview else "")
+                     + "Можно прислать ещё текст или файлы. Когда всё готово, нажмите кнопку отправки."),
+        attachments=[keyboards.appeal_draft_keyboard(token, has_content=bool(full.strip() or files), followup=followup)],
+    )
 
 
 async def on_awaiting_topic(event, body, text_body, max_user_id):
@@ -670,6 +746,14 @@ async def on_awaiting_consent(event, body, text_body, max_user_id):
             session, policy_url=policy_url or "в прикреплённом файле",
             fallback=texts.CONSENT_REQUEST,
         )
+    from aemr_bot.utils.text_pages import fits_max_message
+    if not fits_max_message(text):
+        log.error("consent text exceeds MAX transport limit; administrator action required")
+        await event.message.answer(
+            "Текст согласия временно недоступен. Попробуйте позже или обратитесь в администрацию.",
+            attachments=[keyboards.back_to_menu_keyboard()],
+        )
+        return
     attachments = [keyboards.consent_keyboard()]
     if policy_token:
         from aemr_bot.services.policy import build_file_attachment
@@ -678,7 +762,8 @@ async def on_awaiting_consent(event, body, text_body, max_user_id):
     async with session_scope() as session:
         await users_service.set_state(
             session, max_user_id, DialogState.AWAITING_CONSENT,
-            data={"consent_prompt_hash": consent_hash, "consent_prompt_mid": extract_message_id(sent)},
+            data={"consent_prompt_hash": consent_hash, "consent_prompt_text": text,
+                  "consent_prompt_mid": extract_message_id(sent)},
         )
 
 
@@ -703,6 +788,11 @@ async def on_idle(event, body, text_body, max_user_id):
 
 
 async def on_awaiting_followup_text(event, body, text_body, max_user_id):
+    """Collect parts; delivery requires an explicit, token-bound confirmation."""
+    await on_awaiting_summary(event, body, text_body, max_user_id)
+
+
+async def submit_followup(event, body, text_body, max_user_id, *, draft_token: str):
     """Житель нажал «📎 Дополнить» в карточке обращения. Принимаем текст
     и/или вложения — пришиваем к обращению из dialog_data, обновляем
     карточку в админ-чате и подтверждаем жителю одной карточкой с
@@ -711,7 +801,7 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
     Отвеченные и закрытые обращения не переоткрываем. Повтор по ним
     оформляется новым связанным обращением через «🔁 Подать похожее».
     """
-    from aemr_bot.services.admin_relay import relay_attachments_to_admin
+    from aemr_bot.services import followup_delivery
 
     async with current_user(max_user_id) as (session, user):
         appeal_id = (user.dialog_data or {}).get("appeal_id")
@@ -722,8 +812,6 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
         )
 
     if appeal is None or appeal.user_id != user.id:
-        async with session_scope() as session:
-            await users_service.reset_state(session, max_user_id)
         await event.message.answer(
             "Обращение, которое вы хотели дополнить, недоступно. "
             "Откройте «📂 Мои обращения» — выберите актуальное.",
@@ -731,12 +819,18 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
         )
         return
 
+    if getattr(appeal, "content_erased_at", None) is not None:
+        await event.message.answer(
+            "Содержание этого обращения очищено по сроку хранения. "
+            "Черновик дополнения сохранён. Нажмите «Создать новое», чтобы оформить новое обращение с теми же текстом и файлами. Адрес укажите заново.",
+            attachments=[keyboards.closed_followup_draft_keyboard(draft_token)],
+        )
+        return
+
     # Если согласие отозвано между нажатием «📎 Дополнить» и присылкой
     # текста — дополнение в админ-чат не идёт. 152-ФЗ ст. 21 ч. 5: после
     # отзыва обработка прекращается, в том числе входящих сообщений.
     if user.consent_pdn_at is None:
-        async with session_scope() as session:
-            await users_service.reset_state(session, max_user_id)
         await event.message.answer(
             "Согласие на обработку отозвано — дополнение не отправлено. "
             "Чтобы продолжить, откройте /start и дайте согласие заново.",
@@ -747,24 +841,41 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
     # Если оператор ответил или закрыл обращение между нажатием и
     # присылкой текста — не возвращаем его в работу дополнением.
     if appeal.status in {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}:
-        async with session_scope() as session:
-            await users_service.reset_state(session, max_user_id)
         await event.message.answer(
             "Обращение уже завершено. Если ситуация повторилась — "
-            "откройте его в «📂 Мои обращения» и нажмите «🔁 Подать похожее».",
-            attachments=[keyboards.back_to_menu_keyboard()],
+            "можно создать новое обращение на основе черновика. "
+            "Текст и вложения сохранятся; перед отправкой вы их увидите.",
+            attachments=[keyboards.closed_followup_draft_keyboard(draft_token)],
         )
         return
 
-    # Лимит длины followup согласован с сутью обращения
-    # (on_awaiting_summary режет chunk[: cfg.summary_max_chars]). Без
-    # обрезки житель мог бы прислать мегабайтный текст в дополнение —
-    # raw в БД и в relay (DoS-storage класс). Усекаем единым лимитом.
-    _raw_followup = (text_body or "").strip()
-    text = _raw_followup[: cfg.summary_max_chars]
-    followup_truncated = len(_raw_followup) > cfg.summary_max_chars
+    _raw_followup = text_body or ""
+    if len(_raw_followup) > cfg.summary_max_chars:
+        await event.message.answer(
+            f"Дополнение не отправлено: в нём {len(_raw_followup)} символов, "
+            f"а сейчас можно до {cfg.summary_max_chars}. Сократите текст и "
+            "отправьте его снова или приложите документ.",
+            attachments=[keyboards.cancel_keyboard()],
+        )
+        return
+    text = _raw_followup
+    if has_unsupported_appeal_attachments(body):
+        await event.message.answer(
+            "Дополнение не отправлено: можно приложить фото, видео или файл. "
+            "Удалите остальные вложения и отправьте сообщение снова.",
+            attachments=[keyboards.cancel_keyboard()],
+        )
+        return
     attachments = collect_attachments(body)
-    if not text and not attachments:
+    if len(attachments) > cfg.attachments_max_per_appeal:
+        await event.message.answer(
+            f"Дополнение не отправлено: приложено {len(attachments)} файлов, "
+            f"а сейчас можно до {cfg.attachments_max_per_appeal}. "
+            "Уменьшите число вложений и отправьте сообщение снова.",
+            attachments=[keyboards.cancel_keyboard()],
+        )
+        return
+    if not text.strip() and not attachments:
         await event.message.answer(
             "Опишите дополнение к обращению одним сообщением или "
             "приложите фото, видео или файл.",
@@ -785,11 +896,7 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
         )
     pending = (user.dialog_data or {}).get(resident_name_gate.RESUME_KEY) or {}
     replay_pending = bool(pending.get("ready"))
-    retry_hint = (
-        "\n\nВаше сообщение сохранено. После паузы отправьте любое сообщение, "
-        "чтобы повторить отправку, или нажмите «Отмена»."
-        if replay_pending else ""
-    )
+    retry_hint = "\n\nЧерновик сохранён. После паузы снова нажмите «Отправить»."
     if last_at is not None:
         elapsed = (datetime.now(UTC) - last_at).total_seconds()
         if elapsed < cfg.followup_min_interval_seconds:
@@ -798,7 +905,7 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
                 f"Слишком часто. Подождите {wait}с перед следующим "
                 f"дополнением — это защита от случайного двойного "
                 f"сообщения.{retry_hint}",
-                attachments=[keyboards.cancel_keyboard()],
+                attachments=[keyboards.appeal_draft_keyboard(draft_token, has_content=True, followup=True)],
             )
             return False
     if recent_count >= cfg.followup_max_per_hour_per_appeal:
@@ -807,27 +914,23 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
             f"лимит {cfg.followup_max_per_hour_per_appeal}. Подождите час "
             f"или дождитесь ответа оператора — он видит всю историю и "
             f"свяжется по сути вопроса.{retry_hint}",
-            attachments=[
-                keyboards.cancel_keyboard() if replay_pending else keyboards.back_to_menu_keyboard()
-            ],
+            attachments=[keyboards.appeal_draft_keyboard(draft_token, has_content=True, followup=True)],
         )
         if replay_pending:
             return False
-        # Сбрасываем state — иначе житель «застрянет» в AWAITING_FOLLOWUP
-        async with session_scope() as session:
-            await users_service.reset_state(session, max_user_id)
+        # Keep the draft for explicit retry after the rate window clears.
         return
 
     async with session_scope() as session:
         # The earlier checks only guide the UI. Reload and lock the rows in
         # the insertion transaction: an operator may have closed the appeal
         # or blocked the resident while the rate-limit query was running.
-        # Appeal -> User matches erasure's appeal updates before user deletion.
-        locked_appeal = await appeals_service.get_by_id(
-            session, appeal.id, for_update=True
-        )
+        # The same lock order as erasure: User before Appeal.
         locked_user = await users_service.find_by_max_id(
             session, max_user_id, for_update=True
+        )
+        locked_appeal = await appeals_service.get_by_id(
+            session, appeal.id, for_update=True
         )
         if (
             locked_appeal is None
@@ -838,82 +941,62 @@ async def on_awaiting_followup_text(event, body, text_body, max_user_id):
             or locked_user.is_blocked
             or locked_user.dialog_state != DialogState.AWAITING_FOLLOWUP_TEXT.value
             or (locked_user.dialog_data or {}).get("appeal_id") != appeal.id
+            or (locked_user.dialog_data or {}).get("draft_token") != draft_token
         ):
-            if (
-                locked_user is not None
-                and locked_user.dialog_state == DialogState.AWAITING_FOLLOWUP_TEXT.value
-                and (locked_user.dialog_data or {}).get("appeal_id") == appeal.id
-            ):
-                await users_service.reset_state(session, max_user_id)
             await event.message.answer(
                 "Дополнение не сохранено: обращение или ваше разрешение на "
                 "отправку изменилось. Откройте «📂 Мои обращения» и проверьте статус.",
                 attachments=[keyboards.back_to_menu_keyboard()],
             )
             return
+        if getattr(locked_appeal, "content_erased_at", None) is not None:
+            await event.message.answer(
+                "Содержание обращения уже очищено по сроку хранения. "
+                "Черновик сохранён. Кнопка «Создать новое» перенесёт текст и файлы в новое обращение; адрес укажите заново.",
+                attachments=[keyboards.closed_followup_draft_keyboard(draft_token)],
+            )
+            return
+        # Read the draft again under its lock. Another message may have
+        # appended to it after the callback first read the screen.
+        current = locked_user.dialog_data or {}
+        text = "\n".join(current.get("summary_chunks") or [])
+        attachments = list(current.get("attachments") or [])
+        if not text.strip() and not attachments:
+            await event.message.answer("Черновик пуст. Добавьте текст или вложение.")
+            return
+        recent_count, last_at = await appeals_service.followup_rate_limit_stats(session, appeal.id, hours=1)
+        if (recent_count >= cfg.followup_max_per_hour_per_appeal or
+                (last_at is not None and
+                 (datetime.now(UTC) - last_at).total_seconds() < cfg.followup_min_interval_seconds)):
+            await event.message.answer(
+                "Слишком часто. Черновик сохранён: немного подождите и снова нажмите «Отправить».",
+                attachments=[keyboards.appeal_draft_keyboard(draft_token, has_content=True, followup=True)],
+            )
+            return
         appeal = locked_appeal
-        await appeals_service.add_user_message(
+        saved_message = await appeals_service.add_user_message(
             session,
             appeal=appeal,
             text=text or None,
             attachments=attachments,
         )
-        updated_appeal = await appeals_service.get_by_id_with_messages(
-            session, appeal.id
-        )
+        # Committed with the text and draft reset: after a crash only a
+        # genuinely unattempted notification can be recovered automatically.
+        saved_message.admin_notice_state = "pending"
+        saved_message_id = saved_message.id
         await users_service.reset_state(session, max_user_id)
-        appeal_for_card = updated_appeal or appeal
-        user_for_card = getattr(appeal_for_card, "user", None) or user
 
-    # Единое уведомление: ПОЛНАЯ admin appeal card с timeline (где видно
-    # свежее дополнение жителя как последнее сообщение) + маркер-шапка
-    # `📩 Новое дополнение по обращению #N от жителя`. Один объект в
-    # чате вместо двух — оператор не сканирует две сущности «короткое
-    # уведомление + карточка», а видит сразу контекст + содержание +
-    # все кнопки действий.
-    #
-    # force_new=True: дополнение = «новая инфа», нужна запись внизу
-    # чата даже если предыдущая карточка ещё была last_in_chat.
-    # admin_message_id оригинала НЕ двигаем (sacred-правило, PR #54),
-    # но last_admin_card_mid в БД обновится новым mid'ом.
-    new_card_mid: str | None = None
-    if cfg.admin_group_id:
-        try:
-            from aemr_bot.services import admin_card as admin_card_service
+    try:
+        notification_confirmed = await followup_delivery.deliver(event.bot, saved_message_id)
+    except Exception:
+        # The message is already committed. Recovery/diagnostics distinguish
+        # a safe pending state from a possibly executed send.
+        log.exception("followup notification failed for appeal #%s", appeal.id)
+        notification_confirmed = False
 
-            if getattr(appeal_for_card, "user", None) is None:
-                appeal_for_card.user = user_for_card
-            new_card_mid = await admin_card_service.render(
-                event.bot,
-                appeal_for_card,
-                force_new=True,
-                event_header=(
-                    f"📩 Новое дополнение по обращению #{appeal.id} от "
-                    f"жителя — см. ниже в истории переписки."
-                ),
-            )
-        except Exception:
-            log.exception("admin_card.render after followup failed")
-
-        if attachments:
-            try:
-                # Relay вложений жителя — reply-link на свежую карточку
-                # (new_card_mid). Без link — relay уйдёт отдельным
-                # сообщением, оператор всё равно увидит вложения.
-                await relay_attachments_to_admin(
-                    event.bot,
-                    appeal_id=appeal.id,
-                    admin_mid=new_card_mid,
-                    stored_attachments=attachments,
-                )
-            except Exception:
-                log.exception("relay followup attachments failed")
-
-    confirm_text = f"✅ Дополнение отправлено оператору по обращению #{appeal.id}."
-    if followup_truncated:
-        confirm_text += "\n\n" + texts.FOLLOWUP_TEXT_TRUNCATED.format(
-            limit=cfg.summary_max_chars, tail=_truncation_tail(text)
-        )
+    confirm_text = f"✅ Дополнение сохранено в обращении № {appeal.id}."
+    if not notification_confirmed:
+        confirm_text += " Уведомление специалиста пока не подтверждено; обращение остаётся в очереди."
     await event.message.answer(
         confirm_text,
         attachments=[keyboards.back_to_menu_keyboard()],

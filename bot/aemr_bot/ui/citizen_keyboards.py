@@ -37,6 +37,7 @@ def blocked_user_menu(electronic_reception_url: str | None = None):
 def main_menu(
     *,
     subscribed: bool = False,
+    has_draft: bool = False,
 ):
     """Главное меню жителя.
 
@@ -51,6 +52,8 @@ def main_menu(
     Электронная приёмная (LinkButton) переехала в подменю «Приём
     граждан». Главное меню содержит 7 кнопок, включая защиту от мошенников."""
     kb = InlineKeyboardBuilder()
+    if has_draft:
+        kb.row(CallbackButton(text="📝 Продолжить черновик", payload="draft:resume"))
     kb.row(CallbackButton(text="📝 Написать обращение", payload=cp.MENU_NEW_APPEAL))
     kb.row(CallbackButton(text="📂 Мои обращения", payload=cp.MENU_MY_APPEALS))
     # Идемпотентные payload'ы вместо toggle: чтобы кнопка из «старого»
@@ -60,13 +63,13 @@ def main_menu(
     if subscribed:
         kb.row(
             CallbackButton(
-                text="🔕 Не хочу получать рассылку", payload=cp.INFO_SUBSCRIBE_OFF
+                text="🔕 Отписаться", payload=cp.INFO_SUBSCRIBE_OFF
             )
         )
     else:
         kb.row(
             CallbackButton(
-                text="🔔 Подписаться на рассылку", payload=cp.INFO_SUBSCRIBE_ON
+                text="🔔 Подписаться", payload=cp.INFO_SUBSCRIBE_ON
             )
         )
     # Электронная приёмная переехала в подменю «Приём граждан» — там она
@@ -80,6 +83,41 @@ def main_menu(
     # переписки, а официальный ответ оператора не перегружен меморандумом.
     kb.row(CallbackButton(text="🛡️ Защита от мошенников", payload=cp.MENU_SECURITY))
     kb.row(CallbackButton(text="⚙️ Настройки и помощь", payload=cp.MENU_SETTINGS))
+    return kb.as_markup()
+
+
+def appeal_draft_keyboard(token: str, *, has_content: bool = True, followup: bool = False):
+    kb = InlineKeyboardBuilder()
+    if has_content:
+        label = "✅ Отправить дополнение" if followup else "✅ Отправить обращение"
+        kb.row(CallbackButton(text=label, payload=f"draft:submit:{token}"))
+        kb.row(CallbackButton(text="📖 Полный текст", payload=f"draft:view:{token}:0"),
+               CallbackButton(text="✏️ Изменить текст", payload=f"draft:edit:{token}"))
+    kb.row(CallbackButton(text="🗑 Отменить черновик", payload=f"draft:cancel:{token}"))
+    kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
+    return kb.as_markup()
+
+
+def draft_edit_cancel_keyboard(token: str):
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="↩️ Не изменять текст", payload=f"draft:edit_cancel:{token}"))
+    return kb.as_markup()
+
+
+def draft_resume_keyboard():
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="📝 Продолжить черновик", payload="draft:resume"))
+    kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
+    return kb.as_markup()
+
+
+def closed_followup_draft_keyboard(token: str):
+    """Offer a new related appeal without losing the resident's draft."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="📝 Создать новое", payload=f"draft:new_related:{token}"))
+    kb.row(CallbackButton(text="📖 Полный текст", payload=f"draft:view:{token}:0"))
+    kb.row(CallbackButton(text="🗑 Отменить", payload=f"draft:cancel:{token}"))
+    kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
     return kb.as_markup()
 
 
@@ -142,14 +180,14 @@ def goodbye_keyboard():
     - ↩️ «Передумал, остаюсь» — назад в Настройки.
     """
     kb = InlineKeyboardBuilder()
-    kb.row(CallbackButton(text="🔕 Не хочу получать рассылку", payload=cp.GOODBYE_UNSUB))
-    kb.row(CallbackButton(text="👋 Хочу попрощаться, но дождаться ответа на обращение", payload=cp.GOODBYE_REVOKE_ASK))
+    kb.row(CallbackButton(text="🔕 Отписаться", payload=cp.GOODBYE_UNSUB))
+    kb.row(CallbackButton(text="👋 Отозвать согласие", payload=cp.GOODBYE_REVOKE_ASK))
     # A4.1 (2026-05-27): `🗑` вместо `❌` — UI_BRAND_CONCEPT B.7
     # требует разводить отмену (❌) и необратимое разрушительное
     # действие (🗑/🚫/⛔). Стирание данных — destructive,
     # эмодзи мусорной корзины ясно сигнализирует это пенсионеру.
-    kb.row(CallbackButton(text="🗑 Стереть данные обо мне прямо сейчас", payload=cp.GOODBYE_ERASE_ASK))
-    kb.row(CallbackButton(text="↩️ Передумал, остаюсь", payload=cp.MENU_SETTINGS))
+    kb.row(CallbackButton(text="🗑 Удалить данные", payload=cp.GOODBYE_ERASE_ASK))
+    kb.row(CallbackButton(text="↩️ Назад", payload=cp.MENU_SETTINGS))
     return kb.as_markup()
 
 
@@ -158,10 +196,8 @@ def goodbye_revoke_confirm_keyboard():
     «Уйти из бота», чтобы человек, передумавший на этом шаге, видел все
     три опции, а не сразу «Назад» в Настройки."""
     kb = InlineKeyboardBuilder()
-    kb.row(
-        CallbackButton(text="✅ Да, попрощаться", payload=cp.GOODBYE_REVOKE_YES),
-        CallbackButton(text="❌ Не отзывать", payload=cp.SETTINGS_GOODBYE),
-    )
+    kb.row(CallbackButton(text="✅ Отозвать согласие", payload=cp.GOODBYE_REVOKE_YES))
+    kb.row(CallbackButton(text="↩️ Назад", payload=cp.SETTINGS_GOODBYE))
     return kb.as_markup()
 
 
@@ -170,10 +206,8 @@ def goodbye_erase_confirm_keyboard():
     «бот не узнает вас при возврате», поэтому шаг подтверждения отдельный.
     Возврат на отказ — в «Уйти из бота», логика та же что у revoke."""
     kb = InlineKeyboardBuilder()
-    kb.row(
-        CallbackButton(text="✅ Да, стереть", payload=cp.GOODBYE_ERASE_YES),
-        CallbackButton(text="❌ Не стирать", payload=cp.SETTINGS_GOODBYE),
-    )
+    kb.row(CallbackButton(text="✅ Удалить данные", payload=cp.GOODBYE_ERASE_YES))
+    kb.row(CallbackButton(text="↩️ Назад", payload=cp.SETTINGS_GOODBYE))
     return kb.as_markup()
 
 
@@ -330,6 +364,7 @@ def user_appeal_card_keyboard(
                 text="🔁 Подать похожее", payload=cp.appeal_repeat(appeal_id)
             )
         )
+    kb.row(CallbackButton(text="📖 История обращения", payload=cp.appeal_history(appeal_id, 0)))
     if attachment_count > 0:
         kb.row(
             CallbackButton(
@@ -339,6 +374,29 @@ def user_appeal_card_keyboard(
         )
     kb.row(CallbackButton(text="↩️ К моим обращениям", payload=cp.MENU_MY_APPEALS))
     kb.row(CallbackButton(text="↩️ В меню", payload=cp.MENU_MAIN))
+    return kb.as_markup()
+
+
+def appeal_history_keyboard(appeal_id: int, page: int, total: int, *, operator: bool = False,
+                            attachments: bool = False, message_id: int | None = None):
+    """Навигация по одной записи или части записи без пересылки всей истории."""
+    kb = InlineKeyboardBuilder()
+    build = cp.op_history if operator else cp.appeal_history
+    buttons = []
+    if page > 0:
+        buttons.append(CallbackButton(text="◀️ Ранее", payload=build(appeal_id, page - 1)))
+    if page + 1 < total:
+        buttons.append(CallbackButton(text="Позже ▶️", payload=build(appeal_id, page + 1)))
+    if buttons:
+        kb.row(*buttons)
+    if message_id is not None:
+        build_record = cp.op_record_atts if operator else cp.appeal_record_atts
+        kb.row(CallbackButton(text="📎 Вложения записи", payload=build_record(appeal_id, message_id)))
+    if attachments:
+        payload = cp.op_atts(appeal_id) if operator else cp.appeal_atts(appeal_id)
+        kb.row(CallbackButton(text="📎 Все вложения", payload=payload))
+    payload = cp.op_open_card(appeal_id) if operator else cp.appeal_show(appeal_id)
+    kb.row(CallbackButton(text="↩️ К обращению", payload=payload))
     return kb.as_markup()
 
 
@@ -448,13 +506,13 @@ def useful_info_keyboard(
     if subscribed:
         kb.row(
             CallbackButton(
-                text="🔕 Не хочу получать рассылку", payload=cp.INFO_SUBSCRIBE_OFF
+                text="🔕 Отписаться", payload=cp.INFO_SUBSCRIBE_OFF
             )
         )
     else:
         kb.row(
             CallbackButton(
-                text="🔔 Подписаться на рассылку", payload=cp.INFO_SUBSCRIBE_ON
+                text="🔔 Подписаться", payload=cp.INFO_SUBSCRIBE_ON
             )
         )
     kb.row(CallbackButton(text="↩️ В меню", payload=cp.MENU_MAIN))
@@ -462,16 +520,21 @@ def useful_info_keyboard(
 
 
 __all__ = [
+    "appeal_draft_keyboard",
+    "appeal_history_keyboard",
     "appointment_keyboard",
     "back_to_menu_keyboard",
     "back_to_settings_keyboard",
     "back_to_useful_info_keyboard",
     "blocked_user_menu",
     "cancel_keyboard",
+    "closed_followup_draft_keyboard",
     "consent_keyboard",
     "consent_revoke_confirm_keyboard",
     "consent_status_keyboard",
     "contact_request_keyboard",
+    "draft_edit_cancel_keyboard",
+    "draft_resume_keyboard",
     "empty_list_keyboard",
     "forget_confirm_keyboard",
     "geo_confirm_keyboard",

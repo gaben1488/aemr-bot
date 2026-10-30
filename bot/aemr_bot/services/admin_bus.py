@@ -27,39 +27,17 @@ log = logging.getLogger(__name__)
 # ============================================================================
 # Глобальный лимитер исходящих (perf-кластер «2 RPS»)
 # ============================================================================
-# MAX держит исходящий лимит ~2 RPS на токен бота. Единственным троттлом
-# раньше был локальный `asyncio.sleep(rate_delay)` внутри ОДНОЙ рассылки
-# (handlers/broadcast). Проблема: рассылка (1 RPS) + ответы операторов +
-# новые карточки обращений + cron-уведомления (pulse, funnel-watchdog,
-# retention-алёрты) шлются НЕЗАВИСИМО и СКЛАДЫВАЮТСЯ. Их сумма пробивает
-# 2 RPS → MAX отвечает 429 → часть рассылки (включая оповещение о ЧС)
-# теряется, потому что `_send_one` сдаётся после 3 ретраев.
-#
-# Фикс: один процесс-глобальный token-bucket, через который проходят ВСЕ
-# `bot.send_message` / `bot.edit_message` (навешивается в
-# `install_outgoing_tracker_hook`, который УЖЕ оборачивает send_message —
-# см. ниже). Рассылка и интерактив делят ОБЩИЙ бюджет, а не суммируются.
-# funnel_watchdog и recover-рассылки идут через тот же хук автоматически
-# (они зовут `bot.send_message`).
-#
-# Свойства (это ГОРЯЧИЙ путь — через него идёт каждый исходящий):
-# - single-loop: один event loop, один процесс. Между refill и списанием
-#   токена внутри `_reserve` НЕТ `await` → нет точки переключения,
-#   гонок нет, блокировка не нужна.
-# - monotonic-часы: невосприимчив к скачкам системного времени.
-# - при низкой активности задержка ~0: токены накоплены до capacity,
-#   `acquire()` списывает токен и возвращается без сна.
-# - НЕ дедлочит: ждём ровно `время до следующего токена`, потом списываем.
-# - FAIL-OPEN: если внутри лимитера случится исключение — `acquire()`
-#   проглатывает его и возвращается немедленно. Доступность важнее
-#   идеального темпа: лучше на мгновение превысить RPS, чем заморозить
-#   отправку (например, не отправить оповещение о ЧС).
-#
-# Темп 1.5 msg/s (запас под 2 RPS): не упираемся в потолок при джиттере
-# round-trip, оставляем место под edit_message и ack'и. Burst до capacity
-# (3) сглаживает короткие всплески (пара карточек подряд) без задержки.
+# Official POST /messages documents at most 2 messages/sec per dialog,
+# group or channel: https://dev.max.ru/docs-api/methods/POST/messages/.
+# The application uses a stricter shared 1.5/sec budget for all send/edit
+# calls. Capacity 1 schedules simultaneous reservations at 0, 2/3, 4/3,
+# ... seconds instead of allowing three immediate sends to one chat.
+# This is a configured reservation policy, not a measured throughput claim
+# or a guarantee of server acceptance; network delay can still change timing.
+# Reservations remain synchronous before the first await, so concurrent
+# callers get distinct slots. Limiter errors remain visible and fail open.
 _OUTGOING_RATE_PER_SEC = 1.5
-_OUTGOING_BURST = 3.0
+_OUTGOING_BURST = 1.0
 
 
 class _GlobalOutgoingLimiter:

@@ -10,6 +10,29 @@ from aemr_bot.services import users as users_service
 
 
 @pytest.mark.asyncio
+async def test_related_appeal_keeps_original_text_and_erasure_removes_link(session):
+    from sqlalchemy import select
+    from aemr_bot.db.models import Appeal
+
+    user = await users_service.get_or_create(session, max_user_id=88110001)
+    source = await appeals_service.create_appeal(
+        session, user=user, address="Ленина, 1", topic="Дороги", summary="Первое", attachments=[]
+    )
+    text = "  Повторилась проблема\n" + "Д" * 10000 + "\n"
+    child = await appeals_service.create_appeal(
+        session, user=user, address="Ленина, 1", topic="Дороги", summary=text,
+        attachments=[], related_appeal_id=source.id,
+    )
+    child_id = child.id
+    assert child.summary == text
+    assert child.related_appeal_id == source.id
+    await users_service.erase_pdn(session, 88110001)
+    row = (await session.execute(select(Appeal.summary, Appeal.related_appeal_id).where(Appeal.id == child_id))).one()
+    assert row.summary is None
+    assert row.related_appeal_id is None
+
+
+@pytest.mark.asyncio
 async def test_user_lifecycle(session):
     user = await users_service.get_or_create(session, max_user_id=42, first_name="Алексей")
     assert user.id is not None

@@ -1,10 +1,10 @@
 FROM python:3.12-slim@sha256:4386a385d81dba9f72ed72a6fe4237755d7f5440c84b417650f38336bbc43117
 
-# uv нужен только на этапе сборки — для `uv export` из bot/uv.lock в
+# uv используется при сборке — для `uv export` из bot/uv.lock в
 # requirements.txt с SHA256-хешами. Берём пиннутый бинарь из официального
 # образа astral-sh/uv (digest, не мутабельный тег) вместо
 # `curl astral.sh/uv/install.sh | sh`: компромет домена иначе исполнялся бы
-# в build-контексте. uv в финальный рантайм НЕ попадает (см. /usr/local/bin).
+# в build-контексте. Пиннутый uv доступен и для служебных команд в образе.
 COPY --from=ghcr.io/astral-sh/uv:0.11.12@sha256:3a59a3cdd5f7c217faa36e32dbc7fddbb0412889c2a0a5229f6d790e5a019dd7 /uv /usr/local/bin/uv
 
 ENV PYTHONUNBUFFERED=1 \
@@ -38,7 +38,11 @@ WORKDIR /app
 # uv.lock НЕ редактируется здесь — только читается.
 COPY bot/pyproject.toml /app/pyproject.toml
 COPY bot/uv.lock /app/uv.lock
-RUN pip install --upgrade pip \
+# An optional ephemeral CA bundle supports controlled build proxies; it is
+# never copied into the runtime image. Ordinary builds use system trust.
+RUN --mount=type=secret,id=build_ca,target=/run/build-ca.pem \
+    if [ -f /run/build-ca.pem ]; then export PIP_CERT=/run/build-ca.pem SSL_CERT_FILE=/run/build-ca.pem; fi; \
+    pip install --upgrade pip \
     && uv export --frozen --no-emit-project --no-dev \
         --format requirements-txt -o /tmp/requirements.txt \
     && pip install --require-hashes --no-deps -r /tmp/requirements.txt \
@@ -47,10 +51,13 @@ RUN pip install --upgrade pip \
 COPY bot/aemr_bot /app/aemr_bot
 # Сам пакет ставим editable БЕЗ зависимостей: весь дерево deps уже
 # установлено хеш-верифицированным шагом выше, повторно тянуть с PyPI нечего.
-RUN pip install -e /app --no-deps
+RUN --mount=type=secret,id=build_ca,target=/run/build-ca.pem \
+    if [ -f /run/build-ca.pem ]; then export PIP_CERT=/run/build-ca.pem SSL_CERT_FILE=/run/build-ca.pem; fi; \
+    pip install -e /app --no-deps
 COPY bot/alembic.ini /app/alembic.ini
 COPY seed /app/seed
 COPY docs/PRIVACY.pdf /app/seed/PRIVACY.pdf
+COPY scripts/reconcile_erasure.py scripts/replay_erasure_tombstones.py /app/scripts/
 
 # /backups is the named volume mount target. Pre-create it so chown runs
 # at build time; compose will mount over it but ownership of the mount
