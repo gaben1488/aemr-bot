@@ -139,11 +139,11 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
             log.exception("pin_message для /op_help не удался")
 
 
-async def run_open_tickets(event) -> None:
+async def run_open_tickets(event, *, new: bool = False) -> None:
     """Кнопочный аналог /open_tickets. Доступен любой роли."""
     if not await ensure_operator(event):
         return
-    await _do_open_tickets(event)
+    await _do_open_tickets(event, new=new)
 
 
 async def run_diag(event) -> None:
@@ -161,7 +161,7 @@ async def run_backup(event) -> None:
     await _do_backup(event)
 
 
-async def _do_open_tickets(event, page: int = 0) -> None:
+async def _do_open_tickets(event, page: int = 0, *, new: bool = False) -> None:
     """Компактный listing открытых обращений (шаг 2-в от 2026-05-26).
 
     Одно сообщение в чате: заголовок «📋 Открытые обращения (N)» +
@@ -197,7 +197,7 @@ async def _do_open_tickets(event, page: int = 0) -> None:
         open_appeals = (await session.scalars(query)).all()
 
     if not open_appeals:
-        await op_screen(event, "🎉 Сейчас нет открытых обращений.", kbds.op_back_to_menu_keyboard())
+        await op_screen(event, "🎉 Сейчас нет открытых обращений.", kbds.op_back_to_menu_keyboard(), new=new)
         return
 
     # Для каждого обращения формируем компактный label кнопки:
@@ -217,7 +217,7 @@ async def _do_open_tickets(event, page: int = 0) -> None:
         f"Нажмите на обращение, чтобы открыть его полную карточку "
         f"с историей переписки."
     )
-    await op_screen(event, text, kbds.open_tickets_listing_keyboard(items, page=page, pages=pages))
+    await op_screen(event, text, kbds.open_tickets_listing_keyboard(items, page=page, pages=pages), new=new)
 
 
 async def run_delivery_issues(event, page: int = 0) -> None:
@@ -585,15 +585,31 @@ async def _do_diag(event) -> None:
         f"• Лимит ответа: {cfg.answer_max_chars} симв.\n"
         f"• Новый период: {current_sla_hours} рабочих ч"
     )
+    from aemr_bot.services import queue_panel
+    queue_status = await queue_panel.recovery_status()
+    queue_uncertain = queue_status.get("state") in {"attempting", "unknown"}
+    if queue_uncertain:
+        warnings_lines.append(
+            "⚠️ Панель очереди: результат создания неизвестен. IT должен проверить "
+            "сообщения MAX; перед пересозданием удалить найденную старую панель. "
+            "Автоматического повтора нет."
+        )
+    else:
+        body += f"\n• Панель очереди: {queue_status.get('state', 'ещё не создана')}"
+    queue_operator = await get_operator(event) if queue_uncertain else None
+    queue_recovery = bool(queue_operator and queue_operator.role == OperatorRole.IT.value
+                          and queue_status.get("recoverable"))
     if warnings_lines:
         body += "\n\nВнимание:\n" + "\n".join(warnings_lines)
     else:
         body += "\n\n✅ Аномалий не обнаружено."
 
-    if pending_followups or uncertain_followups or uncertain_replies:
+    if pending_followups or uncertain_followups or uncertain_replies or queue_recovery:
         from maxapi.types import CallbackButton
         from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
         keyboard = InlineKeyboardBuilder()
+        if queue_recovery:
+            keyboard.row(kbds.queue_recovery_button(queue_status["token"]))
         if pending_followups or uncertain_followups:
             keyboard.row(CallbackButton(text="📬 Дополнения", payload="op:delivery_issues:0"))
         if uncertain_replies:

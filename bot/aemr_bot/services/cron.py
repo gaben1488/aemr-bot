@@ -85,12 +85,16 @@ _MISFIRE_GRACE_SEC = 120
 def _format_appeal_lines(appeals: list, *, max_rows: int = 10,
                          anchors: dict[int, datetime] | None = None) -> list[str]:
     """Show elapsed working time, with the relevant response-period anchor."""
+    from aemr_bot.services import work_schedule
+
     now = datetime.now(TZ)
     lines: list[str] = []
     for ap in appeals[:max_rows]:
         anchor = ((anchors or {}).get(ap.id) or getattr(ap, "sla_anchor_at", None)
                   or ap.created_at or now)
-        elapsed = sla_service.business_seconds_between(anchor, now) / 3600
+        elapsed = sla_service.business_seconds_between(
+            anchor, now, schedule=work_schedule.for_appeal(ap),
+        ) / 3600
         name = (ap.user.first_name or "—") if ap.user else "—"
         description = "после первого ответа" if anchors and ap.id in anchors else "с начала периода"
         lines.append(f"• #{ap.id} · {name} · {ap.locality or '—'} · "
@@ -1044,130 +1048,31 @@ async def _job_funnel_watchdog(bot, send_admin_text) -> None:
         log.exception("funnel_watchdog crashed")
 
 
+async def _refresh_working_hours_queue(bot, toggle: str) -> None:
+    from aemr_bot.services import notify_toggles, queue_panel, work_schedule
+    from aemr_bot.services.quiet_hours import is_quiet_hours_now
+
+    if is_quiet_hours_now() or not notify_toggles.is_enabled(toggle):
+        return
+    async with session_scope() as session:
+        await work_schedule.refresh(session)
+    if not sla_service.is_working_time(datetime.now(TZ)):
+        return
+    await queue_panel.refresh(bot)
+
+
 async def _job_working_hours_open_reminder(bot) -> None:
-    """Раз в час, ТОЛЬКО в рабочее время АЕМО:
-    пн–пт 09:00–11:59 и 13:00–17:59 Камчатка, не в праздники РФ.
-
-    Напоминание о всех неответленных обращениях — без разделения на
-    «в SLA» и «просрочено». Если открытых нет — тишина (по нулям не
-    пишем, чтобы оператор не привык игнорировать).
-
-    Под сообщением кнопка «📋 Открытые обращения» — тап открывает
-    полный список с кнопками действий по каждому.
-
-    Гейт `admin_notify_open_reminder` (services/notify_toggles.py):
-    выключен — напоминалка не считается и не отправляется.
-    """
+    """Refresh the shared queue in working hours; preserve the existing toggle."""
     try:
-        from aemr_bot.services import notify_toggles
-        from aemr_bot.services.quiet_hours import is_quiet_hours_now
-
-        if is_quiet_hours_now() or not notify_toggles.is_enabled("admin_notify_open_reminder"):
-            log.debug("open-reminder: admin_notify_open_reminder disabled, suppressed")
-            return
-        if not sla_service.is_working_time(datetime.now(TZ)):
-            return
-
-        async with session_scope() as session:
-            appeals = await appeals_service.list_unanswered(session)
-            total = await appeals_service.count_open(session)
-            first_replies = await appeals_service.first_operator_reply_times(session, [a.id for a in appeals])
-            intermediate_replies = await appeals_service.latest_intermediate_reply_times(session, [a.id for a in appeals])
-            followup_hours = await appeals_service.current_followup_hours(session)
-        if not appeals:
-            await _claim_reminder_snapshot("open_reminder", [], 0)
-            return
-        # Просрочка — по рабочему времени (services/sla.py), не
-        # календарному: обращение из пятничного вечера не «горит» в
-        # субботу. Раньше здесь же соседствовали datetime.now(timezone.utc)
-        # и datetime.now(TZ) в одной функции (находка ревью) — унифицировано
-        # на TZ (локальное время бота), т.к. sla_service сам приводит к TZ
-        # внутри, а now(TZ) читается счётчиком возраста ниже без конверсии.
-        now = datetime.now(TZ)
-        # is_overdue() итерирует по рабочим дням от created_at до now — для
-        # годовалого обращения это сотни итераций. Считаем один раз на
-        # обращение и переиспользуем флаг, а не зовём дважды на каждое.
-        with_reply = [a for a in appeals if a.id in first_replies]
-        needs_action = [a for a in with_reply if followup_hours > 0
-                        and a.id in intermediate_replies
-                        and sla_service.is_overdue(intermediate_replies[a.id], now, followup_hours)]
-        flags = [
-            (a, sla_service.is_overdue(getattr(a, "sla_anchor_at", None) or a.created_at, now,
-                                    appeals_service.response_hours_for(a, settings.sla_response_hours)))
-            for a in appeals if a.id not in first_replies
-        ]
-        in_sla = [a for a, is_od in flags if not is_od]
-        overdue = [a for a, is_od in flags if is_od]
-        signature_groups = [sorted(a.id for a in group) for group in (overdue, in_sla, with_reply, needs_action)]
-        if not await _claim_reminder_snapshot("open_reminder", signature_groups, total):
-            return
-        if overdue:
-            # The main digest already contains this overdue set. The separate
-            # overdue job should send only if that set subsequently changes.
-            await _claim_reminder_snapshot("overdue_reminder", [sorted(a.id for a in overdue)], len(overdue))
-        header = (
-            f"📋 Открытых обращений: {total}. "
-            f"Без первичного ответа: в срок — {len(in_sla)}, просрочено — {len(overdue)}; "
-            f"с промежуточным ответом — {len(with_reply)}."
-        )
-        if total > len(appeals):
-            header += f" Показаны первые {len(appeals)}."
-        lines = [header, ""]
-        if overdue:
-            lines.append("⚠️ Просрочено по внутреннему сроку первого ответа:")
-            lines.extend(_format_appeal_lines(overdue))
-            lines.append("")
-        if in_sla:
-            lines.append("🆕 В SLA:")
-            lines.extend(_format_appeal_lines(in_sla))
-        ordinary_with_reply = [a for a in with_reply if a not in needs_action]
-        if ordinary_with_reply:
-            lines.append("💬 В работе после первичного ответа:")
-            lines.extend(_format_appeal_lines(ordinary_with_reply, anchors=first_replies))
-        if needs_action:
-            lines.append(f"\n⏱ Требует дальнейшей работы: после последнего промежуточного ответа прошло "
-                         f"не менее {followup_hours} рабочих ч. Это внутреннее напоминание.")
-            lines.extend(_format_appeal_lines(needs_action, anchors=intermediate_replies))
-        await _send_with_open_tickets_button(bot, "\n".join(lines).rstrip())
+        await _refresh_working_hours_queue(bot, "admin_notify_open_reminder")
     except Exception:
         log.exception("working_hours_open_reminder crashed")
 
 
 async def _job_working_hours_overdue_reminder(bot) -> None:
-    """Раз в час на :40 — отдельное напоминание ТОЛЬКО о просроченных.
-    Вместе с :10 даёт «каждые полчаса для просрочки». Если нет
-    просроченных — тишина. В госпраздники РФ молчит.
-
-    Гейт `admin_notify_overdue_reminder` (services/notify_toggles.py):
-    выключен — напоминалка не считается и не отправляется.
-    """
+    """The second tick refreshes the same message, including overdue changes."""
     try:
-        from aemr_bot.services import notify_toggles
-        from aemr_bot.services.quiet_hours import is_quiet_hours_now
-
-        if is_quiet_hours_now() or not notify_toggles.is_enabled("admin_notify_overdue_reminder"):
-            log.debug(
-                "overdue-reminder: admin_notify_overdue_reminder disabled, suppressed"
-            )
-            return
-        if not sla_service.is_working_time(datetime.now(TZ)):
-            return
-
-        async with session_scope() as session:
-            overdue = await appeals_service.find_overdue_unanswered(
-                session, settings.sla_response_hours
-            )
-        if not overdue:
-            await _claim_reminder_snapshot("overdue_reminder", [], 0)
-            return
-        if not await _claim_reminder_snapshot("overdue_reminder", [sorted(a.id for a in overdue)], len(overdue)):
-            return
-        lines = [
-            (f"⚠️ Просрочено по внутреннему сроку первого ответа: "
-            f"{len(overdue)} обращений.")
-        ]
-        lines.extend(_format_appeal_lines(overdue))
-        await _send_with_open_tickets_button(bot, "\n".join(lines))
+        await _refresh_working_hours_queue(bot, "admin_notify_overdue_reminder")
     except Exception:
         log.exception("working_hours_overdue_reminder crashed")
 
@@ -1429,16 +1334,9 @@ def build_scheduler(bot, send_admin_document, send_admin_text) -> GracefulAsyncI
             CronTrigger(minute=15, timezone=TZ),
             "funnel-watchdog",
         ),
-        # Напоминалки операторам по неотвеченным/просроченным обращениям.
-        # Расписание соответствует фактическому рабочему времени АЕМО:
-        # пн-пт 09:00-18:00 с обеденным перерывом 12:00-13:00 (Регламент
-        # v7 §39 + уточнение в v8-draft: пн-пт + обед). В Сб бот не дёргает
-        # оператора — он не на смене. В обед — не дёргает тоже: hour=12
-        # выпадает из расписания (`hour="9-11,13-17"`).
-        #
-        # Pulse-задачи (см. выше) намеренно остаются пн-пт + 24/7 — это
-        # технический heartbeat «бот живой», а не уведомление оператора.
-        # Heartbeat в обед и в субботу полезен (мониторинг непрерывный).
+        # Both ticks update one shared queue panel. All-hour triggers allow
+        # committed schedule changes to apply immediately; each job reloads
+        # the schedule and gates on live working time and quiet mode.
         (
             functools.partial(_job_working_hours_open_reminder, bot),
             CronTrigger(

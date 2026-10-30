@@ -476,4 +476,18 @@ __all__ = [
     "op_help_security_keyboard",
     "op_stats_menu_keyboard",
     "open_tickets_listing_keyboard",
+    "queue_panel_keyboard",
+    "queue_recovery_button",
 ]
+
+
+def queue_panel_keyboard():
+    """Shared queue opens an independent operator navigation screen."""
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="📋 Открыть очередь", payload="op:queue_view"))
+    return kb.as_markup()
+
+
+
+def queue_recovery_button(token: str):
+    return CallbackButton(text="Проверил MAX: создать панель заново", payload=f"op:queue_recreate:{token}")

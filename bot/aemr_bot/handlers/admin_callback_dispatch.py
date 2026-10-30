@@ -467,6 +467,7 @@ _EXACT: dict[str, ExactHandler] = {
     "op:stats_half_year": _stats_handler("half_year"),
     "op:stats_year": _stats_handler("year"),
     "op:stats_all": _stats_handler("all"),
+    "op:queue_view": _ack_then(lambda e: admin_commands.run_open_tickets(e, new=True)),
     "op:open_tickets": _ack_then(lambda e: admin_commands.run_open_tickets(e)),
     "op:diag": _ack_then(lambda e: admin_commands.run_diag(e)),
     "op:backup": _ack_then(lambda e: admin_commands.run_backup(e)),
@@ -585,7 +586,24 @@ async def _op_reply_draft(event, payload: str):
     await operator_draft.callback(event, payload)
 
 
+async def _op_queue_recreate(event, payload: str) -> None:
+    from aemr_bot.services import queue_panel
+
+    operator = await get_operator(event)
+    if operator is None or operator.role != OperatorRole.IT.value:
+        await ack_callback(event, "Только для IT")
+        return
+    token = payload.removeprefix("op:queue_recreate:")
+    if not await queue_panel.allow_recreate(token):
+        await ack_callback(event, "Панель уже изменилась. Откройте диагностику снова.")
+        return
+    await ack_callback(event, "Восстановление разрешено после проверки MAX")
+    await queue_panel.refresh(event.bot)
+    await admin_panel._do_diag(event)
+
+
 _PREFIX_RAW: tuple[tuple[str, Callable[[object, str], Awaitable[object]]], ...] = (
+    ("op:queue_recreate:", _op_queue_recreate),
     ("op:replydraft:", _op_reply_draft),
     ("op:reply_cancel:", lambda e, p: admin_commands.run_reply_cancel(e, p.removeprefix("op:reply_cancel:"))),
     ("op:reply_resolve:", _op_reply_resolve),
