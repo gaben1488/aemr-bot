@@ -62,7 +62,7 @@ async def test_personal_admin_navigation_is_inventoried_and_erased(source, route
         await users.erase_pdn_detailed(session, source.user_id)
     async with session_scope() as session:
         copy = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.message_id == "personal-view"))
-        assert copy.erase_requested and copy.state == "pending"
+        assert copy.erase_requested and copy.state == "manual"
 
 
 async def test_personal_notification_is_inventoried_before_erasure(source):
@@ -91,7 +91,7 @@ async def test_multi_resident_views_are_inventoried_before_erasure(source, route
         await users.erase_pdn_detailed(session, source.user_id)
     async with session_scope() as session:
         copy = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.message_id == "personal-view"))
-        assert copy.erase_requested and copy.state == "pending"
+        assert copy.erase_requested and copy.state == "manual"
 
 
 @pytest.mark.parametrize("existing_mid", [None, "existing-preview"])

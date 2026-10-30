@@ -19,9 +19,14 @@ jobs:
         working-directory: ./bot
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 2
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.12"
+      - name: Changed text size policy
+        working-directory: .
+        run: python scripts/check_staged_size.py --base-ref HEAD^ --baseline .agents/staged-size-baseline.json
       # Ставим ПО LOCK, а не по диапазонам pyproject. Иначе свежий релиз
       # любого dev-инструмента приезжает в CI сам: ruff 0.16 однажды дал
       # 285 замечаний по неизменившемуся коду, mypy 2.3 — ошибку, которую

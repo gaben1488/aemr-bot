@@ -851,17 +851,16 @@ async def main() -> None:
             _report_abandoned_broadcasts(), name="report_abandoned_broadcasts"
         )
 
-        async def _erasure_worker():
+        async def _local_backup_cleanup_worker():
             from aemr_bot.services import db_backup
             while True:
                 try:
-                    await data_erasure.recover_deletions(bot)
                     await db_backup.cleanup_erased_backups()
                 except Exception as exc:
-                    log.error("Data-copy cleanup needs attention (%s)", type(exc).__name__)
+                    log.error("Local backup cleanup needs attention (%s)", type(exc).__name__)
                 await asyncio.sleep(30)
 
-        service_tasks.append(asyncio.create_task(_erasure_worker(), name="data_copy_cleanup"))
+        service_tasks.append(asyncio.create_task(_local_backup_cleanup_worker(), name="local_backup_cleanup"))
 
         # Polling and webhook share health endpoints and heartbeat.
         health_runner = await health.start(

@@ -31,12 +31,7 @@ def _make_event(*, chat_id: int = 100, user_id: int = 42) -> SimpleNamespace:
 
 @pytest.mark.usefixtures("personal_view_boundary")
 class TestShowConsentStatus:
-    """show_consent_status зовёт keyboards.consent_status_keyboard
-    (keyboards.py:178, сигнатура `*, consent_active: bool`). Патчим её
-    на MagicMock, чтобы изолированно проверить логику ветвления text
-    по consent_pdn_at / consent_revoked_at — без create=True, чтобы
-    patch упал, если функцию переименуют.
-    """
+    """Проверяем показанный текст для каждого состояния согласия."""
     @pytest.mark.asyncio
     async def test_active_consent_shows_active_text(self) -> None:
         from aemr_bot import keyboards
@@ -83,7 +78,8 @@ class TestShowConsentStatus:
             "Согласие на обработку персональных данных отозвано"
         )
         assert "Новые обращения и рассылка недоступны" in text
-        assert "очистки данных" in text
+        assert "Очистка рабочей базы" in text
+        assert "Ответы через бот после отзыва не отправляются" in text
         assert "дать согласие заново" in text
         assert "оператор даст по ним финальный ответ" not in text
         assert text != texts.CONSENT_STATUS_NEVER

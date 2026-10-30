@@ -25,6 +25,7 @@ from datetime import UTC, datetime, timedelta
 
 from aemr_bot import keyboards, texts
 from aemr_bot.config import settings as cfg
+from aemr_bot.copy.draft_preview import render as render_draft_preview
 from aemr_bot.db.models import AppealStatus, DialogState
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers import resident_name_gate
@@ -701,14 +702,11 @@ async def show_summary_draft(event, max_user_id: int) -> None:
     chunks = data.get("summary_chunks") or []
     files = data.get("attachments") or []
     full = "\n".join(chunks)
-    preview = full[:400] + ("…" if len(full) > 400 else "")
-    title = f"Черновик дополнения к № {data.get('appeal_id')}" if followup else "Черновик обращения"
     await send_or_edit_screen(
-        event, text=(f"📝 {title}\n\nЧастей текста: {len(chunks)} · "
-                     f"Символов: {len(full)} из {cfg.summary_max_chars}\n"
-                     f"Вложений: {len(files)} из {cfg.attachments_max_per_appeal}\n\n"
-                     + (f"{preview}\n\n" if preview else "")
-                     + "Можно прислать ещё текст или файлы. Когда всё готово, нажмите кнопку отправки."),
+        event, text=render_draft_preview(
+            data, followup=followup, max_chars=cfg.summary_max_chars,
+            max_attachments=cfg.attachments_max_per_appeal,
+        ),
         attachments=[keyboards.appeal_draft_keyboard(token, has_content=bool(full.strip() or files), followup=followup)],
     )
 
@@ -721,7 +719,7 @@ async def on_awaiting_topic(event, body, text_body, max_user_id):
         async with session_scope() as session:
             await users_service.reset_state(session, max_user_id)
         await event.message.answer(
-            "Список тем сейчас пуст — сообщили координатору. Попробуйте позже.",
+            "Сейчас не удаётся выбрать тему. Попробуйте позже или воспользуйтесь электронной приёмной в меню.",
             attachments=[keyboards.back_to_menu_keyboard()],
         )
         return

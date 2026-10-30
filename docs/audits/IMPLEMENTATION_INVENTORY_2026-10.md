@@ -19,7 +19,7 @@
 
 ## Границы доказательства
 
-AST не раскрывает все вычисляемые payload, getattr, monkey-patch, косвенную регистрацию или реальную последовательность событий. Команды ниже — литеральные вызовы фильтра; фактические доступы зависят от чата, активной роли, состояния и повторных проверок. Тесты контрактов маршрутов и сквозные PostgreSQL-тесты дополняют этот снимок. Получение/удаление сообщений реальным MAX, пользовательские клиентские ограничения, права группы, S3 history/locks, journald, неизвестные старые копии, восстановление резервной копии и закрытый рабочий сервер требуют ручной проверки. Нет заявления о 100% охвате или exactly-once внешних действий.
+AST не раскрывает все вычисляемые payload, getattr, monkey-patch, косвенную регистрацию или реальную последовательность событий. Команды ниже — литеральные вызовы фильтра; фактические доступы зависят от чата, активной роли, состояния и повторных проверок. Тесты контрактов маршрутов и сквозные PostgreSQL-тесты дополняют этот снимок. Получение/доставка сообщений реальным MAX, клиентские ограничения, права группы, ручная обработка внешних копий, journald, неизвестные старые копии, восстановление резервной копии и закрытый рабочий сервер требуют ручной проверки. Нет заявления о 100% охвате или exactly-once внешних действий.
 
 ## Команды и регистрация
 
@@ -56,7 +56,7 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `broadcast.register` — `bot/aemr_bot/handlers/__init__.py:157`
 - `dp.bot_started` — `bot/aemr_bot/handlers/start.py:667`
 - `dp.bot_stopped` — `bot/aemr_bot/handlers/start.py:673`
-- `dp.handle` — `bot/aemr_bot/services/inbox.py:194`
+- `dp.handle` — `bot/aemr_bot/services/inbox.py:181`
 - `dp.message_callback` — `bot/aemr_bot/handlers/appeal.py:764`
 - `dp.message_created` — `bot/aemr_bot/handlers/admin_commands.py:140`
 - `dp.message_created` — `bot/aemr_bot/handlers/admin_commands.py:153`
@@ -83,8 +83,8 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `dp.message_created` — `bot/aemr_bot/handlers/start.py:784`
 - `dp.message_created` — `bot/aemr_bot/handlers/start.py:791`
 - `dp.message_created` — `bot/aemr_bot/handlers/start.py:798`
-- `dp.start_polling` — `bot/aemr_bot/main.py:894`
-- `dp.startup` — `bot/aemr_bot/main.py:888`
+- `dp.start_polling` — `bot/aemr_bot/main.py:893`
+- `dp.startup` — `bot/aemr_bot/main.py:887`
 - `start.register` — `bot/aemr_bot/handlers/__init__.py:154`
 
 ## Маршруты callback
@@ -286,51 +286,51 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `OP_TMPL_CANCELLED` — `bot/aemr_bot/copy/broadcast_texts.py:295`
 - `OP_TMPL_NOT_FOUND` — `bot/aemr_bot/copy/broadcast_texts.py:296`
 - `OP_TMPL_NO_SUBSCRIBERS` — `bot/aemr_bot/copy/broadcast_texts.py:297`
-- `WELCOME` — `bot/aemr_bot/copy/citizen_funnel.py:8`
-- `CONSENT_REQUEST` — `bot/aemr_bot/copy/citizen_funnel.py:28`
-- `CONSENT_DECLINED` — `bot/aemr_bot/copy/citizen_funnel.py:62`
-- `CONSENT_ACCEPTED` — `bot/aemr_bot/copy/citizen_funnel.py:67`
-- `CONTACT_REQUEST` — `bot/aemr_bot/copy/citizen_funnel.py:72`
-- `CONTACT_RECEIVED` — `bot/aemr_bot/copy/citizen_funnel.py:78`
-- `LOCALITY_REQUEST` — `bot/aemr_bot/copy/citizen_funnel.py:80`
-- `GEO_DETECTED_FULL` — `bot/aemr_bot/copy/citizen_funnel.py:90`
-- `GEO_DETECTED_LOCALITY_ONLY` — `bot/aemr_bot/copy/citizen_funnel.py:97`
-- `GEO_OUTSIDE_EMO` — `bot/aemr_bot/copy/citizen_funnel.py:104`
-- `APPEAL_ACCEPTED` — `bot/aemr_bot/copy/citizen_funnel.py:111`
-- `APPEAL_LIST_EMPTY` — `bot/aemr_bot/copy/citizen_funnel.py:118`
-- `APPEAL_EMPTY_REJECTED` — `bot/aemr_bot/copy/citizen_funnel.py:123`
-- `NAME_EMPTY` — `bot/aemr_bot/copy/citizen_funnel.py:128`
-- `ADDRESS_EMPTY` — `bot/aemr_bot/copy/citizen_funnel.py:130`
-- `CONTACT_RETRY` — `bot/aemr_bot/copy/citizen_funnel.py:135`
-- `APPEAL_CARD_TEMPLATE` — `bot/aemr_bot/copy/citizen_funnel.py:153`
-- `CITIZEN_REPLY_TEMPLATE` — `bot/aemr_bot/copy/citizen_funnel.py:166`
-- `USEFUL_INFO_TITLE` — `bot/aemr_bot/copy/citizen_funnel.py:181`
-- `SETTINGS_MENU_TITLE` — `bot/aemr_bot/copy/citizen_funnel.py:183`
-- `GOODBYE_PROMPT` — `bot/aemr_bot/copy/citizen_funnel.py:189`
-- `CONSENT_STATUS_ACTIVE` — `bot/aemr_bot/copy/citizen_funnel.py:201`
-- `CONSENT_STATUS_REVOKED` — `bot/aemr_bot/copy/citizen_funnel.py:207`
-- `CONSENT_STATUS_NEVER` — `bot/aemr_bot/copy/citizen_funnel.py:217`
-- `CONSENT_REVOKE_CONFIRM` — `bot/aemr_bot/copy/citizen_funnel.py:222`
-- `CONSENT_REVOKED_OK` — `bot/aemr_bot/copy/citizen_funnel.py:235`
-- `ERASE_CONFIRM` — `bot/aemr_bot/copy/citizen_funnel.py:246`
-- `ERASE_REQUESTED` — `bot/aemr_bot/copy/citizen_funnel.py:258`
-- `HELP_USER` — `bot/aemr_bot/copy/citizen_funnel.py:266`
-- `SUBSCRIBE_CONFIRMED` — `bot/aemr_bot/copy/citizen_funnel.py:284`
-- `SUBSCRIBE_ALREADY_ON` — `bot/aemr_bot/copy/citizen_funnel.py:289`
-- `UNSUBSCRIBE_CONFIRMED` — `bot/aemr_bot/copy/citizen_funnel.py:292`
-- `UNSUBSCRIBE_ALREADY_OFF` — `bot/aemr_bot/copy/citizen_funnel.py:298`
-- `SUBSCRIBE_MINI_CONSENT` — `bot/aemr_bot/copy/citizen_funnel.py:302`
-- `APPEAL_TEXT_TRUNCATED` — `bot/aemr_bot/copy/citizen_funnel.py:318`
-- `FOLLOWUP_TEXT_TRUNCATED` — `bot/aemr_bot/copy/citizen_funnel.py:324`
-- `BROADCAST_HEADER` — `bot/aemr_bot/copy/citizen_funnel.py:330`
-- `POLICY_DELIVERED` — `bot/aemr_bot/copy/citizen_funnel.py:334`
-- `POLICY_FALLBACK_URL` — `bot/aemr_bot/copy/citizen_funnel.py:338`
-- `POLICY_UNAVAILABLE` — `bot/aemr_bot/copy/citizen_funnel.py:343`
-- `STATUS_LABELS` — `bot/aemr_bot/copy/citizen_funnel.py:348`
+- `WELCOME` — `bot/aemr_bot/copy/citizen_funnel.py:22`
+- `CONTACT_REQUEST` — `bot/aemr_bot/copy/citizen_funnel.py:36`
+- `CONTACT_RECEIVED` — `bot/aemr_bot/copy/citizen_funnel.py:42`
+- `LOCALITY_REQUEST` — `bot/aemr_bot/copy/citizen_funnel.py:44`
+- `GEO_DETECTED_FULL` — `bot/aemr_bot/copy/citizen_funnel.py:54`
+- `GEO_DETECTED_LOCALITY_ONLY` — `bot/aemr_bot/copy/citizen_funnel.py:61`
+- `GEO_OUTSIDE_EMO` — `bot/aemr_bot/copy/citizen_funnel.py:68`
+- `APPEAL_ACCEPTED` — `bot/aemr_bot/copy/citizen_funnel.py:75`
+- `APPEAL_LIST_EMPTY` — `bot/aemr_bot/copy/citizen_funnel.py:82`
+- `APPEAL_EMPTY_REJECTED` — `bot/aemr_bot/copy/citizen_funnel.py:87`
+- `NAME_EMPTY` — `bot/aemr_bot/copy/citizen_funnel.py:92`
+- `ADDRESS_EMPTY` — `bot/aemr_bot/copy/citizen_funnel.py:94`
+- `CONTACT_RETRY` — `bot/aemr_bot/copy/citizen_funnel.py:99`
+- `APPEAL_CARD_TEMPLATE` — `bot/aemr_bot/copy/citizen_funnel.py:117`
+- `CITIZEN_REPLY_TEMPLATE` — `bot/aemr_bot/copy/citizen_funnel.py:130`
+- `USEFUL_INFO_TITLE` — `bot/aemr_bot/copy/citizen_funnel.py:145`
+- `SETTINGS_MENU_TITLE` — `bot/aemr_bot/copy/citizen_funnel.py:147`
+- `HELP_USER` — `bot/aemr_bot/copy/citizen_funnel.py:154`
+- `SUBSCRIBE_CONFIRMED` — `bot/aemr_bot/copy/citizen_funnel.py:172`
+- `SUBSCRIBE_ALREADY_ON` — `bot/aemr_bot/copy/citizen_funnel.py:177`
+- `UNSUBSCRIBE_CONFIRMED` — `bot/aemr_bot/copy/citizen_funnel.py:180`
+- `UNSUBSCRIBE_ALREADY_OFF` — `bot/aemr_bot/copy/citizen_funnel.py:186`
+- `SUBSCRIBE_MINI_CONSENT` — `bot/aemr_bot/copy/citizen_funnel.py:190`
+- `APPEAL_TEXT_TRUNCATED` — `bot/aemr_bot/copy/citizen_funnel.py:206`
+- `FOLLOWUP_TEXT_TRUNCATED` — `bot/aemr_bot/copy/citizen_funnel.py:212`
+- `BROADCAST_HEADER` — `bot/aemr_bot/copy/citizen_funnel.py:218`
+- `POLICY_DELIVERED` — `bot/aemr_bot/copy/citizen_funnel.py:222`
+- `POLICY_FALLBACK_URL` — `bot/aemr_bot/copy/citizen_funnel.py:226`
+- `POLICY_UNAVAILABLE` — `bot/aemr_bot/copy/citizen_funnel.py:231`
+- `STATUS_LABELS` — `bot/aemr_bot/copy/citizen_funnel.py:236`
 - `CANCELLED` — `bot/aemr_bot/copy/errors_texts.py:6`
 - `CANCEL_ALREADY_DONE` — `bot/aemr_bot/copy/errors_texts.py:14`
 - `UNKNOWN_INPUT` — `bot/aemr_bot/copy/errors_texts.py:24`
 - `CITIZEN_COMMAND_IN_ADMIN_CHAT` — `bot/aemr_bot/copy/errors_texts.py:29`
+- `CONSENT_REQUEST` — `bot/aemr_bot/copy/privacy.py:7`
+- `CONSENT_DECLINED` — `bot/aemr_bot/copy/privacy.py:42`
+- `CONSENT_ACCEPTED` — `bot/aemr_bot/copy/privacy.py:48`
+- `GOODBYE_PROMPT` — `bot/aemr_bot/copy/privacy.py:54`
+- `CONSENT_STATUS_ACTIVE` — `bot/aemr_bot/copy/privacy.py:66`
+- `CONSENT_STATUS_REVOKED` — `bot/aemr_bot/copy/privacy.py:73`
+- `CONSENT_STATUS_NEVER` — `bot/aemr_bot/copy/privacy.py:85`
+- `CONSENT_REVOKE_CONFIRM` — `bot/aemr_bot/copy/privacy.py:91`
+- `CONSENT_REVOKED_OK` — `bot/aemr_bot/copy/privacy.py:105`
+- `ERASE_CONFIRM` — `bot/aemr_bot/copy/privacy.py:117`
+- `ERASE_REQUESTED` — `bot/aemr_bot/copy/privacy.py:131`
 - `SECURITY_INFO_TEXT` — `bot/aemr_bot/copy/security_texts.py:9`
 - `OP_HELP_SECURITY` — `bot/aemr_bot/copy/security_texts.py:64`
 - `RULES_TEXT` — `bot/aemr_bot/copy/security_texts.py:121`
@@ -340,7 +340,7 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 
 Имена и SHA256; бинарные материалы не анализируются как текст.
 
-- `seed/consent.md:1` — 6684 байт, SHA256 `58ed2951491db2d9f51979db0a0de3b6a1ea3eafb58bfb32f0f9d75e6a856a1b`
+- `seed/consent.md:1` — 6841 байт, SHA256 `1fdbe032bf819b35fe65cadfac8b335c4bcbe9a368f2821d747d3ceb1a3b115f`
 - `seed/contacts.json:1` — 1292 байт, SHA256 `92d6c2601db33e692b27f22ef80b624dab7b46feb4ddabd9ff2f44d6905b0842`
 - `seed/geo/buildings.geojson:1` — 1013600 байт, SHA256 `8dc0897e206801b640fc2fe236886d91fe33c5018383def461e4bfd807ac6b49`
 - `seed/geo/localities.geojson:1` — 252636 байт, SHA256 `058395634d49f5d9ad337f7f20990678e3f0f66e53d48bdf7f4ed08f2e3605b9`
@@ -352,15 +352,17 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 
 ## Прочитанные исходники приложения
 
-Всего 175 Python-файлов; SHA256 каждого исходника:
+Всего 180 Python-файлов; SHA256 каждого исходника:
 
 - `bot/aemr_bot/__init__.py:1` — `48197610f156fa5b4fbd0eef6d5588b7202ccf768a608a633bbbdc7ebf381a45`
-- `bot/aemr_bot/config.py:1` — `0e23b0955504149d0f9f4a50df096e368c8ab68686383861a29672f1444944b1`
+- `bot/aemr_bot/config.py:1` — `70ec0aadbd38e244586f4fc53078e309cce5425f0ce359ea8ba1f75c70714a07`
 - `bot/aemr_bot/copy/__init__.py:1` — `b7a23b3fde2e7853b5c0fb526f84ac53b2947c9b02542998c4be004529b62871`
 - `bot/aemr_bot/copy/admin_texts.py:1` — `45d5493055de949633433257de3d5e3f5004c33efe6c95b0e9679d3a57938e23`
 - `bot/aemr_bot/copy/broadcast_texts.py:1` — `1491ebe1102b0303d95978fdb632170202d61e5a91f3bad82ecfe5a2769e0736`
-- `bot/aemr_bot/copy/citizen_funnel.py:1` — `16a48fb9b56586b75e7f0128ede225d6940237e3983f29bfa33b254aca6af623`
+- `bot/aemr_bot/copy/citizen_funnel.py:1` — `31d2b7c9e58b29f677b54535448c2a76d996ad48c74a87779d35bc165a06049b`
+- `bot/aemr_bot/copy/draft_preview.py:1` — `61755837b5a7422dd721a620aa72073beae19d5ae299e42d8503923c48c8681b`
 - `bot/aemr_bot/copy/errors_texts.py:1` — `20f7b96e7edfb32c7663a686a03b825cfe4dd6149f0087670f6152c6bb8ca0a4`
+- `bot/aemr_bot/copy/privacy.py:1` — `6eca01f72bc99500bbd1096f17e07a5e0305c6ceec7126cfd9f461db8e0b46e9`
 - `bot/aemr_bot/copy/security_texts.py:1` — `0ef2d9f8efedc45babfa3b40ccbcfb3ce41dc53c4a5177a590d142efcdd0096d`
 - `bot/aemr_bot/data/__init__.py:1` — `af0a17d2526a3de2b104c77b4e8105c837ac78fed2b45ff16d408f2536dd95ee`
 - `bot/aemr_bot/data/resident_names_v1.py:1` — `c105adf9e5ed5287c2cfd612c0f91f8762b79305a78deb7aa333175a3decf1e3`
@@ -418,7 +420,7 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `bot/aemr_bot/handlers/admin_audience.py:1` — `af7826a664278d3f62a107cfcf9bda65005f65ef5b5a4daa4187daee0d8102dc`
 - `bot/aemr_bot/handlers/admin_callback_dispatch.py:1` — `b64a1511e40fcacf862b231cec95530a2b659e1f86893fa31d1da8fda06cb395`
 - `bot/aemr_bot/handlers/admin_commands.py:1` — `338f04193dad1b1afe96f96898f3207b7dcd4abc673c1e527c8120d41a257216`
-- `bot/aemr_bot/handlers/admin_data_erasure.py:1` — `2bb5acaf31c9e58cb3a35f6cf06ad9cf97557dc5a18988167954f3232132f7ba`
+- `bot/aemr_bot/handlers/admin_data_erasure.py:1` — `2430682e563f881da34bf9f1907bc88be0e1cc18c856e3d081d01c50680bbfe2`
 - `bot/aemr_bot/handlers/admin_operators.py:1` — `e31cc9a07ba4374eaf14b157f9f980fb289ca6f2148d2ead23989566d3126007`
 - `bot/aemr_bot/handlers/admin_operators_list.py:1` — `4372a26e2de714ce2507805512d53e96396cddd23efa5e8997d509b333ae345d`
 - `bot/aemr_bot/handlers/admin_operators_roles.py:1` — `431e96a8bdadc9869cfca47dc94e439c4fe1291878da5031a8d1904df78a5e01`
@@ -438,7 +440,7 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `bot/aemr_bot/handlers/admin_settings_text.py:1` — `24088843a4955ace02645e4fc00483f82b9515255656d0e2ccb1bac89d5ebe61`
 - `bot/aemr_bot/handlers/admin_stats.py:1` — `dc5558ae7e88f71a30b398849f46ca9538f59d6f48208c2a1b406eafdaa20ff9`
 - `bot/aemr_bot/handlers/appeal.py:1` — `97a55f467404857b83d9fc7ac92ab00b5d11d04894f24ae209142a5de11db2a8`
-- `bot/aemr_bot/handlers/appeal_funnel.py:1` — `02163703b604a92d37a5e45823f8990f1f4a84381d83ecd62de3dadc9c0001b7`
+- `bot/aemr_bot/handlers/appeal_funnel.py:1` — `df7ed6776b9f5a31bdbb1346d0de655b2aca9a8b968314b8aa272a4c2323d37e`
 - `bot/aemr_bot/handlers/appeal_geo.py:1` — `98883857e4bb963b0a2297edbbea3e3cdf6d8d0524dc52d4157cb78c52bc5046`
 - `bot/aemr_bot/handlers/appeal_runtime.py:1` — `b751e6c30ee42885aaad6fd58b139c380047aff05f19ff6c0fe0de4811765122`
 - `bot/aemr_bot/handlers/broadcast.py:1` — `82161f0f6dd454fa6e18863e410c42f3471442981bb544c3926d49e53d9aff5f`
@@ -450,7 +452,7 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `bot/aemr_bot/handlers/broadcast_wizard.py:1` — `f1651a4f01d6b92dbe6f31d8deb680c76aed85f918c61b26a57ba4b1bebe7d62`
 - `bot/aemr_bot/handlers/callback_payloads.py:1` — `42daf5a8aa8815b45ddfac0c89fdbf42e03140c1804f1af44c5adff9f4c0fd06`
 - `bot/aemr_bot/handlers/callback_router.py:1` — `8df42126f3bd3d46249f91b01dfceae47b50af037bca50732009c95a39d9e1d7`
-- `bot/aemr_bot/handlers/menu.py:1` — `93616aee4ae113ef76e89528f8dbc705c90aa1596fb6b31bc3461576612251f8`
+- `bot/aemr_bot/handlers/menu.py:1` — `5b5f3bdbb49456e2faa33c1e1103c989ebb910572b9f2218653a292cc4237dcc`
 - `bot/aemr_bot/handlers/operator_draft.py:1` — `77ccb3d8de1c49ca72c30a3a298819218a07abe60fc7b33dd485cff3d324b174`
 - `bot/aemr_bot/handlers/operator_reply.py:1` — `f111a7110f7249bb7714738300a374dfb5e5c2561e5b232f2c5f46b88cac5a78`
 - `bot/aemr_bot/handlers/resident_name_gate.py:1` — `fd825ba5e981c0893c4dcaa979ad7c782105e2a5a524ca1e9c571f72c39c845e`
@@ -458,8 +460,8 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `bot/aemr_bot/health.py:1` — `2f95cf0cdecd3fe6c6cd34011f7fcdfe10f712874b3e06f285c1a68f791fab85`
 - `bot/aemr_bot/keyboards.py:1` — `db84ebdc392b48eed2557510bc288f5165b977259a80285cb5cb445e489a6a60`
 - `bot/aemr_bot/logging_setup.py:1` — `0137b44569e599ea2d3476b26070fba145e2eb3f92f86bae1bd494ac79c4798e`
-- `bot/aemr_bot/main.py:1` — `1da0a3aa1b6c6adca74c1a0ac14c7a220bd3a45095e83b4d83aebe2a8e66fbd6`
-- `bot/aemr_bot/network.py:1` — `b59c00c66deb6b456c8f3cb420021df02371ab8b1fcfe4ab013386f7e27c9a59`
+- `bot/aemr_bot/main.py:1` — `ac6b0bd49951dc94fcec254cc68b8532f85428f9c4043af49ec9ebede15c473a`
+- `bot/aemr_bot/network.py:1` — `35bc7413b8f9fae04464b112f7e671ba81e00bf2e1eb4d74fa321cd4bf26a679`
 - `bot/aemr_bot/services/__init__.py:1` — `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 - `bot/aemr_bot/services/admin_bus.py:1` — `3e000e9397ecb4d6558237d3de935e50692c3b6d151c0e3ab7884db369083c21`
 - `bot/aemr_bot/services/admin_card.py:1` — `9879c2bf89a66fdc3b6bdb7f97ffe9e53202387a251f98103b774e8e745337e7`
@@ -481,12 +483,15 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `bot/aemr_bot/services/content_status.py:1` — `368caf4743e7f132853890f6d3bf9c3ab5553a0d83caa2c31ad090c4ba8a9658`
 - `bot/aemr_bot/services/cron.py:1` — `e4fbe4b0524a2b090cd16c64f4a3e444ad4021df71690b98c39a9cf0c050e8ee`
 - `bot/aemr_bot/services/cron_registry.py:1` — `878ff066481e84c1fda8e2c563f037912f2e0db29e3b2c66d98b13547819252e`
-- `bot/aemr_bot/services/data_erasure.py:1` — `224a7452c2fc4c611fbe710d5decd5f084dced93cf657765c62bb92ca1ffe4e5`
-- `bot/aemr_bot/services/db_backup.py:1` — `172cade772cc3c03534ae5e9ce10a1d1e2c8ce750a7f824cd999cf3cb8a65d29`
+- `bot/aemr_bot/services/data_erasure.py:1` — `094c65b72d6ea8d676236196e6715c5606b3a30fde1966cdcd7545baf8071a5b`
+- `bot/aemr_bot/services/data_erasure_delivery.py:1` — `8b7b856b71fc9b6f819c3908c1b73be82346b748674a05455d40e691a7d700fa`
+- `bot/aemr_bot/services/data_erasure_journal.py:1` — `2b57bdbbe7423ce46c583f134357b5ef06654bf443cc7d0810822ab927ece9e2`
+- `bot/aemr_bot/services/data_erasure_restore.py:1` — `f02d1ff285efd7e6f8b3e0ff15df8fc3136612c8b38403a6a92cd520e8287212`
+- `bot/aemr_bot/services/db_backup.py:1` — `1c89a88b3c9b988fc57052164ae71715a20811cd1d338fca80ad2000e3ebeacf`
 - `bot/aemr_bot/services/followup_delivery.py:1` — `3e7444a44921f4052e5f62660f69028ef39e669458155d4b5d84acc9835792c8`
 - `bot/aemr_bot/services/geo.py:1` — `f975cc0fd72a42efdefd1e5ea349f2f51d7c725ad68cf4142dac5179451f17c8`
 - `bot/aemr_bot/services/idempotency.py:1` — `03ddbc5443b1a9cedf0e23b7504e6d6487cced3728dd41055909a38f1f7cef37`
-- `bot/aemr_bot/services/inbox.py:1` — `967604cf91afb068be964fa5a24d9be9141e1febf0439cc9adeab74ba561aaa6`
+- `bot/aemr_bot/services/inbox.py:1` — `b6c00f6caf0c10e4ee825dc55322f4e7eba7f9a2cadfc6cdeb00f3e5a720dff0`
 - `bot/aemr_bot/services/message_labels.py:1` — `a3a9c91d5e95ee90e8294517b79c294587b3a85e7979b6740a3770fa1cc61146`
 - `bot/aemr_bot/services/notify_toggles.py:1` — `9ef4f39df424734563027fb29777e43be51249d8fdccb11a92f8425f75f6581e`
 - `bot/aemr_bot/services/operator_drafts.py:1` — `bb9fbab034d2b1bf95c098e69f68b258fd1e3749bdffaa5b363c0ff6f018d038`
@@ -512,7 +517,7 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `bot/aemr_bot/transport.py:1` — `0245e6af7ccb231b47eb6c3b0b5288dbad7990e0354acf59ded9ecd96603ac30`
 - `bot/aemr_bot/ui/__init__.py:1` — `65e166158c8ec1c74a5b8e3677f1ef6d7d1b07caa0043e238011e4075871f14a`
 - `bot/aemr_bot/ui/broadcast_keyboards.py:1` — `386afd9084a3de9e223a3c488505c6c1eddaaf815e206c21ddf6ea585c135b99`
-- `bot/aemr_bot/ui/citizen_keyboards.py:1` — `9a026aefe21af17d75f9c0b76bcfd1f49d418fb131fe40f80d7947f44f152d5a`
+- `bot/aemr_bot/ui/citizen_keyboards.py:1` — `d712a517c94b9a06727c82882b8b4a4457c95bdf7484a2dc4021e11d2883ad77`
 - `bot/aemr_bot/ui/operator_keyboards.py:1` — `4a79880a0800b916a92d7fb118dcd6ae4e2543e5a95bb4f3cbd9854a526aebf1`
 - `bot/aemr_bot/ui/settings_keyboards.py:1` — `30379b246a8a526687672d2d06f03b823526e08f3cede0892bed53f1f45ecf02`
 - `bot/aemr_bot/ui/wizard_keyboards.py:1` — `4ac8fb03e5948fcd6f1441e45ab04329ba7342185b9ca69ee53c7292554d94ea`

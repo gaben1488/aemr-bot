@@ -1,5 +1,5 @@
 """Резервное копирование Postgres БД: pg_dump → опционально gpg →
-локальный том → опционально S3.
+локальный том.
 
 Выделено из services/cron.py этапом 4 рефакторинга. cron.py импортирует
 из этого модуля `backup_db()` (возвращает BackupResult с фактом успеха
@@ -10,7 +10,6 @@
 - _rotate_backups() — ротация старых файлов
 - _run_pg_dump() — простой pg_dump → файл (без шифрования)
 - _run_pg_dump_encrypted() — pg_dump | gpg --symmetric → файл
-- _upload_to_s3() — опциональная загрузка в S3 через rclone
 - backup_db() — главная функция; возвращает BackupResult
 
 Категоризированные исключения (BackupPgDumpError / BackupGpgError) дают
@@ -52,9 +51,9 @@ class BackupGpgError(BackupError):
 
 
 class BackupTimeoutError(BackupError):
-    """Дочерний процесс бэкапа (pg_dump / gpg / rclone) не завершился за
+    """Дочерний процесс бэкапа (pg_dump / gpg) не завершился за
     отведённый таймаут и был убит. Причина — обычно повисший внешний
-    ресурс: недоступный S3-эндпоинт, зависший Postgres, заблокированный
+    ресурс: зависший Postgres, заблокированный
     диск. Без таймаута `await proc.wait()` висел бы вечно, и cron-job
     никогда не вернул бы BackupResult — а значит, и admin-алёрт о провале
     бэкапа не ушёл бы."""
@@ -67,7 +66,7 @@ async def _wait_proc(
 
     Возвращает код возврата. При превышении `timeout` процесс убивается
     (kill), затем дожидается (reap — иначе остался бы зомби и FD-утечка),
-    и бросается BackupTimeoutError. Так зависший pg_dump/gpg/rclone не
+    и бросается BackupTimeoutError. Так зависший pg_dump/gpg не
     морозит backup-job навечно: вызывающий получит исключение, переведёт
     его в BackupResult(fail_kind=…) и отправит штатный admin-алёрт.
     """
@@ -297,51 +296,11 @@ async def _run_pg_dump_encrypted(
         raise BackupGpgError(f"gpg failed with code {gpg_rc}")
 
 
-async def _upload_to_s3(out_path: Path) -> None:
-    """Опциональная загрузка в S3 через rclone.
-
-    Учётные данные передаются через переменные окружения RCLONE_CONFIG_*,
-    а не argv. Форма с argv (`access_key=...`) утекает через `ps` и
-    `/proc/<pid>/cmdline` — это совсем не то место, где должны лежать
-    секреты. env-форма держит их внутри процесса rclone.
-    """
-    if not (
-        settings.backup_s3_bucket
-        and settings.backup_s3_endpoint
-        and settings.backup_s3_access_key
-        and settings.backup_s3_secret_key
-    ):
-        return
-    env = os.environ.copy()
-    env.update({
-        "RCLONE_CONFIG_BACKUPS3_TYPE": "s3",
-        "RCLONE_CONFIG_BACKUPS3_PROVIDER": "Other",
-        "RCLONE_CONFIG_BACKUPS3_ACCESS_KEY_ID": settings.backup_s3_access_key,
-        "RCLONE_CONFIG_BACKUPS3_SECRET_ACCESS_KEY": settings.backup_s3_secret_key,
-        "RCLONE_CONFIG_BACKUPS3_ENDPOINT": settings.backup_s3_endpoint,
-    })
-    rclone = await asyncio.create_subprocess_exec(
-        "rclone", "copy", str(out_path),
-        f"backups3:{settings.backup_s3_bucket}/",
-        env=env,
-    )
-    # Сетевой шаг: повисший/недоступный S3-эндпоинт без таймаута заставил
-    # бы rclone (и весь backup-job) ждать вечно. По таймауту убиваем+reap
-    # и бросаем BackupTimeoutError. Здесь это не валит результат целиком —
-    # backup_db ловит ошибку S3 отдельно (локальный файл уже на диске).
-    rc = await _wait_proc(
-        rclone, settings.backup_rclone_timeout_seconds, "rclone"
-    )
-    if rc != 0:
-        raise RuntimeError(f"rclone failed with code {rc}")
-    log.info("backup uploaded to s3: %s", out_path.name)
-
-
 async def _backup_db_impl() -> BackupResult:
-    """Еженедельный pg_dump → опционально gpg → локальный том → опционально S3.
+    """Еженедельный pg_dump → опционально gpg → локальный том.
 
     Сделано под self-hosted: по умолчанию сохраняет только в локальный
-    том (`/backups`) с ротацией. S3 и gpg включаются через переменные
+    том (`/backups`) с ротацией. gpg включается через переменные
     окружения. Возвращает `BackupResult`: при успехе `.ok=True`,
     `.path` указывает на файл; при сбое — `.fail_kind` категоризирует
     причину (`config` / `pg_dump` / `gpg` / `unknown`), `.fail_detail` —
@@ -349,8 +308,7 @@ async def _backup_db_impl() -> BackupResult:
 
     Никогда не выбрасывает исключений — вызывающий код в
     `cron._job_backup_with_alert` читает `.fail_kind` и шлёт точный
-    алёрт. S3-загрузка считается необязательной: её сбой не валит
-    весь результат (локальный файл по-прежнему есть).
+    алёрт. Внешние копии персонал обслуживает вручную.
     """
     local_dir = (
         Path(settings.backup_local_dir) if settings.backup_local_dir else None
@@ -382,7 +340,7 @@ async def _backup_db_impl() -> BackupResult:
     encrypt = bool(passphrase)
     # SEC #2: блокируем создание plain-text дампа без явного opt-in.
     # Дамп содержит phones / names / texts / operator audit-log — это
-    # PII по 152-ФЗ. Хранить на диске или заливать в S3 без шифрования
+    # PII по 152-ФЗ. Хранить на диске без шифрования
     # = breach. Для dev/local-only можно поставить
     # BACKUP_ALLOW_UNENCRYPTED=1, но в prod должен быть GPG passphrase.
     if not encrypt and not settings.backup_allow_unencrypted:
@@ -459,20 +417,15 @@ async def _backup_db_impl() -> BackupResult:
     except OSError:
         log.exception("backup rotation failed (local copy still intact)")
 
-    try:
-        await _upload_to_s3(out)
-    except Exception:
-        log.exception("backup s3 upload failed (local copy still intact)")
-
     return BackupResult(path=out)
 
 
 async def _cleanup_erased_backups_impl() -> int:
-    """Remove recognized dumps after erasure; retain non-backup files.
+    """Remove recognized LOCAL dumps after erasure; retain unrelated files.
 
-    Encrypted SQL cannot be surgically edited. All application dumps present
-    during cleanup are invalidated. S3 current objects are removed individually;
-    versioned/retained copies require the storage owner's confirmation.
+    Legacy manual/unknown S3 states describe external copies, which staff
+    manage separately. They cannot prevent cleaning local dumps or making a
+    fresh backup from the sanitized database. No remote storage is contacted.
     """
     from sqlalchemy import select
 
@@ -481,7 +434,7 @@ async def _cleanup_erased_backups_impl() -> int:
 
     async with session_scope() as session:
         pending = list((await session.scalars(select(ErasureTombstone)
-            .where(ErasureTombstone.backups_state == "pending"))).all())
+            .where(ErasureTombstone.backups_state != "done"))).all())
     if not pending:
         return 0
     try:
@@ -492,40 +445,9 @@ async def _cleanup_erased_backups_impl() -> int:
             for path in directory.glob("aemr-*"):
                 if path.is_file() and not path.is_symlink() and path.name.endswith((".sql", ".sql.gpg")):
                     path.unlink()
-        remote = bool(settings.backup_s3_bucket)
-        if remote:
-            from aemr_bot.services.data_erasure import _write_instruction
-            # Persist the attempt before external deletion. A crash/timeout
-            # requires review rather than repeating a possibly executed call.
-            async with session_scope() as claim_session:
-                for item in pending:
-                    current = await claim_session.get(ErasureTombstone, item.subject_digest, with_for_update=True)
-                    if current is not None:
-                        current.backups_state = "manual"
-                        current.last_error = "s3_cleanup_attempt_unknown"
-                    _write_instruction(f"{item.subject_digest}.backup.json", {
-                        "subject_digest": item.subject_digest, "erased_before": item.erased_before.isoformat(), "state": "manual",
-                        "error": "s3_cleanup_attempt_unknown",
-                    })
-            if not (settings.backup_s3_endpoint and settings.backup_s3_access_key and settings.backup_s3_secret_key):
-                raise BackupError("incomplete_s3_configuration")
-            env = os.environ.copy()
-            env.update({
-                "RCLONE_CONFIG_BACKUPS3_TYPE": "s3",
-                "RCLONE_CONFIG_BACKUPS3_PROVIDER": "Other",
-                "RCLONE_CONFIG_BACKUPS3_ACCESS_KEY_ID": settings.backup_s3_access_key,
-                "RCLONE_CONFIG_BACKUPS3_SECRET_ACCESS_KEY": settings.backup_s3_secret_key,
-                "RCLONE_CONFIG_BACKUPS3_ENDPOINT": settings.backup_s3_endpoint,
-            })
-            proc = await asyncio.create_subprocess_exec(
-                "rclone", "delete", f"backups3:{settings.backup_s3_bucket}/",
-                "--include", "/aemr-*.sql", "--include", "/aemr-*.sql.gpg", env=env,
-            )
-            if await _wait_proc(proc, settings.backup_rclone_timeout_seconds, "erasure-rclone") != 0:
-                raise BackupError("s3_delete_failed")
-        state, error = ("manual", "verify_s3_versions_and_retention") if remote else ("done", None)
+        state, error = "done", None
     except Exception as exc:
-        state, error = ("manual" if settings.backup_s3_bucket else "pending"), type(exc).__name__
+        state, error = "pending", type(exc).__name__
     async with session_scope() as session:
         for item in pending:
             current = await session.get(ErasureTombstone, item.subject_digest, with_for_update=True)
@@ -550,7 +472,7 @@ async def backup_db() -> BackupResult:
     from aemr_bot.db.session import session_scope
     from aemr_bot.services import privacy_epoch
     try:
-        # The same epoch barrier as exports covers dump + upload. An erasure
+        # The same epoch barrier as exports covers the local dump. An erasure
         # cannot commit while a pre-erasure dump is still being published.
         async with session_scope() as session:
             await privacy_epoch.hold_delivery(session)
@@ -559,7 +481,7 @@ async def backup_db() -> BackupResult:
             blocked = await session.scalar(select(ErasureTombstone.subject_digest)
                 .where(ErasureTombstone.backups_state != "done").limit(1))
             if blocked:
-                return BackupResult(path=None, fail_kind="erasure", fail_detail="Erasure backup cleanup requires reconciliation")
+                return BackupResult(path=None, fail_kind="erasure", fail_detail="Local backup cleanup has not completed")
             return await _backup_db_impl()
     except Exception as exc:
         return BackupResult(path=None, fail_kind="erasure", fail_detail=type(exc).__name__)

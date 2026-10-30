@@ -560,23 +560,17 @@ class TestBackupDbSurfacesTimeoutFailKind:
         assert hanging.killed is True
 
     @pytest.mark.asyncio
-    async def test_s3_upload_hang_does_not_kill_whole_backup(
+    async def test_legacy_s3_settings_do_not_start_remote_upload(
         self, tmp_path
     ) -> None:
-        """Повисший rclone убивается по таймауту, но локальный бэкап уже
-        записан — backup_db всё равно отдаёт .ok=True (S3 опционален)."""
+        """Старые S3-настройки не запускают сеть; локальный дамп создаётся."""
         from aemr_bot.services import db_backup
 
-        # pg_dump — мгновенный успех; rclone — висит.
         dump = _ImmediateProc(rc=0)
-        hanging_rclone = _HangingProc()
-        calls = {"n": 0}
+        commands = []
 
         async def fake_exec(*args, **kwargs):
-            calls["n"] += 1
-            prog = args[0] if args else ""
-            if prog == "rclone":
-                return hanging_rclone
+            commands.append(args[0])
             return dump
 
         with patch.object(db_backup, "settings") as st:
@@ -600,9 +594,8 @@ class TestBackupDbSurfacesTimeoutFailKind:
             ):
                 result = await db_backup.backup_db()
 
-        # Локальный бэкап успешен несмотря на повисший S3.
+        # Локальный бэкап успешен, удалённая операция не начинается.
         assert result.ok is True
         assert result.path is not None
         assert result.path.exists()
-        # rclone был убит по таймауту.
-        assert hanging_rclone.killed is True
+        assert commands == ["pg_dump"]

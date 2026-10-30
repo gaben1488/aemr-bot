@@ -2,7 +2,8 @@
 #
 # Установка: `pip install pre-commit && pre-commit install`.
 # Запуск вручную: `pre-commit run --all-files`.
-# Все hook'и зеркалят CI lint job — что упало здесь, упадёт и в CI.
+# Локальные форматтеры и изолированный mypy могут отличаться от CI.
+# Источник итоговых проверок — CI с зависимостями из bot/uv.lock.
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -47,6 +48,12 @@ repos:
 
   - repo: local
     hooks:
+      - id: staged-text-size
+        name: check staged text blobs (20000 bytes)
+        entry: python scripts/check_staged_size.py --baseline .agents/staged-size-baseline.json
+        language: system
+        pass_filenames: false
+        always_run: true
       - id: assemble-wiki
         # Вика index.html СОБИРАЕТСЯ из фрагментов docs/site/_kb2/* — руками
         # не правится. Любая правка фрагмента (или каркаса/сборщика) триггерит

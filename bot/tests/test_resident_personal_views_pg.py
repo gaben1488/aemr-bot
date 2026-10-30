@@ -86,7 +86,7 @@ async def test_retention_waits_from_resident_view_read_through_tracked_send(sess
         results = await asyncio.gather(reading, *([purging] if purging else []), return_exceptions=True)
     assert not any(isinstance(result, BaseException) for result in results), results
     copy = await session.scalar(select(ResidentDataCopy).where(ResidentDataCopy.message_id == "resident-view"))
-    assert copy is not None and copy.erase_requested and copy.state == "pending"
+    assert copy is not None and copy.erase_requested and copy.state == "manual"
     if screen != "list":
         assert copy.appeal_id == appeal_id
     assert copy.subjects == [data_erasure.subject_digest(42)]

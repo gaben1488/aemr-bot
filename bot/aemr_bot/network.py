@@ -15,7 +15,7 @@ platform-api2.max.ru (до 19.07.2026 — platform-api.max.ru; MAX сменил 
 Два механизма:
 - `apply_firewall_env()` — вызывается ОДИН раз на старте, ДО любых HTTP-клиентов:
   (1) пробрасывает BOT_OUTBOUND_PROXY в стандартные HTTP(S)_PROXY env — их читает
-  aiohttp при trust_env=True, а также дочерние процессы (curl в healthwatch, rclone,
+  aiohttp при trust_env=True, а также дочерние процессы (curl в healthwatch,
   git); (2) собирает объединённый CA-бандл (системные CA + корпоративный) и указывает
   на него SSL_CERT_FILE/REQUESTS_CA_BUNDLE — это видит stdlib ssl, aiohttp и requests.
 - `session_kwargs()` — kwargs для aiohttp.ClientSession (`trust_env=True`), чтобы прокси
