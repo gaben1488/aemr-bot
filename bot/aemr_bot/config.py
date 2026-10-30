@@ -51,6 +51,9 @@ class Settings(BaseSettings):
 
     timezone: str = Field("Asia/Kamchatka", alias="TZ")
     sla_response_hours: int = Field(4, alias="SLA_RESPONSE_HOURS")
+    # Internal operational reminder after the last intermediate response.
+    # This is not a legal deadline; 0 disables this reminder.
+    sla_followup_hours: int = Field(8, alias="SLA_FOLLOWUP_HOURS", ge=0, le=168)
     # Границы рабочего окна для расчёта SLA-просрочки (services/sla.py) —
     # локальное время по `timezone` (Камчатка). SLA-часы копятся ТОЛЬКО
     # внутри [sla_work_start_hour, sla_work_end_hour) рабочих дней

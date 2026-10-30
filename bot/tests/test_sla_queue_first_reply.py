@@ -67,3 +67,33 @@ async def test_reopen_does_not_invent_old_sla_when_setting_was_not_saved(session
     assert appeal.sla_history[0]["sla_hours"] is None
     assert appeal.sla_history[0]["overdue"] is None
     assert appeal.sla_history[0]["assessment"] == "at_reopen_legacy"
+
+
+@pytest.mark.asyncio
+async def test_latest_intermediate_response_ignores_old_period_and_newer_other_reply(session):
+    from aemr_bot.db.models import Appeal, Message, User
+    from aemr_bot.services import appeals
+
+    user = User(max_user_id=514204, first_name="Анна")
+    session.add(user)
+    await session.flush()
+    start = datetime.now(UTC) - timedelta(days=2)
+    first = Appeal(user_id=user.id, status="in_progress", created_at=start, sla_anchor_at=start,
+                   summary="А", attachments=[])
+    second = Appeal(user_id=user.id, status="in_progress", created_at=start, sla_anchor_at=start,
+                    summary="Б", attachments=[])
+    session.add_all([first, second])
+    await session.flush()
+    session.add_all([
+        Message(appeal_id=first.id, direction="from_operator", response_kind="intermediate", text="Ответ",
+                created_at=start + timedelta(hours=1)),
+        Message(appeal_id=first.id, direction="from_user", text="Дополнение", created_at=start + timedelta(hours=2)),
+        Message(appeal_id=second.id, direction="from_operator", response_kind="intermediate", text="Ответ",
+                created_at=start + timedelta(hours=1)),
+        Message(appeal_id=second.id, direction="from_operator", response_kind=None, text="Старый тип",
+                created_at=start + timedelta(hours=2)),
+    ])
+    await session.flush()
+    result = await appeals.latest_intermediate_reply_times(session, [first.id, second.id])
+    assert first.id in result
+    assert second.id not in result

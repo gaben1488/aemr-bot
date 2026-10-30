@@ -658,6 +658,28 @@ async def first_operator_reply_times(session: AsyncSession, appeal_ids: list[int
     return {appeal_id: first_at for appeal_id, first_at in rows if first_at is not None}
 
 
+async def latest_intermediate_reply_times(session: AsyncSession, appeal_ids: list[int]) -> dict[int, datetime]:
+    """Return the last operator response only when its stored type is intermediate.
+
+    The current reopen anchor prevents an earlier period being treated as
+    current. Old responses without a stored type are never guessed.
+    """
+    if not appeal_ids:
+        return {}
+    ranked = (select(
+        Message.appeal_id.label("appeal_id"), Message.created_at.label("created_at"),
+        Message.response_kind.label("response_kind"),
+        func.row_number().over(partition_by=Message.appeal_id,
+                               order_by=(Message.created_at.desc(), Message.id.desc())).label("rank"),
+    ).join(Appeal, Appeal.id == Message.appeal_id).where(
+        Message.appeal_id.in_(appeal_ids), Message.direction == MessageDirection.FROM_OPERATOR.value,
+        Message.created_at >= func.coalesce(Appeal.sla_anchor_at, Appeal.created_at),
+    ).subquery())
+    rows = await session.execute(select(ranked.c.appeal_id, ranked.c.created_at).where(
+        ranked.c.rank == 1, ranked.c.response_kind == "intermediate"))
+    return {appeal_id: created_at for appeal_id, created_at in rows if created_at is not None}
+
+
 async def count_open(session: AsyncSession) -> int:
     """Сколько обращений висит без ответа (NEW + IN_PROGRESS).
 
