@@ -6,6 +6,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 from zoneinfo import ZoneInfo
 
 from aemr_bot.config import settings
+from aemr_bot.services.content_status import content_notice
 
 
 def _xml_text(value: object) -> str:
@@ -61,7 +62,7 @@ def build_appeal_docx(appeal) -> bytes:
               ("Населённый пункт", appeal.locality), ("Адрес", appeal.address),
               ("Тема", appeal.topic))
     body.extend(_paragraph(f"{label}: {value or 'не указано'}") for label, value in fields)
-    body.extend([_paragraph("Обращение", "Heading1"), _paragraph(appeal.summary or "Текст не указан")])
+    body.extend([_paragraph("Обращение", "Heading1"), _paragraph(appeal.summary or content_notice(appeal) or "Текст не указан")])
     for line in _attachment_lines(getattr(appeal, "attachments", [])):
         body.append(_paragraph(line))
     body.append(_paragraph("История", "Heading1"))

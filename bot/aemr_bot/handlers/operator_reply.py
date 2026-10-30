@@ -270,19 +270,17 @@ def _reply_rejection_before_delivery(*, fresh_appeal, appeal_id: int) -> str | N
     перевешивает appeals на anonymous-user и физически удаляет запись
     жителя — объект в памяти оператора остался бы устаревшим.
 
-    Логика согласия (152-ФЗ ст. 21 ч. 5): после отзыва оператор может
-    дать финальный ответ только по обращению, ПРИНЯТОМУ до отзыва.
-      - is_blocked (включая заглушку удалённого жителя) — жёсткий отказ;
-      - нет согласия и обращение подано ПОСЛЕ revoked_at — отказ;
-      - согласия не было никогда — отказ;
-      - нет согласия, но обращение подано ДО revoked_at — доставка
-        разрешена как финальный ответ.
+    Автоматическая доставка требует действующего согласия. Дата подачи
+    обращения до отзыва сама по себе не доказывает иное правовое основание;
+    такую работу уполномоченный сотрудник рассматривает отдельно.
     """
     if fresh_appeal is None or fresh_appeal.user is None:
         return (
             f"⚠️ Не могу доставить ответ по обращению #{appeal_id}: "
             f"обращение или его автор не найдены."
         )
+    if getattr(fresh_appeal, "content_erased_at", None) is not None:
+        return f"⚠️ Содержание обращения #{appeal_id} очищено. Создайте новое обращение."
     if fresh_appeal.status in {AppealStatus.CLOSED.value, AppealStatus.ANSWERED.value}:
         return (
             f"⚠️ Не могу доставить ответ по обращению #{appeal_id}: "
@@ -297,21 +295,12 @@ def _reply_rejection_before_delivery(*, fresh_appeal, appeal_id: int) -> str | N
     # Легаси-записи стёртых жителей блокирует миграция 0024, служебная
     # заглушка создаётся заблокированной.
     hard_forbidden = user.is_blocked
-    revoked_after_appeal = (
-        user.consent_pdn_at is None
-        and user.consent_revoked_at is not None
-        and fresh_appeal.created_at is not None
-        and fresh_appeal.created_at >= user.consent_revoked_at
-    )
-    no_consent_ever = (
-        user.consent_pdn_at is None and user.consent_revoked_at is None
-    )
-    if hard_forbidden or revoked_after_appeal or no_consent_ever:
+    if hard_forbidden or user.consent_pdn_at is None:
         return (
             f"⚠️ Не могу доставить ответ по обращению #{appeal_id}: "
-            f"у жителя нет действующего согласия или данные уже удалены. "
-            f"Ответ через бот возможен только по обращению, принятому "
-            f"до отзыва согласия."
+            "нет действующего согласия, житель заблокирован или данные удалены. "
+            "Иное основание дальнейшей работы уполномоченный сотрудник "
+            "рассматривает отдельно; автоматическая отправка через бот остановлена."
         )
     return None
 
@@ -372,9 +361,8 @@ async def _send_reply_to_citizen(
             (
                 f"⚠️ Ответ по обращению #{appeal_id} НЕ доставлен жителю: "
                 f"в тексте найдены ссылки на сторонние сайты "
-                f"({', '.join(bad_urls[:3])}{'…' if len(bad_urls) > 3 else ''}). "
-                f"Разрешены только официальные ресурсы: elizovomr.ru, "
-                f"kamgov.ru, gosuslugi.ru, kamchatka.gov.ru. "
+                f"(найдено: {len(bad_urls)}). "
+                "Используйте разрешённые ссылки из памятки оператора. "
                 f"Удалите ссылку или замените на гос-домен и повторите."
             ),
         )
@@ -428,7 +416,9 @@ async def _send_reply_to_citizen(
             # the exact uncertain part visible, without sending later parts.
             if on_part is not None:
                 await on_part(index, "sending", None)
-            sent = await event.bot.send_message(
+            from aemr_bot.services import data_erasure
+            sent = await data_erasure.tracked_send(event.bot, kind="operator_part",
+                appeal_id=appeal_id, max_user_ids=[target_user_id],
                 user_id=target_user_id,
                 text=formatted_text if index == 0 else (
                     f"📎 Вложения к ответу по обращению № {appeal_id} · "

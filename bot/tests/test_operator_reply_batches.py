@@ -6,6 +6,17 @@ import pytest
 from aemr_bot.handlers.operator_reply import _send_reply_to_citizen
 
 
+@pytest.fixture(autouse=True)
+def isolate_copy_inventory(monkeypatch):
+    # These unit tests exercise transport ordering. The durable inventory is
+    # exercised by PostgreSQL handler/service tests with real resident rows.
+    from aemr_bot.services import data_erasure
+
+    async def tracked_send(bot, *, kind, appeal_id=None, max_user_ids=None, **kwargs):
+        return await bot.send_message(**kwargs)
+    monkeypatch.setattr(data_erasure, "tracked_send", tracked_send)
+
+
 def event():
     return SimpleNamespace(bot=SimpleNamespace(send_message=AsyncMock()),
                            message=SimpleNamespace(body=SimpleNamespace(attachments=[])),

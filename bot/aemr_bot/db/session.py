@@ -10,7 +10,7 @@ def _engine_kwargs() -> dict:
     """Параметры создания engine. SQLite (для unit-тестов) использует
     StaticPool и не принимает pool_size/max_overflow/pool_recycle —
     отдаём только universal-параметры."""
-    base: dict = {"echo": False}
+    base: dict = {"echo": False, "hide_parameters": True}
     if settings.database_url.startswith("postgresql"):
         base.update(
             pool_pre_ping=True,

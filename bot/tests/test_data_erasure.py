@@ -131,7 +131,11 @@ async def test_erase_waits_for_inflight_copy_inventory(erasure_db):
         return SimpleNamespace(message=SimpleNamespace(body=SimpleNamespace(mid="racing")))
     bot = SimpleNamespace(send_message=delayed_send)
     sending = asyncio.create_task(data_erasure.tracked_send(bot, kind="relay", appeal_id=db.appeal_id, text="Private"))
-    await entered.wait()
+    ready = asyncio.create_task(entered.wait())
+    done, _ = await asyncio.wait({sending, ready}, timeout=5, return_when=asyncio.FIRST_COMPLETED)
+    if sending in done:
+        await sending  # Surface reservation errors instead of hanging forever.
+    assert ready in done, "the reserved send did not reach the MAX boundary"
     async def erase():
         async with db.scope() as session:
             await users.erase_pdn_detailed(session, 42)

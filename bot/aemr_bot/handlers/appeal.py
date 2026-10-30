@@ -548,22 +548,30 @@ async def _cb_draft(event, max_user_id: int, payload: str) -> None:
             except (TypeError, ValueError):
                 source_id = 0
             source = await appeals_service.get_by_id(session, source_id, for_update=True) if source_id > 0 else None
+            cleared = source is not None and getattr(source, "content_erased_at", None) is not None
             if (draft_state != DialogState.AWAITING_FOLLOWUP_TEXT.value or source is None
-                    or source.user_id != user.id or source.status not in {
-                        AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}
-                    or not source.locality or not source.address or user.is_blocked
-                    or user.consent_pdn_at is None):
+                    or source.user_id != user.id or (not cleared and source.status not in {
+                        AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value})
+                    or (not cleared and (not source.locality or not source.address))
+                    or user.is_blocked or user.consent_pdn_at is None):
                 valid = False
-                invalid_notice = "Не удалось создать связанное обращение: проверьте статус и адрес. Черновик сохранён."
+                invalid_notice = "Не удалось создать связанное обращение. Черновик сохранён; проверьте согласие и источник."
             else:
                 import secrets
-                data.update({"locality": source.locality, "address": source.address,
-                             "topic": source.topic, "repeat_source_appeal_id": source.id,
+                data.update({"topic": source.topic, "repeat_source_appeal_id": source.id,
                              "repeat_source_status": source.status, "repeat_source_topic": source.topic,
                              "draft_token": secrets.token_urlsafe(12), "replace_text": False})
+                if cleared:
+                    # The saved parts are still the resident's new input.
+                    # Ask for fresh location/address; never resurrect erased fields.
+                    data.pop("locality", None)
+                    data.pop("address", None)
+                    user.dialog_state = DialogState.AWAITING_LOCALITY.value
+                else:
+                    data.update({"locality": source.locality, "address": source.address})
+                    user.dialog_state = DialogState.AWAITING_SUMMARY.value
                 data.pop("appeal_id", None)
                 data.pop("progress_message_id", None)
-                user.dialog_state = DialogState.AWAITING_SUMMARY.value
                 user.dialog_data = data
                 await session.flush()
     if not valid:
@@ -586,6 +594,8 @@ async def _cb_draft(event, max_user_id: int, payload: str) -> None:
             text="Пришлите новый текст одним сообщением. Прежний текст сохранится, пока вы не пришлёте замену; вложения останутся.",
             attachments=[keyboards.draft_edit_cancel_keyboard(token)],
         )
+    elif action == "new_related" and not data.get("address"):
+        await appeal_funnel.ask_locality(event, max_user_id)
     elif action == "edit_cancel" or action == "new_related":
         await appeal_funnel.show_summary_draft(event, max_user_id)
     elif action == "view":

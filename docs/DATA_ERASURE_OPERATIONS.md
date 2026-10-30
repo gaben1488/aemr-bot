@@ -31,6 +31,14 @@
 uv run python ../scripts/reconcile_erasure.py --initialize-journal
 ```
 
+В собранном образе скрипты находятся в `/app/scripts/`. Для остановленного
+контура Compose сначала применяют миграции, затем выполняют одноразовую команду
+с теми же настроенными томами и окружением сервиса `bot`:
+
+```sh
+docker compose -f infra/docker-compose.yml run --rm --no-deps bot sh -c 'alembic upgrade head && python /app/scripts/reconcile_erasure.py --initialize-journal'
+```
+
 Эта команда не предназначена для восстановления и не заменяет потерянный ключ.
 Обычный запуск `prepare_startup()` валидирует журнал и применяет инструкции до
 приёма событий; автоматически инициализируется только новая пустая БД.

@@ -288,6 +288,11 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
         await _show_author_card(event)
         return
 
+    if rest == "erasure_status":
+        from aemr_bot.handlers import admin_data_erasure
+        await admin_data_erasure.show_status(event)
+        return
+
     if rest == "schedule" or rest.startswith("schedule:"):
         from aemr_bot.handlers import admin_settings_schedule
         if rest == "schedule":

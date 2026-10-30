@@ -14,6 +14,7 @@ from sqlalchemy.orm import selectinload
 from aemr_bot.db.models import Appeal, Message
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import privacy_epoch, sla, stats, work_schedule
+from aemr_bot.services.content_status import content_notice
 from aemr_bot.utils.pii_mask import mask_phone
 from aemr_bot.utils.text_pages import split_text_units
 
@@ -192,7 +193,7 @@ async def build_xlsx_with_epoch(
                     on_time = "нет" if sla.is_overdue(anchor, first_reply, appeal.sla_hours_at_start, schedule=work_schedule.for_appeal(appeal)) else "да"
             overview.append([appeal.id, appeal.related_appeal_id or "", _date(appeal.created_at), getattr(user, "first_name", "") or "",
                              mask_phone(getattr(user, "phone", None)), appeal.locality or "",
-                             appeal.address or "", appeal.topic or "", _summary_preview(appeal.summary),
+                             appeal.address or "", appeal.topic or "", _summary_preview(appeal.summary or content_notice(appeal)),
                              stats._status_label(appeal.status), latest_action,
                              _date(first_reply), _date(appeal.answered_at), _date(appeal.closed_at), elapsed,
                              appeal.sla_hours_at_start if appeal.sla_hours_at_start is not None else "Не сохранился", on_time,

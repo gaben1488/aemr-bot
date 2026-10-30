@@ -254,7 +254,10 @@ async def cmd_forget(event):
         max_user_id=max_user_id,
         closed_appeal_ids=closed_ids or [],
     )
-    await reply(event, texts.ERASE_REQUESTED)
+    from aemr_bot.services import data_erasure
+    await data_erasure.tracked_send(event.bot, kind="erasure_confirmation",
+        max_user_ids=[max_user_id], allow_erased_recipient=True,
+        chat_id=get_chat_id(event), text=texts.ERASE_REQUESTED)
 
 
 # Порог разбивки выгрузки на сообщения. У MAX предел около 4000

@@ -822,8 +822,8 @@ async def submit_followup(event, body, text_body, max_user_id, *, draft_token: s
     if getattr(appeal, "content_erased_at", None) is not None:
         await event.message.answer(
             "Содержание этого обращения очищено по сроку хранения. "
-            "Черновик дополнения сохранён. Создайте новое обращение и перенесите в него нужные части.",
-            attachments=[keyboards.back_to_menu_keyboard()],
+            "Черновик дополнения сохранён. Нажмите «Создать новое», чтобы оформить новое обращение с теми же текстом и файлами. Адрес укажите заново.",
+            attachments=[keyboards.closed_followup_draft_keyboard(draft_token)],
         )
         return
 
@@ -952,7 +952,8 @@ async def submit_followup(event, body, text_body, max_user_id, *, draft_token: s
         if getattr(locked_appeal, "content_erased_at", None) is not None:
             await event.message.answer(
                 "Содержание обращения уже очищено по сроку хранения. "
-                "Черновик сохранён: создайте новое обращение и перенесите нужные части."
+                "Черновик сохранён. Кнопка «Создать новое» перенесёт текст и файлы в новое обращение; адрес укажите заново.",
+                attachments=[keyboards.closed_followup_draft_keyboard(draft_token)],
             )
             return
         # Read the draft again under its lock. Another message may have

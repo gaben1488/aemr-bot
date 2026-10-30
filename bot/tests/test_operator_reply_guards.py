@@ -182,7 +182,8 @@ class TestOutgoingLinkGate:
             assert "user_id" not in call.kwargs
         text = event.bot.send_message.await_args.kwargs.get("text", "")
         assert "сторонн" in text.lower()
-        assert "evil.example" in text
+        assert "evil.example" not in text
+        assert "найдено: 1" in text
 
 
 class TestSwipeResolvesAppeal:

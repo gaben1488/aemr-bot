@@ -69,9 +69,17 @@ def _make_bot(new_mid="new-mid-1"):
 
 
 @pytest.fixture(autouse=True)
-def _clean_tracker():
+def _clean_tracker(monkeypatch):
     from aemr_bot.utils import menu_tracker
 
+    from aemr_bot.services import data_erasure, queue_panel
+
+    async def transport(bot, *, kind, appeal_id=None, max_user_ids=None, **kwargs):
+        # Event-card unit tests isolate copy inventory and queue aggregation;
+        # their real storage/erasure races have PostgreSQL integration tests.
+        return await bot.send_message(**kwargs)
+    monkeypatch.setattr(data_erasure, "tracked_send", transport)
+    monkeypatch.setattr(queue_panel, "refresh", AsyncMock())
     menu_tracker.clear_all()
     yield
     menu_tracker.clear_all()

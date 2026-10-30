@@ -61,6 +61,8 @@ def build_bot() -> Bot:
         ),
     )
     admin_bus.install_outgoing_tracker_hook(bot)
+    from aemr_bot.services import data_erasure
+    data_erasure.install_outgoing_hook(bot)
     if settings.bot_mode == "polling":
         _install_polling_timeout(bot, settings.polling_timeout_seconds)
         # Клиентский ClientTimeout.total долгого poll'а должен превышать
@@ -470,7 +472,8 @@ def _build_admin_senders(bot: Bot):
                 f"{caption}\n(файл {filename} — загрузка не удалась, см. логи)"
             )
             return
-        await bot.send_message(
+        from aemr_bot.services import data_erasure
+        await data_erasure.tracked_send(bot, kind="bulk_export",
             chat_id=settings.admin_group_id,
             text=caption or filename,
             attachments=[uploads.file_attachment(token)],
@@ -723,6 +726,8 @@ async def main() -> None:
         except Exception:
             log.exception("set_my_commands failed; продолжаем без подсказок в /-меню")
 
+        from aemr_bot.services import data_erasure
+        await data_erasure.prepare_startup()
         await _seed_settings()
         from aemr_bot.services import work_schedule
         async with session_scope() as session:
@@ -845,6 +850,18 @@ async def main() -> None:
         spawn_background_task(
             _report_abandoned_broadcasts(), name="report_abandoned_broadcasts"
         )
+
+        async def _erasure_worker():
+            from aemr_bot.services import db_backup
+            while True:
+                try:
+                    await data_erasure.recover_deletions(bot)
+                    await db_backup.cleanup_erased_backups()
+                except Exception as exc:
+                    log.error("Data-copy cleanup needs attention (%s)", type(exc).__name__)
+                await asyncio.sleep(30)
+
+        service_tasks.append(asyncio.create_task(_erasure_worker(), name="data_copy_cleanup"))
 
         # Polling and webhook share health endpoints and heartbeat.
         health_runner = await health.start(

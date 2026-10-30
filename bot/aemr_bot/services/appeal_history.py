@@ -7,6 +7,7 @@ from typing import Any
 
 from aemr_bot.db.models import MessageDirection
 from aemr_bot.services.card_format import _local
+from aemr_bot.services.content_status import content_notice
 from aemr_bot.services.message_labels import response_label
 from aemr_bot.utils.text_pages import split_text_units
 from aemr_bot.utils.url_defang import defang_for_admin
@@ -38,7 +39,7 @@ def pages_for(appeal: Any, *, operator: bool) -> list[HistoryPage]:
     """One or more bounded screens per message; messages remain in order."""
     entries = [(
         'Обращение', getattr(appeal, 'created_at', None),
-        getattr(appeal, 'summary', None) or '', len(getattr(appeal, 'attachments', None) or []),
+        getattr(appeal, 'summary', None) or content_notice(appeal), len(getattr(appeal, 'attachments', None) or []),
         True, 0,
     )]
     messages = list(getattr(appeal, 'messages', None) or [])

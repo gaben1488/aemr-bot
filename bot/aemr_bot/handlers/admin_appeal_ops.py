@@ -153,6 +153,7 @@ _REOPEN_FALLBACK_TEXT = {
     "reopened": texts.OP_APPEAL_REOPENED,
     "already_open": texts.OP_APPEAL_ALREADY_OPEN,
     "blocked_by_revoke": texts.OP_APPEAL_BLOCKED_BY_REVOKE,
+    "content_erased": "Содержание обращения № {number} очищено. Создайте новое обращение.",
     "not_found": texts.OP_APPEAL_NOT_FOUND,
 }
 

@@ -71,7 +71,9 @@ async def test_purge_old_appeals_content_redacts_attachments_even_without_text(s
         .where(Appeal.id == appeal.id)
         .values(
             status=AppealStatus.CLOSED.value,
+            created_at=old_closed_at,
             closed_at=old_closed_at,
+            sla_anchor_at=old_closed_at,
             summary=None,
         )
     )

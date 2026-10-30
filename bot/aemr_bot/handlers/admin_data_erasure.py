@@ -11,7 +11,8 @@ async def show_status(event) -> None:
     if not await ensure_role(event, OperatorRole.IT):
         return
     status = await data_erasure.diagnostics()
-    lines = ["🧹 Удаление данных: состояние копий",
+    lines = ["🧹 Удаление данных: учтённые копии",
+             "Неучтённые старые сообщения, внешние выгрузки и версии хранилищ сверяются отдельно.",
              f"В очереди: {status.get('pending', 0)}",
              f"Удаление начато, результат неизвестен: {status.get('deleting', 0)}",
              f"Нужна проверка в MAX: {status.get('uncertain', 0) + status.get('reserved', 0)}",

@@ -5,6 +5,7 @@ from zoneinfo import ZoneInfo
 
 from aemr_bot.config import settings
 from aemr_bot.db.models import Appeal, MessageDirection, User
+from aemr_bot.services.content_status import content_notice
 from aemr_bot.texts import (
     ADMIN_CARD_TEMPLATE,
     ADMIN_FOLLOWUP_TEMPLATE,
@@ -312,7 +313,7 @@ def admin_card(appeal: Appeal, user: User) -> str:
             origin = "срок периода" if hours and getattr(appeal, "sla_schedule_at_start", None) is not None else "ориентир без снимка периода"
             flag = "⚠️ " if elapsed >= target else "⏱ "
             header += f"\n{flag}Первый ответ: {elapsed:.1f} из {target} рабочих ч ({origin})"
-    body = header + "\n\n" + body
+    body = header + ("\n" + content_notice(appeal) if content_notice(appeal) else "") + "\n\n" + body
     related = getattr(appeal, "related_appeal_id", None)
     if related:
         body = f"🔗 Связано с обращением № {related}\n\n" + body
@@ -526,6 +527,8 @@ def user_card(appeal: Appeal) -> str:
     related = getattr(appeal, "related_appeal_id", None)
     if related:
         body = f"🔗 Связано с обращением № {related}\n\n" + body
+    if content_notice(appeal):
+        body = content_notice(appeal) + "\n\n" + body
     # Лента для жителя: те же блоки что у admin_card, но житель видит
     # «Ваше дополнение» и «Ответ Администрации» вместо служебных
     # маркеров (через user_appeal_timeline_block).

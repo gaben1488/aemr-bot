@@ -82,7 +82,8 @@ async def _send_stats_xlsx(
             )
             return False
         try:
-            sent = await event.bot.send_message(
+            from aemr_bot.services import data_erasure
+            sent = await data_erasure.tracked_send(event.bot, kind="bulk_export",
                 chat_id=chat_id,
                 text=f"📊 Статистика {title} ({count} обращений). Файл: {filename}",
                 attachments=[uploads.file_attachment(token)],

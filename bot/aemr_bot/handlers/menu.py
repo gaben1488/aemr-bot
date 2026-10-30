@@ -1014,8 +1014,10 @@ async def do_forget(event, max_user_id: int):
             action="self_erase",
             target=None,
         )
-    await _send_or_edit_menu(
-        event,
+    from aemr_bot.services import data_erasure
+    await data_erasure.tracked_send(
+        event.bot, kind="erasure_confirmation", max_user_ids=[max_user_id],
+        allow_erased_recipient=True, chat_id=get_chat_id(event),
         text=texts.ERASE_REQUESTED,
         attachments=[keyboards.back_to_menu_keyboard()],
     )
