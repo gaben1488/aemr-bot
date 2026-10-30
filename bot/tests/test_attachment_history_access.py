@@ -41,6 +41,11 @@ async def test_uncertain_attachment_delivery_is_not_retried(monkeypatch):
 
     from aemr_bot.services import admin_bus
 
+    async def tracked(bot, *, kind, appeal_id, **kwargs):
+        assert kind == "attachment_relay" and appeal_id == 3
+        return await bot.send_message(**kwargs)
+
+    monkeypatch.setattr(admin_relay, "tracked_send", tracked)
     monkeypatch.setattr(admin_relay.cfg, 'admin_group_id', 555)
     monkeypatch.setattr(admin_relay, 'deserialize_for_relay', lambda a: a)
     alert = AsyncMock()

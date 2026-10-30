@@ -36,20 +36,26 @@ async def test_abandoning_registration_enqueues_persistent_delete(action, pendin
         await admin_operators.run_operators_action(event, "op:opadd:cancel")
     elif action == "cancel_command":
         from aemr_bot.handlers import appeal
+        monkeypatch.setattr(appeal, "session_scope", fake_session_scope)
+        monkeypatch.setattr("aemr_bot.services.operators.get", AsyncMock(return_value=None))
         monkeypatch.setattr(appeal.cfg, "admin_group_id", 123)
         event.message.body.text = "/cancel"
         dispatcher = _CapturingDispatcher()
         appeal.register(dispatcher)
         await dispatcher.message_handler(event)
     elif action == "reply":
-        monkeypatch.setattr(admin_appeal_ops, "is_admin_chat", lambda _: True)
-        monkeypatch.setattr(admin_appeal_ops, "ensure_operator", AsyncMock(return_value=True))
-        monkeypatch.setattr(admin_appeal_ops, "session_scope", fake_session_scope)
-        monkeypatch.setattr(admin_appeal_ops, "op_screen", AsyncMock())
-        monkeypatch.setattr(admin_appeal_ops.appeals_service, "get_by_id", AsyncMock(return_value=SimpleNamespace(
-            status="new", user=SimpleNamespace(is_blocked=False),
+        from aemr_bot.handlers import operator_draft
+        monkeypatch.setattr(operator_draft, "is_admin_chat", lambda _: True)
+        monkeypatch.setattr(operator_draft, "get_operator", AsyncMock(return_value=SimpleNamespace(id=70, max_user_id=7)))
+        monkeypatch.setattr(operator_draft, "session_scope", fake_session_scope)
+        monkeypatch.setattr(operator_draft, "show", AsyncMock())
+        monkeypatch.setattr(operator_draft, "ack_callback", AsyncMock())
+        monkeypatch.setattr(operator_draft.appeals, "get_by_id", AsyncMock(return_value=SimpleNamespace(
+            id=12, status="new", user=SimpleNamespace(is_blocked=False, consent_pdn_at=True),
         )))
-        monkeypatch.setattr(admin_appeal_ops.appeals_service, "mark_in_progress", AsyncMock())
+        monkeypatch.setattr(operator_draft.appeals, "mark_in_progress", AsyncMock())
+        monkeypatch.setattr(operator_draft.operator_drafts, "get", AsyncMock(return_value=None))
+        monkeypatch.setattr(operator_draft.operator_drafts, "start", AsyncMock(return_value=SimpleNamespace(token="draft")))
         await admin_appeal_ops.run_reply_intent(event, 12)
     else:
         from aemr_bot.handlers import broadcast_wizard

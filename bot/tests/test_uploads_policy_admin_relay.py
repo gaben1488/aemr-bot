@@ -277,6 +277,18 @@ class TestPolicy:
         assert token == "NEW-TOK"
 
 
+@pytest.fixture
+def relay_transport(monkeypatch):
+    """Keep relay batching/uncertain outcomes real, with inventory checked in PG tests."""
+    async def tracked(bot, *, kind, appeal_id, **kwargs):
+        assert kind == "attachment_relay" and appeal_id > 0
+        return await bot.send_message(**kwargs)
+
+    transport = AsyncMock(side_effect=tracked)
+    monkeypatch.setattr("aemr_bot.services.admin_relay.tracked_send", transport)
+    return transport
+
+
 class TestAdminRelay:
     @pytest.mark.asyncio
     async def test_skips_when_no_attachments(self) -> None:
@@ -323,11 +335,11 @@ class TestAdminRelay:
         alert.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_sends_single_batch(self) -> None:
+    async def test_sends_single_batch(self, relay_transport) -> None:
         from aemr_bot.services import admin_relay
 
         bot = MagicMock()
-        bot.send_message = AsyncMock()
+        bot.send_message = AsyncMock(return_value=SimpleNamespace(body=SimpleNamespace(mid="relay-confirmed")))
         with patch.object(admin_relay.cfg, "admin_group_id", 555), \
              patch.object(admin_relay.cfg, "attachments_per_relay_message", 10), \
              patch("aemr_bot.services.admin_relay.deserialize_for_relay",
@@ -343,11 +355,11 @@ class TestAdminRelay:
         assert "1/" not in text
 
     @pytest.mark.asyncio
-    async def test_chunks_into_batches_with_indicator(self) -> None:
+    async def test_chunks_into_batches_with_indicator(self, relay_transport) -> None:
         from aemr_bot.services import admin_relay
 
         bot = MagicMock()
-        bot.send_message = AsyncMock()
+        bot.send_message = AsyncMock(return_value=SimpleNamespace(body=SimpleNamespace(mid="relay-confirmed")))
         # 7 вложений по 3 за раз → 3 батча.
         relayable = [{"type": "image"}] * 7
         with patch.object(admin_relay.cfg, "admin_group_id", 555), \
@@ -364,7 +376,7 @@ class TestAdminRelay:
         assert "(1/3)" in first_text
 
     @pytest.mark.asyncio
-    async def test_swallows_send_message_exceptions(self) -> None:
+    async def test_swallows_send_message_exceptions(self, relay_transport) -> None:
         from aemr_bot.services import admin_relay
 
         bot = MagicMock()
@@ -388,7 +400,7 @@ class TestAdminRelay:
         bot.send_message.assert_awaited()
 
     @pytest.mark.asyncio
-    async def test_full_failure_sends_admin_alert(self) -> None:
+    async def test_full_failure_sends_admin_alert(self, relay_transport) -> None:
         """При полном провале доставки (все батчи не удались) должен
         уйти critical-алёрт в админ-группу — иначе вложения жителя
         пропадают из виду оператора молча."""
@@ -415,7 +427,7 @@ class TestAdminRelay:
         assert call_kwargs.get("critical") is True
 
     @pytest.mark.asyncio
-    async def test_alert_itself_failing_does_not_raise(self) -> None:
+    async def test_alert_itself_failing_does_not_raise(self, relay_transport) -> None:
         """Если сам admin_bus.send при алёрте тоже упадёт — не
         пробрасываем исключение наружу (best-effort уведомление)."""
         from aemr_bot.services import admin_relay
@@ -436,14 +448,14 @@ class TestAdminRelay:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_partial_failure_alerts(self) -> None:
+    async def test_partial_failure_alerts(self, relay_transport) -> None:
         """При частичной выдаче оператор должен увидеть, что показано не всё."""
         from aemr_bot.services import admin_relay
 
         bot = MagicMock()
         # Первый батч ok, результат второго неизвестен.
         bot.send_message = AsyncMock(
-            side_effect=[MagicMock(), RuntimeError("x"), RuntimeError("x"), RuntimeError("x")]
+            side_effect=[SimpleNamespace(body=SimpleNamespace(mid="first-confirmed")), RuntimeError("x")]
         )
         relayable = [{"type": "image"}] * 6
         alert = AsyncMock(return_value="mid")
@@ -461,11 +473,11 @@ class TestAdminRelay:
         alert.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_full_success_returns_true(self) -> None:
+    async def test_full_success_returns_true(self, relay_transport) -> None:
         from aemr_bot.services import admin_relay
 
         bot = MagicMock()
-        bot.send_message = AsyncMock(return_value=MagicMock())
+        bot.send_message = AsyncMock(return_value=SimpleNamespace(body=SimpleNamespace(mid="relay-confirmed")))
         with patch.object(admin_relay.cfg, "admin_group_id", 555), \
              patch.object(admin_relay.cfg, "attachments_per_relay_message", 10), \
              patch("aemr_bot.services.admin_relay.deserialize_for_relay",
