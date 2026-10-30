@@ -498,3 +498,42 @@ async def test_retention_cleared_appeal_cannot_reopen_or_accept_new_parts(erasur
     async with db.scope() as session:
         resident = await users.find_by_max_id(session, 42)
         assert resident.dialog_data["summary_chunks"] == ["new private"]
+
+
+@pytest.mark.asyncio
+async def test_expired_open_appeal_leaves_operational_queues_but_preserves_history_and_draft(erasure_db, monkeypatch):
+    from aemr_bot.handlers import appeal_funnel
+    from aemr_bot.services import appeals
+    from tests._helpers import make_event
+    db = erasure_db
+    old = datetime.now(UTC) - timedelta(days=365 * 7)
+    async with db.scope() as session:
+        item = await session.get(Appeal, db.appeal_id)
+        item.created_at = old
+        message = await session.scalar(select(Message).where(Message.appeal_id == item.id))
+        message.created_at = old
+        resident = await users.find_by_max_id(session, 42)
+        resident.dialog_state = "awaiting_followup_text"
+        resident.dialog_data = {"appeal_id": item.id, "draft_token": "draft", "summary_chunks": ["new private"]}
+    async with db.scope() as session:
+        assert await appeals.purge_old_appeals_content(session) == (1, 1)
+        resident = await users.find_by_max_id(session, 42)
+        assert (await session.get(Appeal, db.appeal_id)).status == "new"
+        assert await appeals.count_open(session) == 1
+        assert [item.id for item in await appeals.list_unanswered(session)] == [db.other_id]
+        assert [item.id for item in await appeals.list_unanswered_with_messages(session)] == [db.other_id]
+        assert await appeals.list_unanswered_for_user(session, resident.id) == []
+        assert await appeals.find_active_for_user(session, resident.id) is None
+        assert await appeals.find_overdue_unanswered(session, sla_hours=1) == []
+        assert [item.id for item in await appeals.list_for_user(session, resident.id)] == [db.appeal_id]
+        assert resident.dialog_data["summary_chunks"] == ["new private"]
+    @asynccontextmanager
+    async def current_user(uid):
+        async with db.scope() as session:
+            yield session, await users.find_by_max_id(session, uid)
+    monkeypatch.setattr(appeal_funnel, "current_user", current_user)
+    event = make_event(user_id=42)
+    await appeal_funnel.submit_followup(event, SimpleNamespace(attachments=[]), "new private", 42, draft_token="draft")
+    assert "новое обращение" in event.message.answer.await_args.args[0]
+    async with db.scope() as session:
+        assert (await users.find_by_max_id(session, 42)).dialog_data["summary_chunks"] == ["new private"]

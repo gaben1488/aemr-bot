@@ -536,6 +536,7 @@ async def list_unanswered(
         select(Appeal)
         .options(selectinload(Appeal.user))
         .where(
+            Appeal.content_erased_at.is_(None),
             Appeal.status.in_(
                 [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
             )
@@ -566,6 +567,7 @@ async def list_unanswered_with_messages(
         select(Appeal)
         .options(selectinload(Appeal.user), selectinload(Appeal.messages))
         .where(
+            Appeal.content_erased_at.is_(None),
             Appeal.status.in_(
                 [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
             )
@@ -600,6 +602,7 @@ async def list_unanswered_for_user(
     query = (
         select(Appeal)
         .where(
+            Appeal.content_erased_at.is_(None),
             Appeal.user_id == user_id,
             Appeal.status.in_(
                 [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
@@ -653,6 +656,7 @@ async def find_overdue_unanswered(
         query = (
             select(Appeal).options(selectinload(Appeal.user))
             .where(
+                Appeal.content_erased_at.is_(None),
                 Appeal.status.in_([AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]),
                 anchor <= now,
                 ~select(Message.id).where(
@@ -727,6 +731,7 @@ async def count_open(session: AsyncSession) -> int:
             select(func.count())
             .select_from(Appeal)
             .where(
+                Appeal.content_erased_at.is_(None),
                 Appeal.status.in_(
                     [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
                 )
@@ -893,6 +898,7 @@ async def find_active_for_user(session: AsyncSession, user_id: int) -> Appeal | 
     return await session.scalar(
         select(Appeal)
         .where(
+            Appeal.content_erased_at.is_(None),
             Appeal.user_id == user_id,
             Appeal.status.in_(
                 [
