@@ -8,7 +8,7 @@ from io import BytesIO
 from openpyxl import Workbook
 from openpyxl.cell import WriteOnlyCell
 from openpyxl.styles import Alignment, Font
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import selectinload
 
 from aemr_bot.db.models import Appeal, Message
@@ -46,6 +46,13 @@ def _date(value) -> datetime | str:
     # Excel does not support timezone-aware datetimes. The displayed and
     # sortable value is local Kamchatka time, as stated in the summary.
     return value.astimezone(stats.TZ).replace(tzinfo=None)
+
+
+def _summary_preview(value: str | None, limit: int = 300) -> str:
+    """Show an explicitly shortened preview; the complete text is in history."""
+    if not value:
+        return ""
+    return value if len(value) <= limit else value[:limit] + "… [сокращено]"
 
 
 class _Sheet:
@@ -122,10 +129,10 @@ async def build_xlsx_with_epoch(
     workbook = Workbook(write_only=True)
     summary = _Sheet(workbook, "Сводка", ["Показатель", "Значение", "Пояснение"], [55, 25, 80])
     overview = _Sheet(workbook, "Обращения", ["№", "Связано с №", "Подано", "Житель", "Телефон", "Населённый пункт",
-                        "Адрес", "Тема", "Статус", "Первый ответ периода", "Итоговый ответ", "Закрыто",
+                        "Адрес", "Тема", "Краткое содержание", "Статус", "Последнее действие", "Первый ответ периода", "Итоговый ответ", "Закрыто",
                         "Рабочих часов до первого ответа", "Внутренний срок, рабочих часов", "Первый ответ в срок", "Согласие дано",
                         "Согласие отозвано", "Подписка", "Блокировка"],
-                      [9, 16, 19, 22, 17, 25, 34, 25, 20, 19, 19, 19, 18, 22, 20, 19, 19, 15, 15])
+                      [9, 16, 19, 22, 17, 25, 34, 25, 55, 20, 19, 19, 19, 19, 18, 22, 20, 19, 19, 15, 15])
     history = _Sheet(workbook, "История", ["Обращение №", "Запись", "Дата", "Автор", "Часть", "Текст"],
                      [16, 12, 19, 24, 12, 75])
     files = _Sheet(workbook, "Вложения", ["Обращение №", "Запись", "Дата", "Вложение"], [16, 12, 19, 60])
@@ -157,6 +164,12 @@ async def build_xlsx_with_epoch(
             break
         after_id = appeals[-1].id
         first_replies = await appeals_service.first_operator_reply_times(session, [a.id for a in appeals])
+        latest_rows = await session.execute(
+            select(Message.appeal_id, func.max(Message.created_at))
+            .where(Message.appeal_id.in_([a.id for a in appeals]))
+            .group_by(Message.appeal_id)
+        )
+        latest_messages = dict(latest_rows.all())
         for appeal in appeals:
             user = appeal.user
             elapsed = ""
@@ -167,6 +180,9 @@ async def build_xlsx_with_epoch(
             status_label = stats._status_label(appeal.status)
             status_counts[status_label] = status_counts.get(status_label, 0) + 1
             anchor = appeal.sla_anchor_at or appeal.created_at
+            action_dates = [_date(date) for date in (appeal.created_at, appeal.answered_at,
+                            appeal.closed_at, appeal.sla_anchor_at, latest_messages.get(appeal.id)) if date]
+            latest_action = max(action_dates) if action_dates else ""
             if first_reply and anchor:
                 elapsed = round(sla.business_seconds_between(anchor, first_reply) / 3600, 2)
                 if appeal.sla_hours_at_start is None:
@@ -175,7 +191,8 @@ async def build_xlsx_with_epoch(
                     on_time = "нет" if sla.is_overdue(anchor, first_reply, appeal.sla_hours_at_start) else "да"
             overview.append([appeal.id, appeal.related_appeal_id or "", _date(appeal.created_at), getattr(user, "first_name", "") or "",
                              mask_phone(getattr(user, "phone", None)), appeal.locality or "",
-                             appeal.address or "", appeal.topic or "", stats._status_label(appeal.status),
+                             appeal.address or "", appeal.topic or "", _summary_preview(appeal.summary),
+                             stats._status_label(appeal.status), latest_action,
                              _date(first_reply), _date(appeal.answered_at), _date(appeal.closed_at), elapsed,
                              appeal.sla_hours_at_start if appeal.sla_hours_at_start is not None else "Не сохранился", on_time,
                              _date(getattr(user, "consent_pdn_at", None)),

@@ -42,6 +42,10 @@ async def test_report_includes_all_history_and_attachment_labels(session):
     attachment = list(workbook["Вложения"].values)[1]
     assert "Фото" in attachment[-1]
     assert "never-export-token" not in str(attachment)
+    overview = list(workbook["Обращения"].values)
+    columns = {name: index for index, name in enumerate(overview[0])}
+    assert overview[1][columns["Краткое содержание"]].endswith("[сокращено]")
+    assert isinstance(overview[1][columns["Последнее действие"]], datetime)
 
 
 @pytest.mark.asyncio
