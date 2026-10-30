@@ -239,3 +239,10 @@ async def test_erasure_notification_does_not_republish_resident_identifier():
     message = send.await_args.args[1]
     assert '918273645' not in message
     assert '#7' in message
+
+
+@pytest.fixture(autouse=True)
+def _fake_personal_source_boundary(monkeypatch):
+    from aemr_bot.services import data_erasure
+    from tests._helpers import fake_personal_view
+    monkeypatch.setattr(data_erasure, "personal_view", fake_personal_view)

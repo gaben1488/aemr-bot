@@ -128,3 +128,13 @@ def fake_current_user(user, *, session=None):
         yield sess, user
 
     return _cm
+
+
+@asynccontextmanager
+async def fake_personal_view(**kwargs):
+    """Unit-only boundary for handlers whose resident queries are already fake.
+
+    The real context and output hook are exercised with PostgreSQL in
+    test_admin_personal_copy_inventory; this helper does not supply source data.
+    """
+    yield SimpleNamespace(include=AsyncMock())

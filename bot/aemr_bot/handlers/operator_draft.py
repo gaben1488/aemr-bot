@@ -12,7 +12,7 @@ from aemr_bot.db.models import OperatorReplyAttempt
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import get_operator
 from aemr_bot.handlers._common import op_screen
-from aemr_bot.services import appeals, idempotency, operator_drafts
+from aemr_bot.services import appeals, data_erasure, idempotency, operator_drafts
 from aemr_bot.utils.attachments import collect_attachments, has_unsupported_appeal_attachments
 from aemr_bot.utils.event import ack_callback, extract_message_id, is_admin_chat
 from aemr_bot.utils.text_pages import split_text_units
@@ -21,6 +21,16 @@ log = logging.getLogger(__name__)
 
 
 async def show(event, draft, *, notice: str = "", page: int = 0, new: bool = False):
+    # The caller may have loaded the draft before erasure. Validate the live
+    # appeal before inspecting detached content and protect upload/send/edit.
+    try:
+        async with data_erasure.personal_view(appeal_id=draft.appeal_id):
+            await _show_current(event, draft, notice=notice, page=page, new=new)
+    except data_erasure.PersonalDataErasedError:
+        await op_screen(event, "Содержание обращения очищено или недоступно.", new=True)
+
+
+async def _show_current(event, draft, *, notice: str = "", page: int = 0, new: bool = False):
     data = draft.data or {}
     text = "\n".join(data.get("summary_chunks") or [])
     pages = split_text_units(text, 2200)
@@ -85,6 +95,9 @@ async def begin(event, appeal_id: int, *, is_final: bool):
         if (appeal is None or appeal.status not in {"new", "in_progress"}
                 or appeal.user is None or appeal.user.is_blocked or appeal.user.consent_pdn_at is None):
             await ack_callback(event, "Ответ сейчас недоступен. Проверьте состояние обращения и согласие.")
+            return
+        if getattr(appeal, "content_erased_at", None) is not None:
+            await ack_callback(event, "Содержание очищено. Создайте новое обращение.")
             return
         draft = await operator_drafts.get(session, operator.id, locked=True)
         if draft is None:

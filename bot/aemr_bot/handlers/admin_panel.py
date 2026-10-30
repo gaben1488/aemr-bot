@@ -32,7 +32,7 @@ from aemr_bot.handlers._auth import ensure_operator, ensure_role, get_operator
 from aemr_bot.handlers._common import op_screen
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
-from aemr_bot.services import db_backup
+from aemr_bot.services import data_erasure, db_backup
 from aemr_bot.utils.event import (
     extract_message_id,
     get_message_text,
@@ -181,43 +181,44 @@ async def _do_open_tickets(event, page: int = 0, *, new: bool = False) -> None:
     # базе. Без него оператор видит «зависание» после тапа кнопки.
     await mark_typing(event, cfg.admin_group_id)
 
-    async with session_scope() as session:
-        condition = Appeal.status.in_(
-            [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
+    async with data_erasure.personal_view(aggregate=True):
+        async with session_scope() as session:
+            condition = Appeal.status.in_(
+                [AppealStatus.NEW.value, AppealStatus.IN_PROGRESS.value]
+            ) & Appeal.content_erased_at.is_(None)
+            total = await session.scalar(select(func.count()).select_from(Appeal).where(condition)) or 0
+            pages = max(1, (total + 7) // 8)
+            page = min(max(0, page), pages - 1)
+            query = (
+                select(Appeal)
+                .where(condition)
+                .order_by(Appeal.created_at, Appeal.id)
+                .limit(8).offset(page * 8)
+            )
+            open_appeals = (await session.scalars(query)).all()
+
+        if not open_appeals:
+            await op_screen(event, "🎉 Сейчас нет открытых обращений.", kbds.op_back_to_menu_keyboard(), new=new)
+            return
+
+        # Для каждого обращения формируем компактный label кнопки:
+        # фрагмент темы или сути, обрезанный до 40 символов. Один и тот
+        # же limit — чтобы кнопки выровнялись визуально в MAX-клиенте.
+        items: list[tuple[int, str, str]] = []
+        for appeal in open_appeals:
+            topic_preview = (appeal.topic or appeal.summary or "—").strip()
+            topic_preview = topic_preview.replace("\n", " ")
+            if len(topic_preview) > 40:
+                topic_preview = topic_preview[:39] + "…"
+            items.append((appeal.id, appeal.status, topic_preview))
+
+        text = (
+            f"📋 Открытые обращения: {total}\n"
+            f"Страница {page + 1} из {pages}\n\n"
+            f"Нажмите на обращение, чтобы открыть его полную карточку "
+            f"с историей переписки."
         )
-        total = await session.scalar(select(func.count()).select_from(Appeal).where(condition)) or 0
-        pages = max(1, (total + 7) // 8)
-        page = min(max(0, page), pages - 1)
-        query = (
-            select(Appeal)
-            .where(condition)
-            .order_by(Appeal.created_at, Appeal.id)
-            .limit(8).offset(page * 8)
-        )
-        open_appeals = (await session.scalars(query)).all()
-
-    if not open_appeals:
-        await op_screen(event, "🎉 Сейчас нет открытых обращений.", kbds.op_back_to_menu_keyboard(), new=new)
-        return
-
-    # Для каждого обращения формируем компактный label кнопки:
-    # фрагмент темы или сути, обрезанный до 40 символов. Один и тот
-    # же limit — чтобы кнопки выровнялись визуально в MAX-клиенте.
-    items: list[tuple[int, str, str]] = []
-    for appeal in open_appeals:
-        topic_preview = (appeal.topic or appeal.summary or "—").strip()
-        topic_preview = topic_preview.replace("\n", " ")
-        if len(topic_preview) > 40:
-            topic_preview = topic_preview[:39] + "…"
-        items.append((appeal.id, appeal.status, topic_preview))
-
-    text = (
-        f"📋 Открытые обращения: {total}\n"
-        f"Страница {page + 1} из {pages}\n\n"
-        f"Нажмите на обращение, чтобы открыть его полную карточку "
-        f"с историей переписки."
-    )
-    await op_screen(event, text, kbds.open_tickets_listing_keyboard(items, page=page, pages=pages), new=new)
+        await op_screen(event, text, kbds.open_tickets_listing_keyboard(items, page=page, pages=pages), new=new)
 
 
 async def run_delivery_issues(event, page: int = 0) -> None:
@@ -232,36 +233,37 @@ async def run_delivery_issues(event, page: int = 0) -> None:
         await ack_callback(event)
         return
     await ack_callback(event)
-    states = ("pending", "sending", "unknown", "alerting", "unknown_alerted", "partial")
-    async with session_scope() as session:
-        total = await session.scalar(select(func.count()).select_from(Message).where(
-            Message.admin_notice_state.in_(states))) or 0
-        pages = max(1, (total + 7) // 8)
-        page = min(max(0, page), pages - 1)
-        records = list(await session.scalars(select(Message).where(
-            Message.admin_notice_state.in_(states)).order_by(Message.id.desc())
-            .offset(page * 8).limit(8)))
-    labels = {"pending": "ожидает отправки", "sending": "результат не подтверждён",
-              "unknown": "результат неизвестен", "alerting": "результат неизвестен",
-              "unknown_alerted": "результат неизвестен", "partial": "вложения показаны не полностью"}
-    lines = ["📬 Доставка дополнений", f"Записей: {total} · страница {page + 1}/{pages}",
-             "Проверьте чат и историю обращения перед повторной отправкой.", ""]
-    keyboard = InlineKeyboardBuilder()
-    for item in records:
-        lines.append(f"№ {item.appeal_id} · {labels.get(item.admin_notice_state or "", 'проверить')}")
-        keyboard.row(CallbackButton(text=f"📂 Обращение № {item.appeal_id}",
-                                    payload=f"op:open_card:{item.appeal_id}"))
-    if not records:
-        lines.append("Неподтверждённых дополнений нет.")
-    nav = []
-    if page:
-        nav.append(CallbackButton(text="◀️ Назад", payload=f"op:delivery_issues:{page - 1}"))
-    if page + 1 < pages:
-        nav.append(CallbackButton(text="Далее ▶️", payload=f"op:delivery_issues:{page + 1}"))
-    if nav:
-        keyboard.row(*nav)
-    keyboard.row(CallbackButton(text="↩️ Диагностика", payload="op:diag"))
-    await op_screen(event, "\n".join(lines), keyboard.as_markup())
+    async with data_erasure.personal_view(aggregate=True):
+        states = ("pending", "sending", "unknown", "alerting", "unknown_alerted", "partial")
+        async with session_scope() as session:
+            total = await session.scalar(select(func.count()).select_from(Message).where(
+                Message.admin_notice_state.in_(states))) or 0
+            pages = max(1, (total + 7) // 8)
+            page = min(max(0, page), pages - 1)
+            records = list(await session.scalars(select(Message).where(
+                Message.admin_notice_state.in_(states)).order_by(Message.id.desc())
+                .offset(page * 8).limit(8)))
+        labels = {"pending": "ожидает отправки", "sending": "результат не подтверждён",
+                  "unknown": "результат неизвестен", "alerting": "результат неизвестен",
+                  "unknown_alerted": "результат неизвестен", "partial": "вложения показаны не полностью"}
+        lines = ["📬 Доставка дополнений", f"Записей: {total} · страница {page + 1}/{pages}",
+                 "Проверьте чат и историю обращения перед повторной отправкой.", ""]
+        keyboard = InlineKeyboardBuilder()
+        for item in records:
+            lines.append(f"№ {item.appeal_id} · {labels.get(item.admin_notice_state or "", 'проверить')}")
+            keyboard.row(CallbackButton(text=f"📂 Обращение № {item.appeal_id}",
+                                        payload=f"op:open_card:{item.appeal_id}"))
+        if not records:
+            lines.append("Неподтверждённых дополнений нет.")
+        nav = []
+        if page:
+            nav.append(CallbackButton(text="◀️ Назад", payload=f"op:delivery_issues:{page - 1}"))
+        if page + 1 < pages:
+            nav.append(CallbackButton(text="Далее ▶️", payload=f"op:delivery_issues:{page + 1}"))
+        if nav:
+            keyboard.row(*nav)
+        keyboard.row(CallbackButton(text="↩️ Диагностика", payload="op:diag"))
+        await op_screen(event, "\n".join(lines), keyboard.as_markup())
 
 
 async def run_reply_issues(event, page: int = 0) -> None:
@@ -276,34 +278,35 @@ async def run_reply_issues(event, page: int = 0) -> None:
         await ack_callback(event)
         return
     await ack_callback(event)
-    conditions = OperatorReplyAttempt.state.in_(["sending", "unknown", "confirmed", "not_delivered"])
-    async with session_scope() as session:
-        total = await session.scalar(select(func.count()).select_from(OperatorReplyAttempt).where(conditions)) or 0
-        pages = max(1, (total + 7) // 8)
-        page = min(max(page, 0), pages - 1)
-        records = list(await session.scalars(select(OperatorReplyAttempt).where(conditions)
-                                             .order_by(OperatorReplyAttempt.id.desc())
-                                             .offset(page * 8).limit(8)))
-    labels = {"sending": "результат неизвестен", "unknown": "результат неизвестен",
-              "confirmed": "записывается в историю", "not_delivered": "не доставлен · черновик"}
-    lines = ["✉️ Проверка ответов", f"Записей: {total} · страница {page + 1}/{pages}",
-             "Проверьте переписку перед повторной отправкой.", ""]
-    keyboard = InlineKeyboardBuilder()
-    for item in records:
-        lines.append(f"№ {item.appeal_id} · {labels[item.state]}")
-        keyboard.row(CallbackButton(text=f"📄 Ответ по № {item.appeal_id}",
-                                    payload=f"op:reply_attempt:{item.id}:0"))
-    if not records:
-        lines.append("Ответов для проверки нет.")
-    nav = []
-    if page:
-        nav.append(CallbackButton(text="◀️ Назад", payload=f"op:reply_issues:{page - 1}"))
-    if page + 1 < pages:
-        nav.append(CallbackButton(text="Далее ▶️", payload=f"op:reply_issues:{page + 1}"))
-    if nav:
-        keyboard.row(*nav)
-    keyboard.row(CallbackButton(text="↩️ Диагностика", payload="op:diag"))
-    await op_screen(event, "\n".join(lines), keyboard.as_markup())
+    async with data_erasure.personal_view(aggregate=True):
+        conditions = OperatorReplyAttempt.state.in_(["sending", "unknown", "confirmed", "not_delivered"])
+        async with session_scope() as session:
+            total = await session.scalar(select(func.count()).select_from(OperatorReplyAttempt).where(conditions)) or 0
+            pages = max(1, (total + 7) // 8)
+            page = min(max(page, 0), pages - 1)
+            records = list(await session.scalars(select(OperatorReplyAttempt).where(conditions)
+                                                 .order_by(OperatorReplyAttempt.id.desc())
+                                                 .offset(page * 8).limit(8)))
+        labels = {"sending": "результат неизвестен", "unknown": "результат неизвестен",
+                  "confirmed": "записывается в историю", "not_delivered": "не доставлен · черновик"}
+        lines = ["✉️ Проверка ответов", f"Записей: {total} · страница {page + 1}/{pages}",
+                 "Проверьте переписку перед повторной отправкой.", ""]
+        keyboard = InlineKeyboardBuilder()
+        for item in records:
+            lines.append(f"№ {item.appeal_id} · {labels[item.state]}")
+            keyboard.row(CallbackButton(text=f"📄 Ответ по № {item.appeal_id}",
+                                        payload=f"op:reply_attempt:{item.id}:0"))
+        if not records:
+            lines.append("Ответов для проверки нет.")
+        nav = []
+        if page:
+            nav.append(CallbackButton(text="◀️ Назад", payload=f"op:reply_issues:{page - 1}"))
+        if page + 1 < pages:
+            nav.append(CallbackButton(text="Далее ▶️", payload=f"op:reply_issues:{page + 1}"))
+        if nav:
+            keyboard.row(*nav)
+        keyboard.row(CallbackButton(text="↩️ Диагностика", payload="op:diag"))
+        await op_screen(event, "\n".join(lines), keyboard.as_markup())
 
 
 async def _do_diag(event) -> None:

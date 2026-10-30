@@ -353,3 +353,10 @@ async def test_search_does_not_echo_private_phone_query(found):
     ):
         assert await mod.handle_audience_search_text(event, phone) is True
     assert phone not in str(send.call_args)
+
+
+@pytest.fixture(autouse=True)
+def _fake_personal_source_boundary(monkeypatch):
+    from aemr_bot.services import data_erasure
+    from tests._helpers import fake_personal_view
+    monkeypatch.setattr(data_erasure, "personal_view", fake_personal_view)

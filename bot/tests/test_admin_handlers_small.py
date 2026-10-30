@@ -16,6 +16,13 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+
+@pytest.fixture(autouse=True)
+def _fake_personal_source_boundary(monkeypatch):
+    from aemr_bot.services import data_erasure
+    from tests._helpers import fake_personal_view
+    monkeypatch.setattr(data_erasure, "personal_view", fake_personal_view)
+
 from tests._helpers import fake_session_scope as _fake_session_scope
 from tests._helpers import make_event
 

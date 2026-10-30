@@ -77,3 +77,10 @@ async def test_open_edits_fresh_list_but_preserves_historical_event(monkeypatch)
         assert menu_tracker.get_last_menu_mid(ADMIN_CHAT_ID) == "view-after-event"
     finally:
         menu_tracker.clear_all()
+
+
+@pytest.fixture(autouse=True)
+def _fake_personal_source_boundary(monkeypatch):
+    from aemr_bot.services import data_erasure
+    from tests._helpers import fake_personal_view
+    monkeypatch.setattr(data_erasure, "personal_view", fake_personal_view)

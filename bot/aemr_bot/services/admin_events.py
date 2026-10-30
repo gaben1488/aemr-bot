@@ -7,6 +7,7 @@ from typing import Any
 
 from aemr_bot.config import settings as cfg
 from aemr_bot.db.session import session_scope
+from aemr_bot.services import data_erasure
 from aemr_bot.services import users as users_service
 from aemr_bot.utils.pii_mask import mask_phone as _mask_phone
 
@@ -91,11 +92,18 @@ async def notify_consent_given(bot: Any, *, max_user_id: int) -> None:
     if not notify_toggles.is_enabled("admin_notify_consent"):
         log.debug("notify_consent_given: admin_notify_consent disabled, suppressed")
         return
-    desc = await _describe_user(max_user_id)
-    await _send(
-        bot,
-        f"✅ Житель дал согласие на обработку ПДн.\n{desc}",
-    )
+    if not cfg.admin_group_id:
+        return
+    try:
+        async with data_erasure.personal_view(max_user_ids=[max_user_id]):
+            desc = await _describe_user(max_user_id)
+            await _send(
+                bot,
+                f"✅ Житель дал согласие на обработку ПДн.\n{desc}",
+            )
+    except data_erasure.PersonalDataErasedError:
+        # A delayed notification must not recreate an erased identifier.
+        return
 
 
 async def notify_consent_revoked(
@@ -110,26 +118,33 @@ async def notify_consent_revoked(
     тихим режимом. Правовое основание дальнейшей обработки оценивается
     ответственным лицом.
     """
-    desc = await _describe_user(max_user_id)
-    if open_appeal_ids:
-        ids = ", ".join(f"#{appeal_id}" for appeal_id in open_appeal_ids[:20])
-        more = f" и ещё {len(open_appeal_ids) - 20}" if len(open_appeal_ids) > 20 else ""
-        detail = (
-            f"Открытые обращения: {ids}{more}.\n"
-            f"Проверьте порядок дальнейшей работы и сроки очистки данных."
-        )
-    else:
-        detail = "Открытых обращений у этого жителя сейчас нет."
-    from maxapi.types import CallbackButton
-    from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
-    keyboard = InlineKeyboardBuilder()
-    keyboard.row(CallbackButton(text="📋 Открыть очередь", payload="op:open_tickets"))
-    await _send(
-        bot,
-        f"⚠️ Житель отозвал согласие на ПДн.\n{desc}\n\n{detail}",
-        critical=True,
-        attachments=[keyboard.as_markup()],
-    )
+    if not cfg.admin_group_id:
+        return
+    try:
+        async with data_erasure.personal_view(max_user_ids=[max_user_id]):
+            desc = await _describe_user(max_user_id)
+            if open_appeal_ids:
+                ids = ", ".join(f"#{appeal_id}" for appeal_id in open_appeal_ids[:20])
+                more = f" и ещё {len(open_appeal_ids) - 20}" if len(open_appeal_ids) > 20 else ""
+                detail = (
+                    f"Открытые обращения: {ids}{more}.\n"
+                    f"Проверьте порядок дальнейшей работы и сроки очистки данных."
+                )
+            else:
+                detail = "Открытых обращений у этого жителя сейчас нет."
+            from maxapi.types import CallbackButton
+            from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
+            keyboard = InlineKeyboardBuilder()
+            keyboard.row(CallbackButton(text="📋 Открыть очередь", payload="op:open_tickets"))
+            await _send(
+                bot,
+                f"⚠️ Житель отозвал согласие на ПДн.\n{desc}\n\n{detail}",
+                critical=True,
+                attachments=[keyboard.as_markup()],
+            )
+    except data_erasure.PersonalDataErasedError:
+        # A delayed notification must not recreate an erased identifier.
+        return
 
 
 async def notify_broadcast_subscribed(bot: Any, *, max_user_id: int) -> None:
@@ -145,11 +160,18 @@ async def notify_broadcast_subscribed(bot: Any, *, max_user_id: int) -> None:
             "suppressed"
         )
         return
-    desc = await _describe_user(max_user_id)
-    await _send(
-        bot,
-        f"🔔 Житель подписался на муниципальные уведомления.\n{desc}",
-    )
+    if not cfg.admin_group_id:
+        return
+    try:
+        async with data_erasure.personal_view(max_user_ids=[max_user_id]):
+            desc = await _describe_user(max_user_id)
+            await _send(
+                bot,
+                f"🔔 Житель подписался на муниципальные уведомления.\n{desc}",
+            )
+    except data_erasure.PersonalDataErasedError:
+        # A delayed notification must not recreate an erased identifier.
+        return
 
 
 async def notify_broadcast_unsubscribed(
@@ -171,12 +193,19 @@ async def notify_broadcast_unsubscribed(
             "suppressed"
         )
         return
-    desc = await _describe_user(max_user_id)
-    await _send(
-        bot,
-        f"🔕 Житель отписался от муниципальных уведомлений.\n{desc}\n"
-        f"Источник отписки: {source}",
-    )
+    if not cfg.admin_group_id:
+        return
+    try:
+        async with data_erasure.personal_view(max_user_ids=[max_user_id]):
+            desc = await _describe_user(max_user_id)
+            await _send(
+                bot,
+                f"🔕 Житель отписался от муниципальных уведомлений.\n{desc}\n"
+                f"Источник отписки: {source}",
+            )
+    except data_erasure.PersonalDataErasedError:
+        # A delayed notification must not recreate an erased identifier.
+        return
 
 
 async def notify_data_erased(
