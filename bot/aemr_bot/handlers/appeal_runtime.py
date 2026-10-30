@@ -169,7 +169,7 @@ async def persist_and_dispatch_appeal(
     try:
         # Recovery also participates in the inbox/erasure lifecycle gate:
         # a startup scan must not overwrite a newer live citizen action.
-        async with guard(max_user_id), get_user_lock(max_user_id), current_user(max_user_id) as (session, user):
+        async with guard(max_user_id), get_user_lock(max_user_id), current_user(max_user_id) as (session, _current):
             user = await users_service.find_by_max_id(session, max_user_id, for_update=True)
             if user is None:
                 return None

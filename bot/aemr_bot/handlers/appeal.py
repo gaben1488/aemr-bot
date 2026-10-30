@@ -476,10 +476,11 @@ async def _cb_appeal_submit(event, max_user_id: int, payload: str) -> None:
 
 
 async def _cb_draft(event, max_user_id: int, payload: str) -> None:
-    from aemr_bot.handlers import menu
-    from aemr_bot.utils.text_pages import split_text_units
     from maxapi.types import CallbackButton
     from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
+
+    from aemr_bot.handlers import menu
+    from aemr_bot.utils.text_pages import split_text_units
 
     parts = payload.split(":")
     action = parts[1] if len(parts) > 1 else ""
@@ -521,7 +522,10 @@ async def _cb_draft(event, max_user_id: int, payload: str) -> None:
     invalid_notice = "Эта кнопка относится к другому черновику."
     async with session_scope() as session:
         user = await users_service.find_by_max_id(session, max_user_id, for_update=True)
-        valid = bool(user and user.dialog_state in {
+        if user is None:
+            await ack_callback(event, "Черновик недоступен.")
+            return
+        valid = bool(user.dialog_state in {
                      DialogState.AWAITING_SUMMARY.value, DialogState.AWAITING_FOLLOWUP_TEXT.value}
                      and (user.dialog_data or {}).get("draft_token") == token)
         draft_state = user.dialog_state if valid else None
@@ -538,9 +542,9 @@ async def _cb_draft(event, max_user_id: int, payload: str) -> None:
         elif valid and action == "view":
             data = dict(user.dialog_data or {})
         elif valid and action == "new_related":
-            source_id = (user.dialog_data or {}).get("appeal_id")
+            raw_source_id = (user.dialog_data or {}).get("appeal_id")
             try:
-                source_id = int(source_id)
+                source_id = int(raw_source_id or 0)
             except (TypeError, ValueError):
                 source_id = 0
             source = await appeals_service.get_by_id(session, source_id, for_update=True) if source_id > 0 else None
@@ -582,9 +586,7 @@ async def _cb_draft(event, max_user_id: int, payload: str) -> None:
             text="Пришлите новый текст одним сообщением. Прежний текст сохранится, пока вы не пришлёте замену; вложения останутся.",
             attachments=[keyboards.draft_edit_cancel_keyboard(token)],
         )
-    elif action == "edit_cancel":
-        await appeal_funnel.show_summary_draft(event, max_user_id)
-    elif action == "new_related":
+    elif action == "edit_cancel" or action == "new_related":
         await appeal_funnel.show_summary_draft(event, max_user_id)
     elif action == "view":
         try:
@@ -836,6 +838,13 @@ def register(dp: Dispatcher) -> None:
                     broadcast_handler._wizards.pop(operator_id, None)
                     admin_cmd_module._op_wizard_drop(operator_id)
                     op_reply.drop_reply_intent(operator_id)
+                    from aemr_bot.services import operator_drafts, operators
+                    async with session_scope() as session:
+                        operator = await operators.get(session, operator_id)
+                        if operator is not None:
+                            draft = await operator_drafts.get(session, operator.id, locked=True)
+                            if draft is not None and draft.state in {"editing", "paused"}:
+                                await session.delete(draft)
                     # Intent правки настроек (consumer handle_settings_edit_text).
                     admin_settings._intent_drop(operator_id)
                     # Wizard шаблонов рассылок (consumer handle_wizard_text).
@@ -846,7 +855,7 @@ def register(dp: Dispatcher) -> None:
                 if event.bot is not None:
                     await event.bot.send_message(
                         chat_id=cfg.admin_group_id,
-                        text="Текущие мастера и черновики ответа сброшены.",
+                        text="Мастера и неотправленные черновики отменены. Начатую отправку проверьте в диагностике.",
                         attachments=[keyboards.op_back_to_menu_keyboard()],
                     )
                 return

@@ -6,7 +6,7 @@ import hashlib
 import json
 import logging
 from collections.abc import Awaitable, Callable
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -653,6 +653,7 @@ async def _job_monthly_report(send_admin_document) -> None:
             log.debug("monthly-stats: admin_notify_monthly_stats disabled, suppressed")
             return
         from datetime import UTC, timedelta
+
         from aemr_bot.services import complete_stats, privacy_epoch
 
         now = datetime.now(TZ)
@@ -829,6 +830,7 @@ async def _warn_about_approaching_pdn_deadline(send_admin_text) -> None:
         if not approaching:
             return
         from sqlalchemy import func, select
+
         from aemr_bot.db.models import Appeal, AppealStatus, User
 
         async with session_scope() as session:

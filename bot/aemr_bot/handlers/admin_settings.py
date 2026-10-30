@@ -340,11 +340,11 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
         await _show_notify_card(event)
         return
     if rest.startswith("notify:set:"):
-        rest2 = rest.removeprefix("notify:set:").rsplit(":", 2)
-        if len(rest2) != 3 or rest2[1] not in {"0", "1"} or not rest2[2].isdigit():
+        notify_parts = rest.removeprefix("notify:set:").rsplit(":", 2)
+        if len(notify_parts) != 3 or notify_parts[1] not in {"0", "1"} or not notify_parts[2].isdigit():
             await _show_notify_card(event)
             return
-        await _toggle_notify(event, rest2[0], expected=rest2[1] == "1", revision=int(rest2[2]))
+        await _toggle_notify(event, notify_parts[0], expected=notify_parts[1] == "1", revision=int(notify_parts[2]))
         return
 
     if rest == "pr:start":

@@ -311,6 +311,19 @@ class Message(Base):
     appeal: Mapped[Appeal] = relationship(back_populates="messages")
 
 
+class OperatorReplyDraft(Base):
+    """One durable composition per operator; a send claim is never auto-replayed."""
+
+    __tablename__ = "operator_reply_drafts"
+    operator_id: Mapped[int] = mapped_column(ForeignKey("operators.id", ondelete="CASCADE"), primary_key=True)
+    appeal_id: Mapped[int] = mapped_column(ForeignKey("appeals.id", ondelete="CASCADE"), index=True)
+    token: Mapped[str] = mapped_column(String(32), unique=True)
+    is_final: Mapped[bool] = mapped_column(Boolean)
+    state: Mapped[str] = mapped_column(String(16), default="editing", server_default="editing")
+    data: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
 class OperatorReplyAttempt(Base):
     __tablename__ = "operator_reply_attempts"
 
@@ -323,6 +336,7 @@ class OperatorReplyAttempt(Base):
     is_final: Mapped[bool] = mapped_column(Boolean)
     state: Mapped[str] = mapped_column(String(16), index=True)
     max_message_id: Mapped[str | None] = mapped_column(String(64))
+    delivery_parts: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
     confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

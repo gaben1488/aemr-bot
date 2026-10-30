@@ -61,7 +61,7 @@ class _Sheet:
         self.number = 0
         self.rows = 0
         self.ws = None
-        self.completed = []
+        self.completed: list[tuple] = []
         self._new()
 
     def _new(self) -> None:
@@ -112,7 +112,8 @@ def _attachment_description(item) -> str:
     label = {"image": "Фото", "video": "Видео", "file": "Файл", "audio": "Аудио"}.get(
         str(item.get("type", "")).lower(), "Вложение"
     )
-    payload = item.get("payload") if isinstance(item.get("payload"), dict) else {}
+    raw_payload = item.get("payload")
+    payload = raw_payload if isinstance(raw_payload, dict) else {}
     name = item.get("filename") or payload.get("filename") or item.get("name") or ""
     return f"{label}: {name}" if name else label
 
@@ -172,7 +173,7 @@ async def build_xlsx_with_epoch(
         latest_messages = dict(latest_rows.all())
         for appeal in appeals:
             user = appeal.user
-            elapsed = ""
+            elapsed: float | str = ""
             on_time = ""
             first_reply = first_replies.get(appeal.id)
             if first_reply is not None:
@@ -202,10 +203,10 @@ async def build_xlsx_with_epoch(
             for period_record in appeal.sla_history or []:
                 if not isinstance(period_record, dict):
                     continue
-                def period_date(field):
+                def period_date(field, record=period_record):
                     try:
                         from datetime import datetime
-                        return _date(datetime.fromisoformat(period_record[field]))
+                        return _date(datetime.fromisoformat(record[field]))
                     except (ValueError, KeyError, TypeError):
                         return ""
                 known = (period_record.get("assessment") == "at_reopen"

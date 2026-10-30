@@ -4,8 +4,9 @@ Revision ID: 0031
 Revises: 0030
 """
 from collections.abc import Sequence
-from alembic import op
+
 import sqlalchemy as sa
+from alembic import op
 
 revision: str = "0031"
 down_revision: str | None = "0030"

@@ -23,16 +23,15 @@ from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 
-from aemr_bot.handlers import admin_panel
 from aemr_bot import keyboards as kbds
 from aemr_bot import texts
 from aemr_bot.config import settings as cfg
+from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
-from aemr_bot.handlers import admin_commands, callback_router
+from aemr_bot.handlers import admin_commands, admin_panel, callback_router
 from aemr_bot.handlers import broadcast as broadcast_handler
 from aemr_bot.handlers import broadcast_templates as broadcast_templates_handler
 from aemr_bot.handlers._auth import ensure_operator, get_operator
-from aemr_bot.db.models import OperatorRole
 from aemr_bot.services import admin_relay, appeal_history, card_format, consent_history
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.utils.event import ack_callback, send_or_edit_screen
@@ -187,6 +186,7 @@ async def _op_reply_attempt(event, payload: str) -> None:
     """Display the saved response without sending or changing its state."""
     from maxapi.types import CallbackButton
     from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
+
     from aemr_bot.db.models import OperatorReplyAttempt
     from aemr_bot.services import privacy_epoch
     from aemr_bot.utils.text_pages import split_text_units
@@ -218,6 +218,11 @@ async def _op_reply_attempt(event, payload: str) -> None:
                   "Сотрудник отметил, что ответ не доставлен. Можно подготовить новый ответ."
                   if attempt.state == "not_delivered" else
                   "Результат отправки неизвестен. Проверьте переписку перед повтором.")
+        transport = list(attempt.delivery_parts or [])
+        confirmed_parts = sum(1 for part in transport if part.get("state") == "confirmed")
+        status += f"\nТранспортных частей подтверждено: {confirmed_parts}; начато: {len(transport)}."
+        if transport and transport[-1].get("state") != "confirmed":
+            status += f" Последняя часть № {len(transport)} требует сверки."
         keyboard = InlineKeyboardBuilder()
         nav = []
         if page:
@@ -270,6 +275,7 @@ async def _op_reply_resolve(event, payload: str) -> None:
     """Confirm a human's explicit reconciliation, never send automatically."""
     from maxapi.types import CallbackButton
     from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
+
     from aemr_bot.db.models import OperatorReplyAttempt
     from aemr_bot.services import appeal_locks, operator_reply_attempts, privacy_epoch
     from aemr_bot.utils.event import get_user_id
@@ -369,6 +375,7 @@ async def _op_consent(event, payload: str) -> None:
 async def _op_word(event, appeal_id: int) -> None:
     """Export one appeal only after checking the actor's operator role."""
     import asyncio
+
     from aemr_bot.services import admin_bus, appeal_word, uploads
     from aemr_bot.utils.resident_lifecycle import guard
 
@@ -573,7 +580,13 @@ async def _op_operators_action(event, payload: str) -> None:
 # (`broadcast_templates.handle_callback` → bool). Узкий `None` заставлял
 # бы оборачивать такие цели пустой обёрткой ради типа — ровно те
 # обёртки, которые здесь и убирали.
+async def _op_reply_draft(event, payload: str):
+    from aemr_bot.handlers import operator_draft
+    await operator_draft.callback(event, payload)
+
+
 _PREFIX_RAW: tuple[tuple[str, Callable[[object, str], Awaitable[object]]], ...] = (
+    ("op:replydraft:", _op_reply_draft),
     ("op:reply_cancel:", lambda e, p: admin_commands.run_reply_cancel(e, p.removeprefix("op:reply_cancel:"))),
     ("op:reply_resolve:", _op_reply_resolve),
     ("op:reply_confirm:", _op_reply_resolve),

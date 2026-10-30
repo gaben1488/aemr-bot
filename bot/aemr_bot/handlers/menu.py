@@ -856,7 +856,7 @@ async def do_forget(event, max_user_id: int):
     """
 
     closed_ids: list[int] = []
-    async with current_user(max_user_id) as (session, user):
+    async with current_user(max_user_id) as (session, _user):
         closed_ids = await users_service.erase_pdn_detailed(session, max_user_id) or []
         await ops_service.write_audit(
             session,

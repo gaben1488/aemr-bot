@@ -23,9 +23,9 @@ from aemr_bot.utils.event import extract_message_id
 
 log = logging.getLogger(__name__)
 
-def _chunk_relayable(relayable: list) -> list[list]:
+def _chunk_relayable(relayable: list, *, media_limit: int = 12) -> list[list]:
     """MAX разрешает группу фото/видео, но файлы — только по одному."""
-    chunk_size = max(1, min(12, cfg.attachments_per_relay_message))
+    chunk_size = max(1, min(media_limit, cfg.attachments_per_relay_message))
     batches: list[list] = []
     media: list = []
     for item in relayable:

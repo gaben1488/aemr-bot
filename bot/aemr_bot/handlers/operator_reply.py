@@ -348,7 +348,8 @@ async def _check_reply_dedupe(
 
 
 async def _send_reply_to_citizen(
-    event, *, fresh_appeal, appeal_id: int, text: str, before_send=None
+    event, *, fresh_appeal, appeal_id: int, text: str, before_send=None,
+    stored_attachments: list | None = None, on_part=None
 ) -> tuple[bool, str | None, list[dict]]:
     """Доставить ответ и вернуть результат, ID и состав вложений.
 
@@ -392,44 +393,24 @@ async def _send_reply_to_citizen(
             "заголовком он превышает размер сообщения MAX. Сократите текст и отправьте заново.",
         )
         return False, None, []
-    # MAX допускает набор фото/видео либо один документ вместе с
-    # клавиатурой. Отправляем только полностью подготовленный набор.
-    # Неподдерживаемые и лишние вложения отклоняем до отправки: ответ
-    # не должен считаться доставленным вместе с фотографиями, которых
-    # житель в действительности не получил.
     body = getattr(getattr(event, "message", None), "body", None)
-    raw_attachments = _raw_attachments(body)
-    operator_attachments = collect_attachments(body)
-    if has_unsupported_appeal_attachments(body):
-        await _safe_admin_notice(
-            event, f"⚠️ Ответ по обращению #{appeal_id} не отправлен: сейчас можно "
-            "приложить фото, видео или документ. Удалите другие вложения, снова нажмите "
-            "«Ответить» и отправьте ответ.",
-        )
+    operator_attachments = (collect_attachments(body) if stored_attachments is None
+                            else stored_attachments)
+    if stored_attachments is None and (
+        has_unsupported_appeal_attachments(body)
+        or len(operator_attachments) != len(_raw_attachments(body))
+    ):
+        await _safe_admin_notice(event, "Ответ не отправлен: приложите фото, видео или документы.")
         return False, None, []
-    file_count = sum(1 for att in operator_attachments if _image_attachments._type_name(att) == "file")
-    if file_count and len(operator_attachments) > 1:
-        await _safe_admin_notice(
-            event, f"⚠️ Ответ по обращению #{appeal_id} не отправлен: MAX принимает "
-            "один документ отдельно от других вложений. Уберите остальные вложения, "
-            "снова нажмите «Ответить» и отправьте ответ.",
-        )
-        return False, None, []
-    media_limit = max(1, min(11, cfg.attachments_per_relay_message))
-    if len(operator_attachments) > media_limit:
-        await _safe_admin_notice(
-            event, f"⚠️ Ответ по обращению #{appeal_id} не отправлен: можно приложить "
-            f"до {media_limit} фото или видео. Уменьшите их число, "
-            "снова нажмите «Ответить» и отправьте ответ.",
-        )
+    if len(operator_attachments) > 20:
+        await _safe_admin_notice(event, "Ответ не отправлен: можно приложить до 20 файлов.")
         return False, None, []
     outbound_attachments = _image_attachments.deserialize_for_relay(operator_attachments)
-    if len(outbound_attachments) != len(operator_attachments) or len(operator_attachments) != len(raw_attachments):
-        await _safe_admin_notice(
-            event, f"⚠️ Ответ по обращению #{appeal_id} не отправлен: не удалось подготовить "
-            "все вложения. Снова нажмите «Ответить» и приложите их ещё раз.",
-        )
+    if len(outbound_attachments) != len(operator_attachments):
+        await _safe_admin_notice(event, "Ответ не отправлен: часть вложений недоступна. Приложите их заново.")
         return False, None, []
+    from aemr_bot.services.admin_relay import _chunk_relayable
+    batches = _chunk_relayable(outbound_attachments, media_limit=11) or [[]]
     if before_send is not None:
         try:
             reserved = await before_send(operator_attachments)
@@ -440,41 +421,38 @@ async def _send_reply_to_citizen(
         if not reserved:
             await _safe_admin_notice(event, f"⚠️ Этот ответ по обращению #{appeal_id} уже обрабатывался. Проверьте историю и диагностику перед повтором.")
             return False, None, []
-    try:
-        # ВАЖНО: доставляем по user_id (а не chat_id) — chat_id личного
-        # диалога жителя мы не храним, только MAX user_id.
-        sent = await event.bot.send_message(
-            user_id=target_user_id,
-            text=formatted_text,
-            attachments=[*outbound_attachments, keyboards.back_to_menu_keyboard()],
-        )
-    except Exception as exc:
-        # Исключения MAX могут содержать текст ответа и токены вложений;
-        # полное тело не пишем ни в чат, ни в системный лог.
-        log.warning(
-            "operator_reply: delivery outcome uncertain for appeal=%s (%s)",
-            appeal_id, type(exc).__name__,
-        )
-        await _safe_admin_notice(
-            event,
-            (
-                f"⚠️ Результат доставки ответа по обращению #{appeal_id} "
-                f"неизвестен ({type(exc).__name__}). Ответ мог быть доставлен. "
-                "Проверьте переписку перед повторной отправкой; статус "
-                "обращения в базе пока не изменён."
-            ),
-        )
-        return False, None, []
-    delivered_mid = extract_message_id(sent)
-    if not delivered_mid:
-        await _safe_admin_notice(
-            event,
-            f"⚠️ Результат доставки ответа по обращению #{appeal_id} неизвестен: "
-            "MAX не вернул ID сообщения. Проверьте переписку перед повторной отправкой; "
-            "статус обращения в базе пока не изменён.",
-        )
-        return False, None, []
-    return True, delivered_mid, operator_attachments
+    first_mid = None
+    for index, batch in enumerate(batches):
+        try:
+            # Commit the part claim before MAX. A timeout or crash must leave
+            # the exact uncertain part visible, without sending later parts.
+            if on_part is not None:
+                await on_part(index, "sending", None)
+            sent = await event.bot.send_message(
+                user_id=target_user_id,
+                text=formatted_text if index == 0 else (
+                    f"📎 Вложения к ответу по обращению № {appeal_id} · "
+                    f"часть {index + 1}/{len(batches)}"
+                ),
+                attachments=[*batch, keyboards.back_to_menu_keyboard()],
+            )
+            delivered_mid = extract_message_id(sent)
+            if not delivered_mid:
+                raise RuntimeError("missing_message_id")
+            if on_part is not None:
+                await on_part(index, "confirmed", delivered_mid)
+            first_mid = first_mid or delivered_mid
+        except Exception as exc:
+            log.warning("operator reply part %d/%d uncertain for appeal=%s (%s)",
+                        index + 1, len(batches), appeal_id, type(exc).__name__)
+            await _safe_admin_notice(
+                event, f"⚠️ Результат доставки части {index + 1}/{len(batches)} ответа "
+                f"по обращению #{appeal_id} неизвестен. Ранее подтверждено частей: {index}. "
+                "Следующие части не отправлены. Проверьте переписку и журнал доставки "
+                "перед повторной отправкой; статус обращения пока не изменён.",
+            )
+            return False, None, []
+    return True, first_mid, operator_attachments
 
 
 async def _persist_reply_and_card(
@@ -569,6 +547,7 @@ async def _deliver_operator_reply(
     text: str,
     audit_action: str,
     is_final: bool = True,
+    composition: dict | None = None,
 ) -> bool:
     # Erasure takes the local resident gate then the exclusive privacy lock.
     # Use the same order here and hold the shared database lock through MAX
@@ -582,7 +561,7 @@ async def _deliver_operator_reply(
         await appeal_locks.hold(privacy_session, appeal.id)
         return await _deliver_operator_reply_guarded(
             event, appeal=appeal, operator=operator, text=text,
-            audit_action=audit_action, is_final=is_final,
+            audit_action=audit_action, is_final=is_final, composition=composition,
         )
 
 
@@ -594,6 +573,7 @@ async def _deliver_operator_reply_guarded(
     text: str,
     audit_action: str,
     is_final: bool = True,
+    composition: dict | None = None,
 ) -> bool:
     """Общий путь доставки ответа оператора жителю.
 
@@ -645,11 +625,16 @@ async def _deliver_operator_reply_guarded(
     # Используем свежую запись оператора во всех дальнейших шагах.
     operator = live_operator
 
-    is_dupe, success_key = await _check_reply_dedupe(
-        event, operator=operator, appeal=appeal, text=text
-    )
-    if is_dupe:
-        return True
+    if composition is not None:
+        success_key = "reply_draft:" + composition["token"]
+        if await _is_reply_success_recorded(success_key):
+            return True
+    else:
+        is_dupe, success_key = await _check_reply_dedupe(
+            event, operator=operator, appeal=appeal, text=text
+        )
+        if is_dupe:
+            return True
 
     # Перечитываем обращение свежей сессией прямо перед отправкой —
     # защита от гонки с erase_pdn / закрытием, пока оператор печатал.
@@ -675,9 +660,15 @@ async def _deliver_operator_reply_guarded(
         )
         return attempt_id is not None
 
+    async def note_part(index, state, mid):
+        if attempt_id is not None:
+            await operator_reply_attempts.note_part(attempt_id, index, state, mid)
+
     delivered_ok, delivered_mid, delivered_attachments = await _send_reply_to_citizen(
         event, fresh_appeal=fresh_appeal, appeal_id=appeal.id, text=text,
         before_send=reserve_attempt,
+        stored_attachments=composition.get("attachments", []) if composition is not None else None,
+        on_part=note_part,
     )
     if not delivered_ok:
         if attempt_id is not None:
@@ -709,7 +700,8 @@ async def _deliver_operator_reply_guarded(
         return True
 
     await _mark_reply_success_recorded(success_key)
-    _remember_successful_reply(operator.id, appeal.id, _reply_dedupe_text(event, text))
+    if composition is None:
+        _remember_successful_reply(operator.id, appeal.id, _reply_dedupe_text(event, text))
 
     # DDD sacred event log (2026-05-26): ответ оператора — это **event**
     # в timeline'е обращения. Должна быть НОВАЯ карточка внизу чата с
@@ -768,6 +760,10 @@ async def handle_operator_reply(event: MessageCreated, body, text: str) -> bool:
     админ-группе уходит как ответ по этому обращению, без свайпа и без
     /reply N. Это третий путь ответа после свайпа и команды.
     """
+    from aemr_bot.handlers import operator_draft
+    if await operator_draft.collect(event, body, text):
+        return True
+
     author_id = get_user_id(event)
     if author_id is not None:
         intent = consume_reply_intent(author_id)

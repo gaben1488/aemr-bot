@@ -3,10 +3,16 @@ from __future__ import annotations
 
 import logging
 
-from sqlalchemy import func, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 
-from aemr_bot.db.models import AppealStatus, Message, Operator, OperatorReplyAttempt
+from aemr_bot.db.models import (
+    AppealStatus,
+    Message,
+    Operator,
+    OperatorReplyAttempt,
+    OperatorReplyDraft,
+)
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import appeal_locks, appeals, operators, privacy_epoch
 
@@ -25,6 +31,24 @@ async def reserve(*, appeal_id: int, operator_id: int, source_key: str | None,
             text=text, attachments=attachments, is_final=is_final, state="sending",
         ).on_conflict_do_nothing(index_elements=[OperatorReplyAttempt.source_key])
         return (await session.execute(statement.returning(OperatorReplyAttempt.id))).scalar_one_or_none()
+
+
+async def note_part(attempt_id: int, index: int, state: str, mid: str | None) -> None:
+    """Commit the per-part transport journal without retrying MAX."""
+    async with session_scope() as session:
+        attempt = await session.scalar(select(OperatorReplyAttempt).where(
+            OperatorReplyAttempt.id == attempt_id).with_for_update())
+        if attempt is None or attempt.state != "sending":
+            raise ValueError("Reply attempt is no longer sending")
+        parts = list(attempt.delivery_parts or [])
+        if index > len(parts):
+            raise ValueError("Reply parts out of order")
+        record = {"index": index, "state": state, "mid": mid}
+        if index == len(parts):
+            parts.append(record)
+        else:
+            parts[index] = record
+        attempt.delivery_parts = parts
 
 
 async def mark_unknown(attempt_id: int) -> None:
@@ -149,6 +173,11 @@ async def resolve_unknown(session, attempt_id: int, *, delivered: bool,
         # Preserve the draft so the operator can copy it into a new reply.
         # No resend is initiated by this action.
         attempt.state = "not_delivered"
+    if attempt.source_key and attempt.source_key.startswith("reply_draft:"):
+        await session.execute(delete(OperatorReplyDraft).where(
+            OperatorReplyDraft.token == attempt.source_key.removeprefix("reply_draft:"),
+            OperatorReplyDraft.state == "sending",
+        ))
     await operators.write_audit(
         session, operator_max_user_id=actor_max_id, action="reply_reconciled",
         target=f"appeal #{attempt.appeal_id}",

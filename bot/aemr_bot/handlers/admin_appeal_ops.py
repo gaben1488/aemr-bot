@@ -12,13 +12,12 @@ from __future__ import annotations
 
 import logging
 
-from aemr_bot import keyboards as kbds
 from aemr_bot import texts
 from aemr_bot.config import settings as cfg
-from aemr_bot.db.models import AppealStatus, OperatorRole
+from aemr_bot.db.models import OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator, ensure_role
-from aemr_bot.handlers._common import op_screen, op_send
+from aemr_bot.handlers._common import op_screen
 from aemr_bot.services import admin_card as admin_card_service
 from aemr_bot.services import admin_relay, wizard_registry
 from aemr_bot.services import appeals as appeals_service
@@ -27,7 +26,6 @@ from aemr_bot.services import users as users_service
 from aemr_bot.utils.event import (
     ack_callback,
     get_user_id,
-    is_admin_chat,
 )
 
 log = logging.getLogger(__name__)
@@ -132,110 +130,9 @@ async def run_reply_intent(event, appeal_id: int, *, is_final: bool = True) -> N
     - сбрасываем активные wizard'ы (broadcast, add-operator) этого
       оператора, чтобы следующий текст не утёк туда
     """
-    from aemr_bot.handlers import admin_operators
-    from aemr_bot.handlers import broadcast as broadcast_handler
-    from aemr_bot.handlers import operator_reply as op_reply
+    from aemr_bot.handlers import operator_draft
 
-    if not is_admin_chat(event):
-        await ack_callback(event)
-        return
-    if not await ensure_operator(event):
-        await ack_callback(event)
-        return
-    operator_id = get_user_id(event)
-    if operator_id is None:
-        await ack_callback(event)
-        return
-
-    async with session_scope() as session:
-        appeal = await appeals_service.get_by_id(session, appeal_id)
-        if appeal is None:
-            await ack_callback(event)
-            await _op_appeal_not_found(event, appeal_id)
-            return
-        if appeal.status in {AppealStatus.CLOSED.value, AppealStatus.ANSWERED.value}:
-            await ack_callback(event, "Обращение завершено. Сначала возобновите его.")
-            return
-        if appeal.user is None or appeal.user.is_blocked:
-            await ack_callback(event)
-            await op_screen(
-                event,
-                f"Житель по обращению #{appeal_id} заблокирован — ответ не "
-                f"будет доставлен через бот. Если ответ всё-таки нужен, "
-                f"сначала снимите блокировку.",
-            )
-            return
-        # NEW → IN_PROGRESS: оператор взял в работу. Видно жителю.
-        await appeals_service.mark_in_progress(session, appeal_id)
-
-    # Сбрасываем чужие wizard'ы того же оператора.
-    broadcast_handler._wizards.pop(operator_id, None)
-    admin_operators._op_wizard_drop(operator_id)
-
-    # P2 #22 — race rapid double-tap: если оператор уже готовил ответ
-    # на ДРУГОЕ обращение, intent перезаписался бы молча, и следующее
-    # сообщение оператора ушло бы не туда, куда он думает. Ловим это
-    # явно: предупреждаем «отменён ответ на #X, теперь на #Y», чтобы
-    # оператор сам решил, продолжить или прервать.
-
-    existing = wizard_registry.get_reply_intent(operator_id)
-    if existing is not None:
-        prev_appeal_id, _prev_is_final, _prev_ts = existing
-        if prev_appeal_id != appeal_id:
-            try:
-                await op_send(
-                    event,
-                    (
-                        f"⚠️ Подготовка ответа на обращение #{prev_appeal_id} "
-                        f"отменена — вы только что переключились на ответ "
-                        f"по обращению #{appeal_id}. Если хотели остаться на "
-                        f"#{prev_appeal_id}, нажмите «✉️ Ответить» под его "
-                        f"карточкой ещё раз."
-                    ),
-                )
-            except Exception:
-                log.exception(
-                    "run_reply_intent: failed to warn about intent "
-                    "overwrite operator=%s prev=%s new=%s",
-                    operator_id, prev_appeal_id, appeal_id,
-                )
-
-    token = op_reply.remember_reply_intent(operator_id, appeal_id, is_final=is_final)
-    label = "Ответ" if is_final else "Промежуточный ответ"
-    await ack_callback(event, f"{label} на #{appeal_id}")
-    prompt_hint = (
-        f"✉️ Введите текст ОТВЕТА на обращение #{appeal_id} "
-        f"(после отправки обращение закроется в «отвечено»).\n"
-        if is_final
-        else (
-            f"💬 Введите ПРОМЕЖУТОЧНЫЙ ответ на обращение #{appeal_id} "
-            f"(обращение останется в работе, можно отправить ещё "
-            f"уточнения).\n"
-        )
-    )
-    # SACRED #4: prompt-ввод НЕ должен edit'нуть карточку обращения.
-    # send_or_edit_screen без force_new_message edit'нул бы admin appeal
-    # card (tracker всё ещё на ней после прошлого render). Карточка с
-    # timeline'ом превратилась бы в input-prompt — содержимое потеряно.
-    # force_new_message=True гарантирует, что prompt всегда уходит
-    # отдельным новым сообщением, а карточка остаётся видимой выше.
-    await op_screen(
-        event,
-        f"{prompt_hint}"
-        f"Лимит текста — {cfg.answer_max_chars} символов; весь ответ вместе с заголовком "
-        "должен поместиться в сообщение MAX; некоторые эмодзи занимают больше места. "
-        f"Можно приложить до {max(1, min(11, cfg.attachments_per_relay_message))} фото или видео "
-        "либо один документ. Отправьте следующее сообщение в этот чат "
-        "или нажмите «Отменить».",
-        kbds.cancel_reply_intent_keyboard(token),
-        new=True,
-    )
-    # Памятка про whitelist гос-доменов раньше дублировалась здесь
-    # (2026-05-27 убрана по решению владельца). Полная памятка живёт
-    # в `📋 Памятка оператора` (op:help_full), а конкретный whitelist
-    # — в broadcast preview (там критично перед массовой отправкой).
-    # Reply prompt оставлен лаконичным — оператор отвечает по обращению
-    # десятки раз в день, не нужно каждый раз листать памятку.
+    await operator_draft.begin(event, appeal_id, is_final=is_final)
 
 
 async def run_reply_cancel(event, token: str = "") -> None:

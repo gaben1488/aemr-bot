@@ -41,7 +41,8 @@ def _attachment_lines(attachments) -> list[str]:
             result.append(f"{index}. Вложение: сведения недоступны")
             continue
         kind = types.get(str(item.get("type", "")).lower(), "Вложение")
-        payload = item.get("payload") if isinstance(item.get("payload"), dict) else {}
+        raw_payload = item.get("payload")
+        payload = raw_payload if isinstance(raw_payload, dict) else {}
         name = item.get("filename") or payload.get("filename") or item.get("name") or ""
         result.append(f"{index}. {kind}" + (f" — {name}" if name else ""))
     return result

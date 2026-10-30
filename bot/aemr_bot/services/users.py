@@ -17,6 +17,7 @@ from aemr_bot.db.models import (
     Event,
     Message,
     OperatorReplyAttempt,
+    OperatorReplyDraft,
     User,
 )
 
@@ -364,6 +365,9 @@ async def _redact_appeal_payloads_for_user(session: AsyncSession, user_id: int) 
     населённый пункт и факт обращения.
     """
     appeal_ids = select(Appeal.id).where(Appeal.user_id == user_id)
+    await session.execute(delete(OperatorReplyDraft).where(
+        OperatorReplyDraft.appeal_id.in_(appeal_ids)
+    ))
     await session.execute(delete(OperatorReplyAttempt).where(
         OperatorReplyAttempt.appeal_id.in_(appeal_ids)
     ))

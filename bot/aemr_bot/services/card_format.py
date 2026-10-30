@@ -288,12 +288,13 @@ def admin_card(appeal: Appeal, user: User) -> str:
         answer_limit=settings.answer_max_chars,
     )
     status = getattr(appeal, "status", None)
-    status_emoji, status_text = STATUS_LABELS.get(status, ("•", "Статус неизвестен"))
+    status_emoji, status_text = STATUS_LABELS.get(status or "", ("•", "Статус неизвестен"))
     header = f"{status_emoji} Состояние: {status_text}"
     anchor = getattr(appeal, "sla_anchor_at", None) or getattr(appeal, "created_at", None)
     if (status in {"new", "in_progress"} and anchor is not None
             and anchor.tzinfo is not None and "messages" in getattr(appeal, "__dict__", {})):
         from datetime import UTC
+
         from aemr_bot.services import sla
 
         responses = [m for m in _loaded_messages(appeal)

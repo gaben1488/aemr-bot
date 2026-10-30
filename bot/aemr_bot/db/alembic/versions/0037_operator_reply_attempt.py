@@ -4,9 +4,10 @@ Revision ID: 0037
 Revises: 0036
 """
 from collections.abc import Sequence
+
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import JSONB
 from alembic import op
+from sqlalchemy.dialects.postgresql import JSONB
 
 revision: str = "0037"
 down_revision: str | None = "0036"

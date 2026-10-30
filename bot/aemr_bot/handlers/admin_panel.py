@@ -23,8 +23,8 @@ from aemr_bot.db.models import (
     Event,
     Message,
     MessageDirection,
-    OperatorRole,
     OperatorReplyAttempt,
+    OperatorRole,
     User,
 )
 from aemr_bot.db.session import session_scope
@@ -90,6 +90,12 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
             log.debug("show_op_menu refusal notice skipped", exc_info=True)
         return
 
+    from aemr_bot.services import operator_drafts
+    async with session_scope() as session:
+        draft = await operator_drafts.get(session, op.id, locked=True)
+        if draft is not None and draft.state == "editing":
+            draft.state = "paused"
+
     is_it = op.role == OperatorRole.IT.value
     can_broadcast = op.role in {
         OperatorRole.IT.value,
@@ -116,7 +122,8 @@ async def show_op_menu(event, *, pin: bool = False) -> None:
         event,
         texts.OP_HELP.format(answer_limit=cfg.answer_max_chars),
         kbds.op_help_keyboard(
-            open_count=open_count, is_it=is_it, can_broadcast=can_broadcast
+            open_count=open_count, is_it=is_it, can_broadcast=can_broadcast,
+            reply_draft_token=draft.token if draft is not None else None
         ),
         new=pin,
     )
@@ -218,6 +225,7 @@ async def run_delivery_issues(event, page: int = 0) -> None:
     from maxapi.types import CallbackButton
     from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
     from sqlalchemy import func, select
+
     from aemr_bot.utils.event import ack_callback
 
     if not await ensure_operator(event):
@@ -240,7 +248,7 @@ async def run_delivery_issues(event, page: int = 0) -> None:
              "Проверьте чат и историю обращения перед повторной отправкой.", ""]
     keyboard = InlineKeyboardBuilder()
     for item in records:
-        lines.append(f"№ {item.appeal_id} · {labels.get(item.admin_notice_state, 'проверить')}")
+        lines.append(f"№ {item.appeal_id} · {labels.get(item.admin_notice_state or "", 'проверить')}")
         keyboard.row(CallbackButton(text=f"📂 Обращение № {item.appeal_id}",
                                     payload=f"op:open_card:{item.appeal_id}"))
     if not records:
@@ -261,6 +269,7 @@ async def run_reply_issues(event, page: int = 0) -> None:
     from maxapi.types import CallbackButton
     from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
     from sqlalchemy import func, select
+
     from aemr_bot.utils.event import ack_callback
 
     if not await ensure_operator(event):

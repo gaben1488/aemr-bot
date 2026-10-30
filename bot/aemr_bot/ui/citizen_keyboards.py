@@ -521,9 +521,6 @@ def useful_info_keyboard(
 
 __all__ = [
     "appeal_draft_keyboard",
-    "draft_resume_keyboard",
-    "draft_edit_cancel_keyboard",
-    "closed_followup_draft_keyboard",
     "appeal_history_keyboard",
     "appointment_keyboard",
     "back_to_menu_keyboard",
@@ -531,10 +528,13 @@ __all__ = [
     "back_to_useful_info_keyboard",
     "blocked_user_menu",
     "cancel_keyboard",
+    "closed_followup_draft_keyboard",
     "consent_keyboard",
     "consent_revoke_confirm_keyboard",
     "consent_status_keyboard",
     "contact_request_keyboard",
+    "draft_edit_cancel_keyboard",
+    "draft_resume_keyboard",
     "empty_list_keyboard",
     "forget_confirm_keyboard",
     "geo_confirm_keyboard",

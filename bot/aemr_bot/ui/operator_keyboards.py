@@ -409,6 +409,7 @@ def op_help_keyboard(
     open_count: int | None = None,
     is_it: bool = False,
     can_broadcast: bool = False,
+    reply_draft_token: str | None = None,
 ):
     """Клавиатура быстрых действий, закреплённая в админ-чате: ближайший
     аналог telegram-кнопки меню, который есть в MAX. Каждое нажатие
@@ -434,6 +435,8 @@ def op_help_keyboard(
     # в две колонки на узких экранах MAX обрезаются до «...». Один ряд —
     # один смысл, ничего не теряется.
     kb = InlineKeyboardBuilder()
+    if reply_draft_token:
+        kb.row(CallbackButton(text="✍️ Сохранённый ответ", payload=f"op:replydraft:page0:{reply_draft_token}"))
     open_label = "📋 Открытые обращения"
     if open_count is not None:
         open_label = f"📋 Открытые обращения ({open_count})"

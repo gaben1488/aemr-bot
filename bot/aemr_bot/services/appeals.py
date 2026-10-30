@@ -6,7 +6,14 @@ from sqlalchemy import case, delete, desc, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from aemr_bot.db.models import Appeal, AppealStatus, Message, MessageDirection, OperatorReplyAttempt, User
+from aemr_bot.db.models import (
+    Appeal,
+    AppealStatus,
+    Message,
+    MessageDirection,
+    OperatorReplyAttempt,
+    User,
+)
 from aemr_bot.services import sla as sla_service
 
 

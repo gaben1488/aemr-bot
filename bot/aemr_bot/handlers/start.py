@@ -9,7 +9,6 @@ from aemr_bot.db.session import session_scope
 from aemr_bot.handlers import resident_name_gate
 from aemr_bot.handlers._common import current_user
 from aemr_bot.services import admin_events, card_format, settings_store, uploads
-from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import broadcasts as broadcasts_service
 from aemr_bot.services import operators as ops_service
 from aemr_bot.services import policy as policy_service
@@ -72,8 +71,8 @@ async def _reset_funnel_if_stuck(max_user_id: int | None) -> None:
         return
     from aemr_bot.db.models import DialogState
 
-    async with current_user(max_user_id) as (session, user):
-        if user.dialog_state and user.dialog_state != DialogState.IDLE.value:
+    async with current_user(max_user_id) as (session, current):
+        if current.dialog_state and current.dialog_state != DialogState.IDLE.value:
             from aemr_bot.services import resident_drafts
             user = await users_service.find_by_max_id(session, max_user_id, for_update=True)
             if user is not None and not await resident_drafts.pause(session, user):
@@ -476,6 +475,7 @@ async def _send_export_as_file(event, body: str | None = None, *, prepared_path=
 async def _write_user_export(session, user, path) -> None:
     """Write a bounded-memory copy of all still stored resident records."""
     from sqlalchemy import func, select
+
     from aemr_bot.db.models import Appeal, Message
 
     count = await session.scalar(select(func.count(Appeal.id)).where(Appeal.user_id == user.id))
@@ -534,7 +534,9 @@ async def cmd_export(event):
     """Hidden access command; generate a file without loading all history into RAM."""
     import tempfile
     from pathlib import Path
+
     from sqlalchemy import text as sql_text
+
     from aemr_bot.services import privacy_epoch
 
     max_user_id = get_user_id(event)

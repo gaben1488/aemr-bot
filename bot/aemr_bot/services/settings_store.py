@@ -921,14 +921,14 @@ async def set_value(
     """
     if expected_revision is not None:
         if expected_revision == 0:
-            stmt = (pg_insert(Setting).values(key=key, value=value)
+            revision_stmt = (pg_insert(Setting).values(key=key, value=value)
                     .on_conflict_do_nothing(index_elements=[Setting.key])
                     .returning(Setting.key))
         else:
-            stmt = (sa_update(Setting).where(Setting.key == key, Setting.revision == expected_revision)
+            update_revision_stmt = (sa_update(Setting).where(Setting.key == key, Setting.revision == expected_revision)
                     .values(value=value, revision=Setting.revision + 1,
                             updated_at=sa_func.now(), synced_at=None).returning(Setting.key))
-        result = await session.execute(stmt)
+        result = await session.execute(revision_stmt if expected_revision == 0 else update_revision_stmt)
         if result.scalar_one_or_none() is None:
             raise SettingConflictError(key)
         return
