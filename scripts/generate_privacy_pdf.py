@@ -137,7 +137,7 @@ def main() -> int:
 
     styles = getSampleStyleSheet()
     base = dict(fontName="PolicySerif", alignment=TA_JUSTIFY, leading=18)
-    body = ParagraphStyle("body", parent=styles["BodyText"], fontSize=14, firstLineIndent=12.5 * mm, spaceAfter=4, **base)
+    body = ParagraphStyle("body", parent=styles["BodyText"], fontSize=14, firstLineIndent=12.5 * mm, spaceAfter=2, allowWidows=0, allowOrphans=0, **base)
     h1 = ParagraphStyle("h1", parent=body, fontName="PolicySerif-Bold", alignment=TA_CENTER, firstLineIndent=0, fontSize=14, leading=18, spaceAfter=8)
     h2 = ParagraphStyle("h2", parent=body, fontName="PolicySerif-Bold", alignment=TA_CENTER, firstLineIndent=0, fontSize=14, leading=18, spaceBefore=8, spaceAfter=4)
     h3 = ParagraphStyle("h3", parent=body, fontName="PolicySerif-Bold", alignment=TA_CENTER, firstLineIndent=0, fontSize=14, leading=18, spaceBefore=6, spaceAfter=2)
