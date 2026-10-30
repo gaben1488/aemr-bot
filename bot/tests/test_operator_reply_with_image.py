@@ -19,8 +19,16 @@ import pytest
 
 from tests._helpers import fake_session_scope as _fake_session_scope
 from tests._helpers import make_event
+from tests._reply_delivery_helpers import tracked_reply_send
 
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
+
+
+@pytest.fixture
+def tracked_delivery(monkeypatch):
+    transport = AsyncMock(side_effect=tracked_reply_send)
+    monkeypatch.setattr("aemr_bot.services.data_erasure.tracked_send", transport)
+    return transport
 
 
 def _event_with_image(*, chat_id: int = 100, user_id: int = 7) -> SimpleNamespace:
@@ -88,7 +96,7 @@ def _patches_for_delivery():
 
 class TestImageRelay:
     @pytest.mark.asyncio
-    async def test_operator_image_attached_to_citizen_message(self) -> None:
+    async def test_operator_image_attached_to_citizen_message(self, tracked_delivery) -> None:
         """Контракт: картинка оператора пробрасывается жителю в
         outbound `attachments` вместе с клавиатурой."""
         from aemr_bot.handlers import operator_reply as opr
@@ -137,7 +145,7 @@ class TestImageRelay:
         )
 
     @pytest.mark.asyncio
-    async def test_text_only_reply_regression(self) -> None:
+    async def test_text_only_reply_regression(self, tracked_delivery) -> None:
         """Regression-guard: текстовый ответ без картинки — никаких
         лишних вложений сверх клавиатуры."""
         from aemr_bot.handlers import operator_reply as opr
@@ -176,7 +184,7 @@ class TestImageRelay:
 
 
 @pytest.mark.asyncio
-async def test_sent_images_are_saved_with_corresponding_reply():
+async def test_sent_images_are_saved_with_corresponding_reply(tracked_delivery):
     from aemr_bot.handlers import operator_reply as opr
 
     event = _event_with_image()
@@ -210,7 +218,7 @@ async def test_sent_images_are_saved_with_corresponding_reply():
      {'type': 'audio', 'payload': {'token': 'audio'}}],
     [{'type': 'audio', 'payload': {'token': 'audio'}}],
 ])
-async def test_unsupported_or_too_many_operator_attachments_do_not_send_partial_answer(attachments):
+async def test_unsupported_or_too_many_operator_attachments_do_not_send_partial_answer(attachments, tracked_delivery):
     from aemr_bot.handlers import operator_reply as opr
 
     event = _event_without_image()
@@ -236,7 +244,7 @@ def test_identical_text_with_different_photos_is_not_duplicate():
 
 
 @pytest.mark.asyncio
-async def test_reply_timeout_reports_unknown_delivery_without_false_failure():
+async def test_reply_timeout_reports_unknown_delivery_without_false_failure(tracked_delivery):
     from aemr_bot.handlers import operator_reply as opr
 
     event = _event_without_image()
@@ -250,7 +258,7 @@ async def test_reply_timeout_reports_unknown_delivery_without_false_failure():
 
 
 @pytest.mark.asyncio
-async def test_reply_without_message_id_requires_manual_delivery_check():
+async def test_reply_without_message_id_requires_manual_delivery_check(tracked_delivery):
     from aemr_bot.handlers import operator_reply as opr
 
     event = _event_without_image()
@@ -265,7 +273,7 @@ async def test_reply_without_message_id_requires_manual_delivery_check():
     {'type': 'file', 'payload': {'token': 'document'}},
     {'type': 'video', 'payload': {'token': 'video'}},
 ])
-async def test_operator_can_send_a_single_document_or_video_and_store_it(attachment):
+async def test_operator_can_send_a_single_document_or_video_and_store_it(attachment, tracked_delivery):
     from aemr_bot.handlers import operator_reply as opr
 
     event = _event_without_image()
@@ -281,7 +289,7 @@ async def test_operator_can_send_a_single_document_or_video_and_store_it(attachm
 
 
 @pytest.mark.asyncio
-async def test_operator_can_send_photos_and_video_together():
+async def test_operator_can_send_photos_and_video_together(tracked_delivery):
     from aemr_bot.handlers import operator_reply as opr
 
     attachments = [{'type': 'image', 'payload': {'token': 'photo'}},

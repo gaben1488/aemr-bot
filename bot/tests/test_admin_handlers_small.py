@@ -498,6 +498,8 @@ class TestRunStats:
                    AsyncMock(return_value=(b"data", "сегодня", 5, 4))), \
              patch("aemr_bot.services.privacy_epoch.hold_export_if_current",
                    AsyncMock(return_value=True)) as guard, \
+             patch("aemr_bot.services.data_erasure.tracked_send",
+                   AsyncMock(return_value=SimpleNamespace(body=SimpleNamespace(mid="stats-mid")))) as delivery, \
              patch("aemr_bot.services.uploads.upload_bytes",
                    AsyncMock(return_value="upload-token")), \
              patch("aemr_bot.services.uploads.file_attachment",
@@ -505,7 +507,10 @@ class TestRunStats:
              patch("aemr_bot.handlers.admin_panel.show_op_menu",
                    AsyncMock()):
             await admin_stats.run_stats(event, "today")
-        text = event.bot.send_message.call_args.kwargs["text"]
+        delivery.assert_awaited_once()
+        assert delivery.await_args.args == (event.bot,)
+        assert delivery.await_args.kwargs["kind"] == "bulk_export"
+        text = delivery.await_args.kwargs["text"]
         guard.assert_awaited_once()
         assert guard.await_args.args[1] == 4
         assert "Статистика" in text
@@ -521,12 +526,14 @@ class TestRunStats:
                           AsyncMock(return_value=(b"private", "сегодня", 5, 4))), \
              patch("aemr_bot.services.privacy_epoch.hold_export_if_current",
                    AsyncMock(return_value=False)) as guard, \
-             patch("aemr_bot.services.uploads.upload_bytes", AsyncMock()) as upload:
+             patch("aemr_bot.services.uploads.upload_bytes", AsyncMock()) as upload, \
+             patch("aemr_bot.services.data_erasure.tracked_send", AsyncMock()) as delivery:
             sent = await admin_stats._send_stats_xlsx(event, "today", target_chat_id=123)
         assert sent is False
         guard.assert_awaited_once()
         assert guard.await_args.args[1] == 4
         upload.assert_not_awaited()
+        delivery.assert_not_awaited()
         event.bot.send_message.assert_awaited_once()
         assert "Отчёт не отправлен" in event.bot.send_message.await_args.kwargs["text"]
 
@@ -581,6 +588,8 @@ class TestStatsFilenameTimezone:
                    AsyncMock(return_value=(b"xlsx", "2 июля", 3, 4))), \
              patch("aemr_bot.services.privacy_epoch.hold_export_if_current",
                    AsyncMock(return_value=True)) as guard, \
+             patch("aemr_bot.services.data_erasure.tracked_send",
+                   AsyncMock(return_value=SimpleNamespace(body=SimpleNamespace(mid="stats-mid")))) as delivery, \
              patch("aemr_bot.services.uploads.upload_bytes",
                    AsyncMock(return_value="TOK")), \
              patch("aemr_bot.services.uploads.file_attachment",
@@ -589,7 +598,10 @@ class TestStatsFilenameTimezone:
 
         guard.assert_awaited_once()
         assert guard.await_args.args[1] == 4
-        text = event.bot.send_message.call_args.kwargs.get("text", "")
+        delivery.assert_awaited_once()
+        assert delivery.await_args.kwargs["kind"] == "bulk_export"
+        assert delivery.await_args.kwargs["chat_id"] == -1
+        text = delivery.await_args.kwargs["text"]
         assert "2026-07-03" in text, (
             f"ожидалась местная дата 03.07, в имени файла: {text}"
         )

@@ -12,6 +12,7 @@ from aemr_bot.db.models import (
     Message,
     MessageDirection,
     OperatorReplyAttempt,
+    OperatorReplyDraft,
     User,
 )
 from aemr_bot.services import sla as sla_service
@@ -792,6 +793,12 @@ async def purge_old_appeals_content(
     # симметрии не хватало — retention обнулял summary/attachments,
     # но оставлял address висеть в БД дольше срока, установленного
     # оператором. Приводим к тому же поведению.
+    from aemr_bot.services import data_erasure
+    candidate_ids = list((await session.scalars(closed_old_appeals)).all())
+    await data_erasure.request_appeal_cleanup(session, candidate_ids)
+    await session.execute(delete(OperatorReplyDraft).where(
+        OperatorReplyDraft.appeal_id.in_(closed_old_appeals)
+    ))
     await session.execute(delete(OperatorReplyAttempt).where(
         OperatorReplyAttempt.appeal_id.in_(closed_old_appeals)
     ))
