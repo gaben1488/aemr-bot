@@ -296,6 +296,10 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
         from aemr_bot.handlers import admin_settings_sla
         await admin_settings_sla.start(event, operator_id)
         return
+    if rest == "sla:followup":
+        from aemr_bot.handlers import admin_settings_sla
+        await admin_settings_sla.start(event, operator_id, followup=True)
+        return
     if rest.startswith("sla:cancel:"):
         from aemr_bot.handlers import admin_settings_sla
         intent = _intent_get(operator_id)

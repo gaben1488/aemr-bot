@@ -505,6 +505,7 @@ DEFAULTS: dict[str, Any] = {
     # Часовой пояс — `Asia/Kamchatka`, как и для всего расписания.
     # None keeps the existing environment value until explicitly changed.
     "sla_response_hours": None,
+    "sla_followup_hours": None,
     "admin_quiet_hours_enabled": False,
     "admin_quiet_hours_start": 18,
     "admin_quiet_hours_end": 9,
@@ -603,6 +604,7 @@ SCHEMA: dict[str, dict] = {
     "broadcast_max_images": {"type": int, "min": 1, "max": 20},
     # quiet hours: bool + два часа 0–23.
     "sla_response_hours": {"type": int, "min": 1, "max": 168},
+    "sla_followup_hours": {"type": int, "min": 0, "max": 168},
     "admin_quiet_hours_enabled": {"type": bool},
     "admin_quiet_hours_start": {"type": int, "min": 0, "max": 23},
     "admin_quiet_hours_end": {"type": int, "min": 0, "max": 23},

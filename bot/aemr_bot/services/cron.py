@@ -1071,6 +1071,7 @@ async def _job_working_hours_open_reminder(bot) -> None:
             total = await appeals_service.count_open(session)
             first_replies = await appeals_service.first_operator_reply_times(session, [a.id for a in appeals])
             intermediate_replies = await appeals_service.latest_intermediate_reply_times(session, [a.id for a in appeals])
+            followup_hours = await appeals_service.current_followup_hours(session)
         if not appeals:
             await _claim_reminder_snapshot("open_reminder", [], 0)
             return
@@ -1085,9 +1086,9 @@ async def _job_working_hours_open_reminder(bot) -> None:
         # годовалого обращения это сотни итераций. Считаем один раз на
         # обращение и переиспользуем флаг, а не зовём дважды на каждое.
         with_reply = [a for a in appeals if a.id in first_replies]
-        needs_action = [a for a in with_reply if settings.sla_followup_hours > 0
+        needs_action = [a for a in with_reply if followup_hours > 0
                         and a.id in intermediate_replies
-                        and sla_service.is_overdue(intermediate_replies[a.id], now, settings.sla_followup_hours)]
+                        and sla_service.is_overdue(intermediate_replies[a.id], now, followup_hours)]
         flags = [
             (a, sla_service.is_overdue(getattr(a, "sla_anchor_at", None) or a.created_at, now,
                                     appeals_service.response_hours_for(a, settings.sla_response_hours)))
@@ -1123,7 +1124,7 @@ async def _job_working_hours_open_reminder(bot) -> None:
             lines.extend(_format_appeal_lines(ordinary_with_reply, anchors=first_replies))
         if needs_action:
             lines.append(f"\n⏱ Требует дальнейшей работы: после последнего промежуточного ответа прошло "
-                         f"не менее {settings.sla_followup_hours} рабочих ч. Это внутреннее напоминание.")
+                         f"не менее {followup_hours} рабочих ч. Это внутреннее напоминание.")
             lines.extend(_format_appeal_lines(needs_action, anchors=intermediate_replies))
         await _send_with_open_tickets_button(bot, "\n".join(lines).rstrip())
     except Exception:

@@ -21,6 +21,17 @@ async def current_first_response_hours(session: AsyncSession) -> int:
     return settings.sla_response_hours
 
 
+async def current_followup_hours(session: AsyncSession) -> int:
+    """Operational reminder threshold; 0 explicitly disables it."""
+    from aemr_bot.config import settings
+    from aemr_bot.services import settings_store
+
+    value = await settings_store.get(session, "sla_followup_hours")
+    if isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= 168:
+        return value
+    return settings.sla_followup_hours
+
+
 def response_hours_for(appeal: Appeal, fallback: int) -> int:
     value = getattr(appeal, "sla_hours_at_start", None)
     return value if isinstance(value, int) and not isinstance(value, bool) and value > 0 else fallback
