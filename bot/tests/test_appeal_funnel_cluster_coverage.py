@@ -13,7 +13,7 @@ handlers/appeal.py — воронка приёма обращения, FSM-пе�
 * start_appeal_flow: запрос согласия (URL / PDF-token / конфиг-стоп)
 * ask_contact_or_skip: три target_state (нет телефона / нет имени / готов)
 * on_awaiting_contact: телефон из текста + извлечение имени из контакта
-* on_awaiting_summary: happy-path (текст+вложение → finalize)
+* on_awaiting_summary: текст+вложение накапливаются до явной отправки
 * finalize_appeal: rate-limited и пустой ввод
 * on_awaiting_followup_text: rate-limit (min-interval, max-per-hour)
 * menu.start_appeal_followup / start_appeal_repeat (CLOSED) / show_appeal
@@ -59,6 +59,10 @@ def _funnel_event(
 
 
 class TestStartAppealFlowConsent:
+    @pytest.fixture(autouse=True)
+    def no_saved_draft(self, monkeypatch):
+        monkeypatch.setattr("aemr_bot.services.resident_drafts.offer_saved", AsyncMock(return_value=False))
+
     @pytest.mark.asyncio
     async def test_no_consent_with_policy_url_sends_consent_keyboard(self) -> None:
         """Нет consent_pdn_at + есть policy_url (без PDF-token) → запрос
@@ -414,6 +418,10 @@ class TestOnAwaitingContact:
 
 
 class TestOnAwaitingSummaryHappy:
+    @pytest.fixture(autouse=True)
+    def draft_preview(self, monkeypatch):
+        monkeypatch.setattr("aemr_bot.handlers.appeal_funnel.show_summary_draft", AsyncMock())
+
     @pytest.mark.asyncio
     async def test_too_many_attachments_are_not_partially_accepted(self) -> None:
         from aemr_bot.config import settings
@@ -440,7 +448,9 @@ class TestOnAwaitingSummaryHappy:
         from aemr_bot.handlers import appeal_funnel
 
         event = _funnel_event()
-        update = AsyncMock()
+        async def apply_merge(session, uid, merge, **kwargs):
+            return merge({})
+        update = AsyncMock(side_effect=apply_merge)
         finalize = AsyncMock()
         with patch("aemr_bot.handlers.appeal_funnel.collect_attachments", return_value=[]), \
              patch("aemr_bot.handlers.appeal_funnel.session_scope", _fake_session_scope), \
@@ -450,16 +460,16 @@ class TestOnAwaitingSummaryHappy:
                 event, body=SimpleNamespace(), text_body="А" * (settings.summary_max_chars + 1),
                 max_user_id=42,
             )
-        update.assert_not_awaited()
+        update.assert_awaited_once()
         finalize.assert_not_awaited()
-        assert "не" in event.message.answer.await_args.args[0].lower()
+        assert "не добавлена" in event.message.answer.await_args.args[0].lower()
 
     @pytest.mark.asyncio
-    async def test_text_and_attachment_appended_then_finalize(self) -> None:
+    async def test_text_and_attachment_appended_without_submission(self) -> None:
         """Непустой текст + вложение → оба добавлены через
         users_service.update_dialog_data (P2-1: НЕ прямой read-modify-write
-        — тот терял одно из двух сообщений, пришедших подряд), вызван
-        finalize_appeal."""
+        — тот терял одно из двух сообщений, пришедших подряд).
+        Отправка требует отдельного нажатия кнопки."""
         from aemr_bot.handlers import appeal_funnel
 
         event = _funnel_event()
@@ -480,6 +490,9 @@ class TestOnAwaitingSummaryHappy:
         # Хендлер отдаёт merge-КОЛЛАБЛ (append вычисляется под advisory-lock
         # внутри update_dialog_data), а не готовый dict от старого снимка.
         update_data.assert_awaited_once()
+        assert update_data.await_args.kwargs["expected_states"] == {
+            "awaiting_summary", "awaiting_followup_text",
+        }
         merge = update_data.call_args.args[2]
         assert callable(merge)
         # Коллабл поверх свежих данных копит, а не затирает.
@@ -494,7 +507,7 @@ class TestOnAwaitingSummaryHappy:
         fresh = merge({})
         assert fresh["summary_chunks"] == ["Яма во дворе"]
         assert fresh["attachments"] == [{"type": "image", "token": "img1"}]
-        finalize.assert_called_once()
+        finalize.assert_not_called()
 
 
 class TestFinalizeAppeal:
@@ -657,9 +670,9 @@ class TestFollowupRateLimit:
                    return_value=[]), \
              patch("aemr_bot.handlers.appeal_funnel.appeals_service.followup_rate_limit_stats",
                    AsyncMock(return_value=(0, last_at))):
-            await appeal_funnel.on_awaiting_followup_text(
+            await appeal_funnel.submit_followup(
                 event, body=SimpleNamespace(), text_body="ещё деталь",
-                max_user_id=42,
+                max_user_id=42, draft_token="draft-1",
             )
 
         reset.assert_not_called()
@@ -667,9 +680,8 @@ class TestFollowupRateLimit:
         assert "Слишком часто" in text
 
     @pytest.mark.asyncio
-    async def test_max_per_hour_blocks_and_resets(self) -> None:
-        """recent_count >= max-per-hour → отказ + state сбрасывается
-        (иначе житель «застрянет» в AWAITING_FOLLOWUP)."""
+    async def test_max_per_hour_blocks_and_preserves_draft(self) -> None:
+        """Hourly rejection keeps the draft available for explicit retry."""
         from aemr_bot.handlers import appeal_funnel
 
         event = _funnel_event()
@@ -688,12 +700,12 @@ class TestFollowupRateLimit:
                    return_value=[]), \
              patch("aemr_bot.handlers.appeal_funnel.appeals_service.followup_rate_limit_stats",
                    AsyncMock(return_value=(99, None))):
-            await appeal_funnel.on_awaiting_followup_text(
+            await appeal_funnel.submit_followup(
                 event, body=SimpleNamespace(), text_body="ещё деталь",
-                max_user_id=42,
+                max_user_id=42, draft_token="draft-1",
             )
 
-        reset.assert_called_once()
+        reset.assert_not_called()
         text = event.message.answer.call_args.args[0]
         assert "лимит" in text.lower()
 
@@ -716,8 +728,8 @@ class TestFollowupRateLimit:
                    return_value=[]), \
              patch("aemr_bot.handlers.appeal_funnel.appeals_service.followup_rate_limit_stats",
                    rl):
-            await appeal_funnel.on_awaiting_followup_text(
-                event, body=SimpleNamespace(), text_body="   ", max_user_id=42
+            await appeal_funnel.submit_followup(
+                event, body=SimpleNamespace(), text_body="   ", max_user_id=42, draft_token="draft-1"
             )
 
         # До rate-limit не дошло.
@@ -732,6 +744,10 @@ class TestFollowupRateLimit:
 
 
 class TestMenuAppealHappyPaths:
+    @pytest.fixture(autouse=True)
+    def no_saved_draft(self, monkeypatch):
+        monkeypatch.setattr("aemr_bot.services.resident_drafts.offer_saved", AsyncMock(return_value=False))
+
     @pytest.fixture(autouse=True)
     def valid_resident_name(self, monkeypatch):
         from aemr_bot.handlers import resident_name_gate
@@ -759,7 +775,8 @@ class TestMenuAppealHappyPaths:
 
         set_state.assert_called_once()
         assert set_state.call_args.args[2] == DialogState.AWAITING_FOLLOWUP_TEXT
-        assert set_state.call_args.kwargs["data"] == {"appeal_id": 7}
+        assert set_state.call_args.kwargs["data"]["appeal_id"] == 7
+        assert set_state.call_args.kwargs["data"]["draft_token"]
         text = event.bot.send_message.call_args.kwargs.get("text", "")
         assert "#7" in text
 
@@ -1345,7 +1362,7 @@ async def test_followup_with_invalid_attachments_is_not_partially_saved(attachme
 def test_default_input_limit_allows_a_full_max_message():
     from aemr_bot.config import Settings
 
-    assert Settings.model_fields['summary_max_chars'].default == 4000
+    assert Settings.model_fields['summary_max_chars'].default == 20_000
 
 
 @pytest.mark.asyncio
@@ -1357,12 +1374,13 @@ async def test_full_sized_message_is_saved_without_truncation():
     finalize = AsyncMock()
     text = 'Д' * 4000
     with patch.object(appeal_funnel.cfg, 'summary_max_chars', 4000), \
+         patch.object(appeal_funnel, 'show_summary_draft', AsyncMock()), \
          patch('aemr_bot.handlers.appeal_funnel.session_scope', _fake_session_scope), \
          patch('aemr_bot.handlers.appeal_funnel.users_service.update_dialog_data', update), \
          patch('aemr_bot.handlers.appeal_funnel.finalize_appeal', finalize):
         await appeal_funnel.on_awaiting_summary(event, body=SimpleNamespace(), text_body=text, max_user_id=42)
     assert update.await_args.args[2]({})['summary_chunks'] == [text]
-    finalize.assert_awaited_once()
+    finalize.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -1371,7 +1389,8 @@ async def test_summary_preserves_leading_and_trailing_whitespace():
 
     event = _funnel_event()
     update = AsyncMock()
-    with patch('aemr_bot.handlers.appeal_funnel.session_scope', _fake_session_scope), \
+    with patch('aemr_bot.handlers.appeal_funnel.show_summary_draft', AsyncMock()), \
+         patch('aemr_bot.handlers.appeal_funnel.session_scope', _fake_session_scope), \
          patch('aemr_bot.handlers.appeal_funnel.users_service.update_dialog_data', update), \
          patch('aemr_bot.handlers.appeal_funnel.finalize_appeal', AsyncMock()):
         await appeal_funnel.on_awaiting_summary(event, body=SimpleNamespace(),

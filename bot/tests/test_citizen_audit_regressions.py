@@ -34,11 +34,11 @@ def test_geo_east_west_candidates_within_radius(direction, kind, radius):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("change", ["closed", "answered", "blocked", "revoked", "erased", "cancelled", "reassigned", "ok"])
 async def test_followup_rechecks_at_insert_boundary(change):
-    initial_user = SimpleNamespace(id=1, consent_pdn_at=datetime.now(UTC), dialog_data={"appeal_id": 5})
+    initial_user = SimpleNamespace(id=1, consent_pdn_at=datetime.now(UTC), dialog_data={"appeal_id": 5, "draft_token": "draft-1", "summary_chunks": ["Детали"]})
     initial_appeal = SimpleNamespace(id=5, user_id=1, status="new")
     fresh_user = SimpleNamespace(id=1, consent_pdn_at=datetime.now(UTC), is_blocked=False,
                                  dialog_state=DialogState.AWAITING_FOLLOWUP_TEXT.value,
-                                 dialog_data={"appeal_id": 5})
+                                 dialog_data={"appeal_id": 5, "draft_token": "draft-1", "summary_chunks": ["Детали"]})
     fresh_appeal = SimpleNamespace(id=5, user_id=1, status="new", user=fresh_user)
     if change in {"closed", "answered"}:
         fresh_appeal.status = change
@@ -53,7 +53,7 @@ async def test_followup_rechecks_at_insert_boundary(change):
     elif change == "reassigned":
         fresh_appeal.user_id = 2
     event = make_event(chat_id=100, user_id=42)
-    add_message = AsyncMock()
+    add_message = AsyncMock(return_value=SimpleNamespace(id=8))
     get_appeal = AsyncMock(side_effect=[initial_appeal, fresh_appeal])
     get_user = AsyncMock(return_value=fresh_user)
     with patch.object(appeal_funnel, "session_scope", fake_session_scope), \
@@ -64,8 +64,10 @@ async def test_followup_rechecks_at_insert_boundary(change):
          patch.object(appeal_funnel.appeals_service, "get_by_id_with_messages", AsyncMock(return_value=fresh_appeal)), \
          patch.object(appeal_funnel.appeals_service, "followup_rate_limit_stats", AsyncMock(return_value=(0, None))), \
          patch.object(appeal_funnel.appeals_service, "add_user_message", add_message), \
-         patch.object(appeal_funnel.cfg, "admin_group_id", None):
-        await appeal_funnel.on_awaiting_followup_text(event, SimpleNamespace(attachments=[]), "Детали", 42)
+         patch.object(appeal_funnel.cfg, "admin_group_id", None), \
+         patch("aemr_bot.services.followup_delivery.deliver", AsyncMock(return_value=True)):
+
+        await appeal_funnel.submit_followup(event, SimpleNamespace(attachments=[]), "Детали", 42, draft_token="draft-1")
     assert get_appeal.await_args.kwargs == {"for_update": True}
     assert get_user.await_args.kwargs == {"for_update": True}
     if change == "ok":
@@ -91,6 +93,7 @@ async def test_recovery_does_not_finalize_a_different_live_step(state):
     create = AsyncMock()
     reset = AsyncMock()
     with patch.object(appeal_runtime, "current_user", current_user), \
+         patch.object(appeal_runtime.users_service, "find_by_max_id", AsyncMock(return_value=user)), \
          patch.object(appeal_runtime.appeals_service, "create_appeal", create), \
          patch.object(appeal_runtime.users_service, "reset_state", reset):
         assert await appeal_runtime.persist_and_dispatch_appeal(object(), 42, reset_empty=True) is None
@@ -106,7 +109,7 @@ async def test_empty_recovery_reset_is_inside_finalization_transaction(reset_emp
     from aemr_bot.handlers import appeal_runtime
 
     user = SimpleNamespace(id=1, first_name="Иван", is_blocked=False, consent_pdn_at=datetime.now(UTC),
-                           dialog_state=DialogState.AWAITING_SUMMARY.value, dialog_data={})
+                           dialog_state=DialogState.AWAITING_SUMMARY.value, dialog_data={"draft_token": "draft-1"})
     in_transaction = False
 
     @asynccontextmanager
@@ -122,16 +125,18 @@ async def test_empty_recovery_reset_is_inside_finalization_transaction(reset_emp
 
     reset_mock = AsyncMock(side_effect=reset)
     with patch.object(appeal_runtime, "current_user", current_user), \
+         patch.object(appeal_runtime.users_service, "find_by_max_id", AsyncMock(return_value=user)), \
          patch.object(appeal_runtime.appeals_service, "count_recent_for_user", AsyncMock(return_value=0)), \
          patch.object(appeal_runtime.users_service, "reset_state", reset_mock):
-        assert await appeal_runtime.persist_and_dispatch_appeal(object(), 42, reset_empty=reset_empty) is False
+        assert await appeal_runtime.persist_and_dispatch_appeal(object(), 42, reset_empty=reset_empty, draft_token="draft-1") is False
     assert reset_mock.await_count == int(reset_empty)
     assert not in_transaction
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("snapshot", [None, {"consent_prompt_hash": "a" * 64},
-                                      {"consent_prompt_hash": "a" * 64, "consent_prompt_mid": "old-prompt"}])
+                                      {"consent_prompt_hash": "a" * 64, "consent_prompt_mid": "old-prompt"},
+                                      {"consent_prompt_hash": "a" * 64, "consent_prompt_mid": "current-prompt", "consent_prompt_text": "Displayed consent"}])
 async def test_consent_evidence_is_bound_to_displayed_prompt(snapshot):
     from aemr_bot.handlers import appeal
 
@@ -151,7 +156,7 @@ async def test_consent_evidence_is_bound_to_displayed_prompt(snapshot):
          patch.object(appeal.appeal_funnel, "start_appeal_flow", prompt):
         await appeal._cb_consent_yes(event, 42, "consent:yes")
     current_hash.assert_not_awaited()
-    if snapshot and "consent_prompt_mid" not in snapshot:
+    if snapshot and snapshot.get("consent_prompt_mid") == "current-prompt" and snapshot.get("consent_prompt_text"):
         assert accept.await_args.kwargs["text_sha256"] == "a" * 64
         prompt.assert_not_awaited()
     else:

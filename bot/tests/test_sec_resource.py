@@ -273,86 +273,20 @@ async def test_throttle_blocks_before_dispatch(monkeypatch) -> None:
 # ---------------------------------------------------------------------------
 
 
-async def test_recover_stuck_funnels_bounds_concurrency(monkeypatch) -> None:
-    """recover_stuck_funnels не превышает _RECOVERY_CONCURRENCY одновременных
-    корутин персиста, сколько бы воронок ни застряло."""
+@pytest.mark.parametrize("drafts", [[], [10, 11, 12, 13], list(range(50))])
+async def test_restart_preserves_unsubmitted_drafts(monkeypatch, drafts) -> None:
+    """Restart neither submits nor resets drafts, including empty drafts."""
+    from unittest.mock import AsyncMock
     from aemr_bot.handlers import appeal_runtime
 
-    n_stuck = 50
-    ids = list(range(1, n_stuck + 1))
+    find = AsyncMock(return_value=drafts)
+    persist = AsyncMock()
+    reset = AsyncMock()
+    monkeypatch.setattr(appeal_runtime.users_service, "find_stuck_in_summary", find)
+    monkeypatch.setattr(appeal_runtime, "persist_and_dispatch_appeal", persist)
+    monkeypatch.setattr(appeal_runtime.users_service, "reset_state", reset)
 
-    # find_stuck_in_summary читается через session_scope → users_service.
-    async def fake_find(session, idle_seconds):
-        return list(ids)
-
-    @asynccontextmanager
-    async def fake_scope():
-        yield SimpleNamespace()
-
-    monkeypatch.setattr(
-        appeal_runtime.users_service, "find_stuck_in_summary", fake_find
-    )
-    monkeypatch.setattr(appeal_runtime, "session_scope", fake_scope)
-
-    state = {"cur": 0, "peak": 0}
-
-    async def fake_persist(bot, uid, *, reset_empty=False):
-        state["cur"] += 1
-        state["peak"] = max(state["peak"], state["cur"])
-        await asyncio.sleep(0.01)  # форсируем перекрытие
-        state["cur"] -= 1
-        return True  # «финализировано» — нет empty_ids, нет reset-прохода
-
-    monkeypatch.setattr(appeal_runtime, "persist_and_dispatch_appeal", fake_persist)
-
-    finalized = await appeal_runtime.recover_stuck_funnels(bot=SimpleNamespace())
-
-    assert finalized == n_stuck, "все воронки должны отметиться финализированными"
-    assert state["peak"] <= appeal_runtime._RECOVERY_CONCURRENCY, (
-        f"пиковая конкуренция {state['peak']} превысила лимит "
-        f"{appeal_runtime._RECOVERY_CONCURRENCY} — fan-out не ограничен"
-    )
-    assert state["peak"] >= 2, (
-        "перекрытия не было — тест не доказывает ограничение"
-    )
-
-
-async def test_recover_preserves_result_order_with_bound(monkeypatch) -> None:
-    """Empty resets belong to the finalization transaction, never a later pass."""
-    from aemr_bot.handlers import appeal_runtime
-
-    ids = [10, 11, 12, 13]
-    # 11 и 13 — «пустые» (вернут False), должны попасть в reset_state.
-    empty = {11, 13}
-
-    async def fake_find(session, idle_seconds):
-        return list(ids)
-
-    reset_calls: list[int] = []
-
-    fake_session = SimpleNamespace()
-
-    @asynccontextmanager
-    async def fake_scope():
-        yield fake_session
-
-    async def fake_persist(bot, uid, *, reset_empty=False):
-        assert reset_empty is True
-        return uid not in empty  # False для пустых, True для остальных
-
-    async def fake_reset(session, uid):
-        reset_calls.append(uid)
-
-    monkeypatch.setattr(
-        appeal_runtime.users_service, "find_stuck_in_summary", fake_find
-    )
-    monkeypatch.setattr(
-        appeal_runtime.users_service, "reset_state", fake_reset
-    )
-    monkeypatch.setattr(appeal_runtime, "session_scope", fake_scope)
-    monkeypatch.setattr(appeal_runtime, "persist_and_dispatch_appeal", fake_persist)
-
-    finalized = await appeal_runtime.recover_stuck_funnels(bot=SimpleNamespace())
-
-    assert finalized == 2, "финализировано должно быть 2 непустых воронки"
-    assert reset_calls == [], "Recovery must not reset states after releasing the finalization lock"
+    assert await appeal_runtime.recover_stuck_funnels(bot=SimpleNamespace()) == 0
+    find.assert_not_awaited()
+    persist.assert_not_awaited()
+    reset.assert_not_awaited()

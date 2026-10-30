@@ -17,7 +17,7 @@ from sqlalchemy.ext.compiler import compiles
 
 from aemr_bot.db.models import Appeal, Base, Message, Operator, User
 from aemr_bot.handlers import appeal_runtime
-from aemr_bot.services import admin_card
+from aemr_bot.services import admin_card, followup_delivery, operator_reply_attempts
 
 
 @compiles(JSONB, "sqlite")
@@ -77,6 +77,8 @@ async def card_db(tmp_path, monkeypatch):
 
     monkeypatch.setattr(admin_card, "session_scope", scope)
     monkeypatch.setattr(appeal_runtime, "session_scope", scope)
+    monkeypatch.setattr(followup_delivery, "session_scope", scope)
+    monkeypatch.setattr(operator_reply_attempts, "recover_confirmed", AsyncMock(return_value=0))
     monkeypatch.setattr(admin_card.cfg, "admin_group_id", 555)
     async with scope() as session:
         user = User(max_user_id=12, first_name="Житель", consent_pdn_at=datetime.now(UTC))
@@ -170,7 +172,7 @@ async def test_started_send_is_not_replayed_and_warns_once_after_restart(card_db
 
 
 @pytest.mark.asyncio
-async def test_failed_uncertainty_warning_is_retried_without_replaying_card(card_db):
+async def test_unknown_uncertainty_warning_is_never_blindly_replayed(card_db):
     async with card_db.scope() as session:
         saved = await session.get(Appeal, card_db.id)
         saved.initial_card_state = "sending"
@@ -178,10 +180,12 @@ async def test_failed_uncertainty_warning_is_retried_without_replaying_card(card
     assert await appeal_runtime.recover_unpublished_appeals(bot) == 0
     async with card_db.scope() as session:
         saved = await session.get(Appeal, card_db.id)
-        assert saved.initial_card_notified is False
+        assert saved.initial_card_state == "uncertain"
+        # This flag reserves the warning attempt; it does not confirm delivery.
+        assert saved.initial_card_notified is True
     bot.send_message.side_effect = None
     assert await appeal_runtime.recover_unpublished_appeals(bot) == 0
-    assert bot.send_message.await_count == 2
+    assert bot.send_message.await_count == 1
     assert all("Не горит фонарь" not in call.kwargs["text"]
                for call in bot.send_message.call_args_list)
 
@@ -307,7 +311,7 @@ async def test_cancelled_send_is_durable_and_not_replayed(card_db):
 
 
 @pytest.mark.asyncio
-async def test_warning_without_message_id_is_not_recorded_as_delivered(card_db):
+async def test_warning_without_message_id_remains_uncertain_without_replay(card_db):
     async with card_db.scope() as session:
         saved = await session.get(Appeal, card_db.id)
         saved.initial_card_state = "sending"
@@ -316,4 +320,8 @@ async def test_warning_without_message_id_is_not_recorded_as_delivered(card_db):
     assert await appeal_runtime.recover_unpublished_appeals(bot) == 0
     async with card_db.scope() as session:
         saved = await session.get(Appeal, card_db.id)
-        assert saved.initial_card_notified is False
+        assert saved.initial_card_state == "uncertain"
+        # This flag reserves the warning attempt; it does not confirm delivery.
+        assert saved.initial_card_notified is True
+    assert await appeal_runtime.recover_unpublished_appeals(bot) == 0
+    assert bot.send_message.await_count == 1
