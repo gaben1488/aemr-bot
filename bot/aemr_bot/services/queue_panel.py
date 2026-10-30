@@ -17,12 +17,12 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
+from aemr_bot import keyboards as kbds
 from aemr_bot.config import settings
 from aemr_bot.db.models import Setting
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import sla, work_schedule
-from aemr_bot.ui.operator_keyboards import queue_panel_keyboard
 from aemr_bot.utils.event import check_edit_result, extract_message_id
 
 log = logging.getLogger(__name__)
@@ -96,13 +96,15 @@ async def refresh(bot: Any) -> None:
         signature = hashlib.sha256(text.encode()).hexdigest()
         mid = state.get("message_id")
         if mid:
-            if state.get("signature") == signature:
+            if state.get("signature") == signature and not state.get("edit_unknown"):
                 return
             try:
                 result = await bot.edit_message(message_id=mid, text=text,
-                                                attachments=[queue_panel_keyboard()], notify=False)
+                                                attachments=[kbds.queue_panel_keyboard()], notify=False)
                 check_edit_result(result)
             except Exception:
+                row.value = {**state, "edit_unknown": True,
+                             "token": state.get("token") or uuid4().hex}
                 log.exception("queue panel edit failed for %s; preserving identity", mid)
                 return
             row.value = {"state": "confirmed", "message_id": mid, "signature": signature}
@@ -116,7 +118,7 @@ async def refresh(bot: Any) -> None:
     mid = None
     try:
         sent = await bot.send_message(chat_id=settings.admin_group_id, text=text,
-                                      attachments=[queue_panel_keyboard()], notify=False)
+                                      attachments=[kbds.queue_panel_keyboard()], notify=False)
         mid = extract_message_id(sent)
     except Exception:
         log.exception("queue panel initial send has unknown outcome; not retrying")
@@ -141,11 +143,11 @@ async def recovery_status() -> dict:
         if row is None or not isinstance(row.value, dict):
             return {}
         state = dict(row.value)
-        if state.get("state") not in {"attempting", "unknown"}:
+        if state.get("state") not in {"attempting", "unknown"} and not state.get("edit_unknown"):
             return state
         # A live request must not be reset. After a crash the committed claim
         # becomes recoverable, but only following an explicit MAX check.
-        recoverable = (state.get("state") == "unknown"
+        recoverable = (bool(state.get("edit_unknown")) or state.get("state") == "unknown"
                        or row.updated_at < datetime.now(UTC) - timedelta(minutes=5))
         if recoverable and not state.get("token"):
             state["token"] = uuid4().hex
@@ -165,7 +167,7 @@ async def allow_recreate(token: str) -> bool:
         state = row.value
         if not token or state.get("token") != token:
             return False
-        if state.get("state") != "unknown" and not (
+        if not state.get("edit_unknown") and state.get("state") != "unknown" and not (
             state.get("state") == "attempting"
             and row.updated_at < datetime.now(UTC) - timedelta(minutes=5)
         ):

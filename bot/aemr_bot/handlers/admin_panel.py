@@ -587,10 +587,11 @@ async def _do_diag(event) -> None:
     )
     from aemr_bot.services import queue_panel
     queue_status = await queue_panel.recovery_status()
-    queue_uncertain = queue_status.get("state") in {"attempting", "unknown"}
+    queue_uncertain = (queue_status.get("state") in {"attempting", "unknown"}
+                       or bool(queue_status.get("edit_unknown")))
     if queue_uncertain:
         warnings_lines.append(
-            "⚠️ Панель очереди: результат создания неизвестен. IT должен проверить "
+            "⚠️ Панель очереди: результат создания или изменения неизвестен. IT должен проверить "
             "сообщения MAX; перед пересозданием удалить найденную старую панель. "
             "Автоматического повтора нет."
         )
