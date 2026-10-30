@@ -37,6 +37,7 @@ import pytest
 
 from tests._helpers import fake_current_user, make_event
 from tests._helpers import fake_session_scope as _fake_session_scope
+from tests._personal_view_helpers import personal_view_boundary  # noqa: F401
 
 pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi")
 
@@ -743,6 +744,7 @@ class TestFollowupRateLimit:
 # ============================================================================
 
 
+@pytest.mark.usefixtures("personal_view_boundary")
 class TestMenuAppealHappyPaths:
     @pytest.fixture(autouse=True)
     def no_saved_draft(self, monkeypatch):

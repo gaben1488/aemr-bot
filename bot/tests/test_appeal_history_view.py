@@ -2,7 +2,10 @@
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
+import pytest
+
 from aemr_bot.services import appeal_history
+from tests._personal_view_helpers import personal_view_boundary  # noqa: F401
 
 
 def test_history_reader_keeps_every_character_with_emoji_and_many_messages():
@@ -51,6 +54,7 @@ def test_preview_is_bounded_and_explains_that_full_text_is_in_history():
     assert text.endswith('КОНЕЦ')
 
 
+@pytest.mark.usefixtures("personal_view_boundary")
 async def test_citizen_cannot_read_someone_elses_history(monkeypatch):
     from unittest.mock import AsyncMock
 
@@ -62,7 +66,7 @@ async def test_citizen_cannot_read_someone_elses_history(monkeypatch):
     monkeypatch.setattr(menu.appeals_service, 'get_by_id_with_messages', AsyncMock(return_value=appeal))
     show = AsyncMock()
     monkeypatch.setattr(menu, '_send_or_edit_menu', show)
-    await menu.show_appeal_history(make_event(), 1, 0, 42)
+    await menu.show_appeal_history(make_event(user_id=42), 1, 0, 42)
     assert show.await_args.kwargs['text'] == 'Обращение не найдено.'
     assert 'ЧУЖИЕ ДАННЫЕ' not in str(show.await_args)
 
