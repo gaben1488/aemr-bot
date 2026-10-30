@@ -75,3 +75,23 @@ async def test_summary_distinguishes_appeals_from_response_messages(session):
     assert summary["Ответов без сохранённого типа (сообщений)"] == 1
     overview = list(workbook["Обращения"].values)
     assert isinstance(overview[1][2], datetime)
+
+
+@pytest.mark.asyncio
+async def test_legacy_period_export_does_not_present_estimate_as_fact(session):
+    from aemr_bot.db.models import Appeal, User
+    from aemr_bot.services.complete_stats import build_xlsx
+
+    user = User(max_user_id=490103, first_name="Анна")
+    session.add(user)
+    await session.flush()
+    appeal = Appeal(user_id=user.id, topic="Дорога", summary="Текст", attachments=[],
+                    sla_history=[{"assessment": "at_reopen_legacy", "sla_hours": 4,
+                                  "first_response": "2026-10-01T01:00:00+00:00", "overdue": True}])
+    session.add(appeal)
+    await session.flush()
+    content, _, _ = await build_xlsx(session, "all")
+    workbook = load_workbook(BytesIO(content), read_only=True, data_only=True)
+    rows = list(workbook["Сроки"].values)
+    assert rows[1][4] == "Не сохранился"
+    assert rows[1][5] == "Нет данных"

@@ -137,9 +137,13 @@ async def _op_open_card(event, appeal_id: int) -> None:
         "✉️ Ответ — кнопкой ниже.",
     )
     periods = getattr(appeal, "sla_history", None) or []
-    breaches = sum(1 for period in periods if isinstance(period, dict) and period.get("overdue") is True)
+    assessed = [period for period in periods if isinstance(period, dict)
+                and period.get("assessment") == "at_reopen"
+                and period.get("first_response") and isinstance(period.get("overdue"), bool)]
+    breaches = sum(1 for period in assessed if period["overdue"])
     if periods:
-        text += f"\n\n⏱ Прошлых периодов: {len(periods)}, с просрочкой: {breaches}."
+        text += (f"\n\n⏱ Прошлых периодов: {len(periods)}, с просрочкой: {breaches}; "
+                 f"без достоверной оценки: {len(periods) - len(assessed)}.")
     text += "\n\nДля ответа используйте кнопку под карточкой."
     keyboard = kbds.appeal_admin_actions(
         appeal.id, appeal.status, is_it=operator.role == OperatorRole.IT.value,

@@ -388,13 +388,12 @@ async def reopen(session: AsyncSession, appeal_id: int) -> ReopenResult:
     # отзыв согласия мог выставить closed_due_to_revoke=True, а reopen
     # всё равно воскрешал стёртое обращение (status=IN_PROGRESS при
     # closed_due_to_revoke=True). Теперь такое обновление не сматчит.
-    from aemr_bot.config import settings
     from aemr_bot.services import appeal_locks
     await appeal_locks.hold(session, appeal_id)
 
     # Capture the previous response period under the same row lock as the
-    # reopen. The assessment uses the SLA configuration at this moment; it
-    # does not pretend to reconstruct settings from before this feature.
+    # reopen. Only the saved historical setting supports an assessment;
+    # the current setting must not be projected backwards.
     previous = await session.scalar(select(Appeal).where(Appeal.id == appeal_id).with_for_update())
     if (previous is None or previous.status not in {AppealStatus.ANSWERED.value, AppealStatus.CLOSED.value}
             or previous.closed_due_to_revoke):
@@ -410,14 +409,16 @@ async def reopen(session: AsyncSession, appeal_id: int) -> ReopenResult:
     )
     period_end = first_response or previous.closed_at or previous.answered_at or datetime.now(UTC)
     history = list(previous.sla_history or [])
-    previous_hours = response_hours_for(previous, settings.sla_response_hours)
+    previous_hours = previous.sla_hours_at_start
     next_hours = await current_first_response_hours(session)
     history.append({
         "start": anchor.isoformat(), "end": period_end.isoformat(),
         "first_response": first_response.isoformat() if first_response else None,
         "sla_hours": previous_hours,
-        "overdue": sla_service.is_overdue(anchor, period_end, previous_hours),
-        "assessment": "at_reopen" if previous.sla_hours_at_start else "at_reopen_legacy",
+        "overdue": (sla_service.is_overdue(anchor, first_response, previous_hours)
+                    if first_response is not None and previous_hours is not None else None),
+        "assessment": ("at_reopen_legacy" if previous_hours is None else
+                       "no_first_response" if first_response is None else "at_reopen"),
     })
     result = await session.execute(
         update(Appeal)

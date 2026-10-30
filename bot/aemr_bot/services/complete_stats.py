@@ -208,13 +208,16 @@ async def build_xlsx_with_epoch(
                         return _date(datetime.fromisoformat(period_record[field]))
                     except (ValueError, KeyError, TypeError):
                         return ""
+                known = (period_record.get("assessment") == "at_reopen"
+                         and bool(period_record.get("first_response"))
+                         and isinstance(period_record.get("overdue"), bool))
+                legacy = period_record.get("assessment") == "at_reopen_legacy"
                 periods.append([appeal.id, period_date("start"), period_date("first_response"),
-                                period_date("end"), period_record.get("sla_hours", ""),
-                                "да" if period_record.get("overdue") is True else
-                                "нет" if period_record.get("overdue") is False else "Нет данных",
-                                "Оценка рассчитана при возобновлении; исходный норматив неизвестен"
-                                if period_record.get("assessment") == "at_reopen_legacy"
-                                else "Оценка рассчитана при возобновлении обращения"])
+                                period_date("end"), "Не сохранился" if legacy else period_record.get("sla_hours") or "Нет данных",
+                                ("да" if period_record["overdue"] else "нет") if known else "Нет данных",
+                                "Исходный норматив неизвестен" if legacy else
+                                "Нет достоверной оценки первого ответа" if not known else
+                                "Оценка рассчитана при возобновлении обращения"])
             records = getattr(user, "consent_records", None) or []
             if not records:
                 consent.append([appeal.id, "", "", "Текст ранее данного согласия не сохранён"])
