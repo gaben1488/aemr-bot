@@ -96,3 +96,6 @@ docs/*.odt
 # Local successful deployment marker
 .aemr-deployed-commit
 .aemr-deployed-commit.tmp
+
+# Parallel/subprocess coverage files are runtime artifacts.
+.coverage.*
