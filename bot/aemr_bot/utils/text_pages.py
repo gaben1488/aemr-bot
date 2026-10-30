@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 
-def fits_max_message(text: str, limit: int = 4000) -> bool:
-    """Conservative UTF-16 budget, including the complete message header."""
+def fits_max_message(text: str, limit: int = 3999) -> bool:
+    """App UTF-16 budget; pinned maxapi rejects Python len >= 4000.
+
+    The official API documents up to 4000 characters without specifying
+    UTF-16 here. Counting non-BMP characters twice is our conservative rule.
+    """
     return sum(2 if ord(char) > 0xFFFF else 1 for char in text) <= limit
 
 

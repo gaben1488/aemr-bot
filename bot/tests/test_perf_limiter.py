@@ -9,7 +9,7 @@ retention-алёрты) шлются НЕЗАВИСИМО и СКЛАДЫВАЮ�
 о ЧС) теряется, потому что `_send_one` сдаётся после 3 ретраев.
 
 Фикс (`services/admin_bus`): один процесс-глобальный async token-bucket
-(`_GlobalOutgoingLimiter`, ~1.5 msg/s, burst 3), через который проходят
+(`_GlobalOutgoingLimiter`, 1.5 msg/s, production capacity 1), через который проходят
 ВСЕ `bot.send_message` / `bot.edit_message`. Навеска — внутри
 `install_outgoing_tracker_hook` (он уже оборачивает send_message):
 `await _acquire_outgoing_slot()` ПЕРЕД фактической отправкой. Рассылка и
@@ -73,6 +73,18 @@ def _reset_singleton():
 
 def _make_limiter(rate: float = 2.0, capacity: float = 3.0):
     return admin_bus._GlobalOutgoingLimiter(rate_per_sec=rate, capacity=capacity)
+
+
+def test_production_budget_never_schedules_three_sends_in_one_second(clock):
+    """MAX permits 2 sends/sec per chat; our global budget is stricter."""
+    limiter = admin_bus._GlobalOutgoingLimiter(
+        rate_per_sec=admin_bus._OUTGOING_RATE_PER_SEC,
+        capacity=admin_bus._OUTGOING_BURST,
+    )
+    slots = [limiter._reserve() for _ in range(10)]
+    assert slots[:3] == pytest.approx([0, 2 / 3, 4 / 3])
+    for left, right in zip(slots, slots[2:]):
+        assert right - left > 1
 
 
 # ---------------------------------------------------------------------------
