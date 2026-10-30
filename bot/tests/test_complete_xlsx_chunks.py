@@ -45,7 +45,7 @@ async def test_report_includes_all_history_and_attachment_labels(session):
     overview = list(workbook["Обращения"].values)
     columns = {name: index for index, name in enumerate(overview[0])}
     assert overview[1][columns["Краткое содержание"]].endswith("[сокращено]")
-    assert isinstance(overview[1][columns["Последнее действие"]], datetime)
+    assert isinstance(overview[1][columns["Последнее зафиксированное событие"]], datetime)
 
 
 @pytest.mark.asyncio
