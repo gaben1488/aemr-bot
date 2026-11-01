@@ -1,4 +1,4 @@
-FROM python:3.12-slim@sha256:4386a385d81dba9f72ed72a6fe4237755d7f5440c84b417650f38336bbc43117
+FROM python:3.15-slim@sha256:94d3426f1def7db4a106a232ac121bfd975393e5dfd40a619b955fae45fe7913
 
 # uv используется при сборке — для `uv export` из bot/uv.lock в
 # requirements.txt с SHA256-хешами. Берём пиннутый бинарь из официального
