@@ -24,6 +24,15 @@ from aemr_bot.utils.event import extract_message_id
 
 log = logging.getLogger(__name__)
 
+def attachment_part_indices(batches: list[list]) -> list[list[int]]:
+    """Map each ordered transport batch to its original attachment indices."""
+    offset = 0
+    result = []
+    for batch in batches:
+        result.append(list(range(offset, offset + len(batch))))
+        offset += len(batch)
+    return result
+
 def _chunk_relayable(relayable: list, *, media_limit: int = 12) -> list[list]:
     """MAX разрешает группу фото/видео, но файлы — только по одному."""
     chunk_size = max(1, min(media_limit, cfg.attachments_per_relay_message))

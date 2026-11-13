@@ -19,6 +19,21 @@ class DraftConflict(ValueError):
     """A stale button, another composition, or a send already in progress."""
 
 
+def attachment_revision(data: dict) -> int:
+    value = data.get("attachments_revision", 0)
+    if type(value) is not int or value < 0:
+        raise DraftConflict("Состав вложений недоступен. Черновик сохранён.")
+    return value
+
+
+def replace_attachments(draft, attachments: list) -> None:
+    """Caller holds the draft row lock; preserve text and event deduplication."""
+    data = dict(draft.data or {})
+    revision = attachment_revision(data)
+    if attachments != (data.get("attachments") or []):
+        draft.data = {**data, "attachments": attachments, "attachments_revision": revision + 1}
+
+
 async def get(session, operator_id: int, *, locked: bool = False):
     statement = select(OperatorReplyDraft).where(OperatorReplyDraft.operator_id == operator_id)
     if locked:
@@ -67,6 +82,8 @@ async def append(session, operator_id: int, token: str, *, source: str,
         data["replace_text"] = False
     composed = append_part(data, text, attachments,
                            max_chars=settings.answer_max_chars, max_files=20)
+    if attachments:
+        composed["attachments_revision"] = attachment_revision(data) + 1
     draft.data = {**data, **composed, "sources": [*sources, source]}
     await session.flush()
     return draft

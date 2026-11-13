@@ -1,28 +1,7 @@
-"""Characterization-тесты handlers/admin_settings.py — Cluster E
-(coverage wave per Codex PR 5 + продолжение паттерна PR #126).
+"""Settings handler contracts: roles, dispatch, intent TTL and quiet-hour wizard.
 
-Подсистема «⚙️ Настройки бота» — иерархическое меню op:set:*,
-intent-flow редактирования (TTL 5 мин), wizard тихого режима,
-PR-flow к репо. До этого PR'а покрытие было точечным
-(`test_admin_settings_audit.py` про audit-trail). Здесь — широкий
-characterization-набор:
-
-1. **Pure helpers**: `_intent_set`/`_intent_get`/`_intent_drop`,
-   `_clip_audit_value`, `_render_value`, TTL семантика, GC.
-2. **`run_settings_menu` role-check**: non-IT → no-op.
-3. **`run_settings_action` dispatch** для всех веток `op:set:*` —
-   ack + правильный sub-handler вызывается.
-4. **Quiet hours wizard**: `_show_quiet_card`, `_toggle_quiet`,
-   `_start_quiet_hour_intent(start/end)`, `_apply_quiet_hour_edit`
-   с валидацией 0–23.
-5. **`handle_settings_edit_text`**: dispatch по kind в intent +
-   intent-drop при successful apply.
-
-Тесты не запускают handler-цепочку до session_scope/DB. Используем
-тонкие mocks для `session_scope`, `settings_store.*`, `quiet_hours.*`,
-`ops_svc.write_audit`, `ensure_role`, `send_or_edit_screen`. Это
-именно характеризационный слой — фиксирует **поведенческий
-контракт** handler'а перед будущей декомпозицией (Cluster B/C/B1).
+Thin mocks isolate routing from persistence; PostgreSQL behavior has separate tests.
+Resident text/URL edits stage a preview; other intent kinds retain their contracts.
 """
 from __future__ import annotations
 
@@ -922,19 +901,20 @@ class TestHandleSettingsEditText:
         assert mod._intent_get(42) is None
 
     @pytest.mark.asyncio
-    async def test_kind_single_dispatches_to_apply_single_edit(self) -> None:
+    async def test_kind_single_dispatches_to_preview_without_dropping_intent(self) -> None:
         from aemr_bot.handlers import admin_settings as mod
+        from aemr_bot.handlers import admin_settings_text_preview as preview
 
         event = make_event(user_id=42)
         mod._intent_set(42, key="welcome_text", kind="single")
         with patch.object(mod, "ensure_role", AsyncMock(return_value=True)), \
-             patch.object(mod, "_apply_single_edit",
+             patch.object(preview, "prepare",
                           AsyncMock()) as apply:
             result = await mod.handle_settings_edit_text(event, "new value")
         assert result is True
         apply.assert_awaited_once()
-        # Intent сброшен после apply.
-        assert mod._intent_get(42) is None
+        # The proposal still needs explicit confirmation.
+        assert mod._intent_get(42) is not None
 
     @pytest.mark.asyncio
     async def test_kind_list_add_dispatches(self) -> None:
@@ -991,11 +971,12 @@ class TestHandleSettingsEditText:
     @pytest.mark.asyncio
     async def test_text_stripped_before_dispatch(self) -> None:
         from aemr_bot.handlers import admin_settings as mod
+        from aemr_bot.handlers import admin_settings_text_preview as preview
 
         event = make_event(user_id=42)
         mod._intent_set(42, key="welcome_text", kind="single")
         with patch.object(mod, "ensure_role", AsyncMock(return_value=True)), \
-             patch.object(mod, "_apply_single_edit",
+             patch.object(preview, "prepare",
                           AsyncMock()) as apply:
             await mod.handle_settings_edit_text(event,
                                                 "  trimmed value  \n")

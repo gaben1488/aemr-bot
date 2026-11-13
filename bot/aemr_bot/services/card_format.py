@@ -566,11 +566,10 @@ def appeal_list_label(appeal: Appeal) -> str:
     """
     emoji, label = STATUS_LABELS.get(appeal.status, ("•", appeal.status))
     summary_preview = (appeal.summary or "").replace("\n", " ")[:32]
-    # Выбор отображаемой даты — по фазе жизненного цикла обращения.
     if appeal.status == "answered":
-        relevant_date = getattr(appeal, "answered_at", None) or appeal.created_at
+        relevant_date = getattr(appeal, "answered_at", None)
     elif appeal.status == "closed":
         relevant_date = getattr(appeal, "closed_at", None) or appeal.created_at
     else:
         relevant_date = appeal.created_at
-    return f"{emoji} #{appeal.id} · {label} · {_local(relevant_date)} · {summary_preview}"
+    return f"{emoji} #{appeal.id} · {label} · {_local(relevant_date) if relevant_date else 'дата ответа неизвестна'} · {summary_preview}"

@@ -156,11 +156,14 @@ async def request_erasure(session, max_user_id: int, user_id: int) -> None:
     appeal_ids = list((await session.scalars(select(Appeal.id).where(Appeal.user_id == user_id))).all())
     if appeal_ids:
         await request_appeal_cleanup(session, appeal_ids)
-    await session.execute(update(ResidentDataCopy).where(((ResidentDataCopy.subjects.contains([digest])) | (ResidentDataCopy.kind.in_(["bulk_export", "bulk_view"]))),
+    criterion = ((ResidentDataCopy.subjects.contains([digest])) | (ResidentDataCopy.kind.in_(["bulk_export", "bulk_view"])))
+    if _restore_cutoff.get() is not None:
+        criterion = criterion & (ResidentDataCopy.created_at <= cutoff)
+    await session.execute(update(ResidentDataCopy).where(criterion,
         ResidentDataCopy.state != "deleted").values(erase_requested=True))
-    await session.execute(update(ResidentDataCopy).where(((ResidentDataCopy.subjects.contains([digest])) | (ResidentDataCopy.kind.in_(["bulk_export", "bulk_view"]))),
+    await session.execute(update(ResidentDataCopy).where(criterion,
         ResidentDataCopy.state.in_(["retained", "pending", "deleting"])).values(state="manual"))
-    await _mirror_matching(session, (ResidentDataCopy.subjects.contains([digest])) | (ResidentDataCopy.kind.in_(["bulk_export", "bulk_view"])))
+    await _mirror_matching(session, criterion)
 
 
 async def recover_deletions(bot=None, *, limit: int = 100) -> int:
@@ -252,6 +255,9 @@ async def request_appeal_cleanup(session, appeal_ids: list[int]) -> None:
     unscoped_views = (ResidentDataCopy.appeal_id.is_(None)) & (ResidentDataCopy.kind.in_(["personal_view", "citizen_screen"])) & owner_views
     criterion = (((ResidentDataCopy.appeal_id.in_(appeal_ids)) & belongs_to_generation)
                  | unscoped_views | (ResidentDataCopy.kind.in_(["bulk_export", "bulk_view"])))
+    restore_cutoff = _restore_cutoff.get()
+    if restore_cutoff is not None:
+        criterion = criterion & (ResidentDataCopy.created_at <= restore_cutoff)
     await session.execute(update(ResidentDataCopy).where(criterion, ResidentDataCopy.state != "deleted")
                           .values(erase_requested=True))
     await session.execute(update(ResidentDataCopy).where(criterion, ResidentDataCopy.state.in_(["retained", "pending", "deleting"]))

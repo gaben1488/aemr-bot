@@ -142,9 +142,8 @@ class User(Base):
     # start with an empty list: never infer an old text from today's seed.
     consent_records: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
     # Когда житель явно отозвал согласие через сценарий «Уйти из бота».
-    # Используется как точка отсечения: по обращениям, принятым до отзыва,
-    # оператор может дать финальный ответ через бот; новые обращения после
-    # отзыва не принимаются без нового согласия.
+    # Начало срока очистки после отзыва. Автоматические ответы и новые
+    # обращения запрещены до нового согласия, включая прежние обращения.
     consent_revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # Отдельное согласие на рассылку. Подписка не требует полного
     # согласия на ПДн (имя/телефон) — для отправки broadcast нужен
@@ -167,8 +166,8 @@ class User(Base):
     #   consent_broadcast_at + NOT is_blocked. Имя в гарде НЕ участвует:
     #   сравнение с 'Удалено' NULL-небезопасно (#270), стёртого выражает
     #   блокировка;
-    # - operator_reply._deliver_operator_reply — Python-уровень с
-    #   исключением для «прощального ответа» по обращениям ДО revoke.
+    # - operator_reply._deliver_operator_reply — Python-уровень: действующее
+    #   согласие, отсутствие блокировки и незавершённое обращение.
     # Объединяющего @property специально нет: семантика отличается, и
     # унификация даст ложную уверенность «один canonical-гард».
 
@@ -248,11 +247,7 @@ class Appeal(Base):
     # Используется только как reply-link для relay вложений.
     # НЕ редактируется после finalize.
     admin_message_id: Mapped[str | None] = mapped_column(String(64))
-    # last_admin_card_mid = mid ПОСЛЕДНЕЙ event-карточки. Обновляется
-    # при каждом render (любое изменение статуса → новая карточка
-    # внизу, mid пишется сюда). Используется для stale-detection
-    # callback'ов: если оператор тапнул на карточке вверху и её mid
-    # != last_admin_card_mid — это устаревшая, надо send-new.
+    # MID последней event-карточки используется для stale-detection callback.
     last_admin_card_mid: Mapped[str | None] = mapped_column(String(64))
     initial_card_state: Mapped[str] = mapped_column(String(16), default="pending", server_default="pending")
     initial_card_notified: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
@@ -284,13 +279,7 @@ class Appeal(Base):
 
 class Message(Base):
     __tablename__ = "messages"
-    # Композитный индекс (appeal_id, created_at) под горячий паттерн
-    # relationship `Appeal.messages`: selectinload фильтрует по
-    # appeal_id и сортирует `order_by="Message.created_at"`. Отдельный
-    # индекс на appeal_id (index=True ниже) покрывает фильтр, но не
-    # сортировку — на длинной переписке Postgres делает Sort-шаг.
-    # Композитный закрывает и фильтр, и порядок одним index scan.
-    # Создан миграцией 0012.
+    # Миграция 0012: индекс покрывает выборку и порядок истории обращения.
     __table_args__ = (
         Index("ix_messages_appeal_created", "appeal_id", "created_at"),
     )
@@ -300,8 +289,9 @@ class Message(Base):
     direction: Mapped[str] = mapped_column(String(32))
     # NULL means the historical response kind was not recorded.
     response_kind: Mapped[str | None] = mapped_column(String(16))
-    # Only new records can distinguish MAX confirmation from human review.
+    # NULL for historical records without delivery provenance.
     delivery_source: Mapped[str | None] = mapped_column(String(16))
+    delivery_uncertain_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # NULL for historical records; follow-ups use pending/sending/sent/
     # partial/unknown and warning states to avoid replaying uncertain requests.
     admin_notice_state: Mapped[str | None] = mapped_column(String(16), index=True)
@@ -344,6 +334,7 @@ class OperatorReplyAttempt(Base):
     delivery_parts: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
     confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    last_activity_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class Event(Base):

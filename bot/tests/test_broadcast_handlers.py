@@ -31,8 +31,6 @@ pytest.importorskip("maxapi", reason="handlers тесты требуют maxapi"
 
 
 def _make_event(*, user_id: int = 7) -> SimpleNamespace:
-    # Обёртка над tests/_helpers.make_event — chat_id жёстко 555
-    # (служебная группа), callback нужен broadcast-handler'ам.
     return make_event(chat_id=555, user_id=user_id, with_callback=True)
 
 
@@ -55,7 +53,6 @@ def _clean_wizards():
     menu_tracker.clear_all()
 
 
-# --- _format_progress ---------------------------------------------------------
 
 
 class TestFormatProgress:
@@ -73,7 +70,6 @@ class TestFormatProgress:
         assert "2" in s
 
 
-# --- _send_one ----------------------------------------------------------------
 
 
 class TestSendOne:
@@ -97,7 +93,6 @@ class TestSendOne:
         assert "rate limited" in result
 
 
-# --- _start_wizard ------------------------------------------------------------
 
 
 class TestStartWizard:
@@ -109,7 +104,6 @@ class TestStartWizard:
         with patch("aemr_bot.handlers.broadcast_wizard._ensure_role",
                    AsyncMock(return_value=False)):
             await broadcast._start_wizard(event)
-        # wizard не создан
         assert 7 not in broadcast._wizards
 
     @pytest.mark.asyncio
@@ -125,8 +119,6 @@ class TestStartWizard:
                    AsyncMock(return_value=True)):
             await broadcast._start_wizard(event)
 
-        # Нет user_id → ранний выход: wizard не создан, prompt не
-        # отправлен (наружу ничего не утекает).
         assert broadcast._wizards == {}
         event.message.answer.assert_not_called()
 
@@ -143,7 +135,7 @@ class TestStartWizard:
         drop_intent = MagicMock()
         with patch("aemr_bot.handlers.broadcast_wizard._ensure_role",
                    AsyncMock(return_value=True)), \
-             patch("aemr_bot.handlers.operator_reply.drop_reply_intent",
+             patch("aemr_bot.services.wizard_registry.drop_reply_intent",
                    drop_intent):
             await broadcast._start_wizard(event)
         # Чужой wizard оператора drop'нут
@@ -183,7 +175,7 @@ class TestHandleWizardText:
         from aemr_bot.handlers import broadcast
 
         event = _make_event(user_id=7)
-        broadcast._wizards[7] = broadcast._WizardState(step="awaiting_confirm")
+        broadcast._wizards[7] = broadcast._WizardState(preview_message_id="m-1", step="awaiting_confirm")
         result = await broadcast._handle_wizard_text(event, "x")
         assert result is False
 
@@ -192,7 +184,7 @@ class TestHandleWizardText:
         from aemr_bot.handlers import broadcast
 
         event = _make_event(user_id=7)
-        state = broadcast._WizardState(step="awaiting_text")
+        state = broadcast._WizardState(preview_message_id="m-1", step="awaiting_text")
         state.expires_at = time.monotonic() - 1  # давно протух
         broadcast._wizards[7] = state
         result = await broadcast._handle_wizard_text(event, "x")
@@ -205,7 +197,7 @@ class TestHandleWizardText:
         from aemr_bot.handlers import broadcast
 
         event = _make_event(user_id=7)
-        broadcast._wizards[7] = broadcast._WizardState(step="awaiting_text")
+        broadcast._wizards[7] = broadcast._WizardState(preview_message_id="m-1", step="awaiting_text")
         result = await broadcast._handle_wizard_text(event, "/cancel")
         assert result is True
         assert 7 not in broadcast._wizards
@@ -216,7 +208,7 @@ class TestHandleWizardText:
         from aemr_bot.handlers import broadcast
 
         event = _make_event(user_id=7)
-        broadcast._wizards[7] = broadcast._WizardState(step="awaiting_text")
+        broadcast._wizards[7] = broadcast._WizardState(preview_message_id="m-1", step="awaiting_text")
         long_text = "x" * (cfg.broadcast_max_chars + 1)
         result = await broadcast._handle_wizard_text(event, long_text)
         assert result is True
@@ -228,7 +220,7 @@ class TestHandleWizardText:
         from aemr_bot.handlers import broadcast
 
         event = _make_event(user_id=7)
-        broadcast._wizards[7] = broadcast._WizardState(step="awaiting_text")
+        broadcast._wizards[7] = broadcast._WizardState(preview_message_id="m-1", step="awaiting_text")
         result = await broadcast._handle_wizard_text(event, "   ")
         assert result is True
         assert broadcast._wizards[7].step == "awaiting_text"
@@ -238,7 +230,7 @@ class TestHandleWizardText:
         from aemr_bot.handlers import broadcast
 
         event = _make_event(user_id=7)
-        broadcast._wizards[7] = broadcast._WizardState(step="awaiting_text")
+        broadcast._wizards[7] = broadcast._WizardState(preview_message_id="m-1", step="awaiting_text")
         with patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
@@ -252,7 +244,7 @@ class TestHandleWizardText:
         from aemr_bot.handlers import broadcast
 
         event = _make_event(user_id=7)
-        broadcast._wizards[7] = broadcast._WizardState(step="awaiting_text")
+        broadcast._wizards[7] = broadcast._WizardState(preview_message_id="m-1", step="awaiting_text")
         with patch("aemr_bot.handlers.broadcast_wizard.session_scope",
                    _fake_session_scope), \
              patch("aemr_bot.handlers.broadcast_wizard.broadcasts_service.count_subscribers",
@@ -289,7 +281,7 @@ class TestHandleConfirm:
 
         event = _make_event(user_id=7)
         # awaiting_text вместо awaiting_confirm
-        broadcast._wizards[7] = broadcast._WizardState(step="awaiting_text")
+        broadcast._wizards[7] = broadcast._WizardState(preview_message_id="m-1", step="awaiting_text")
         with patch("aemr_bot.handlers.broadcast_wizard.ack_callback",
                    AsyncMock()) as ack:
             await broadcast._handle_confirm(event)
@@ -301,7 +293,7 @@ class TestHandleConfirm:
         from aemr_bot.handlers import broadcast
 
         event = _make_event(user_id=7)
-        broadcast._wizards[7] = broadcast._WizardState(step="awaiting_confirm")
+        broadcast._wizards[7] = broadcast._WizardState(preview_message_id="m-1", step="awaiting_confirm")
         broadcast._wizards[7].text = "hi"
         with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()), \
              patch("aemr_bot.handlers.broadcast_wizard._ensure_role",
@@ -320,7 +312,7 @@ class TestHandleConfirm:
         from aemr_bot.handlers import broadcast
 
         event = _make_event(user_id=7)
-        broadcast._wizards[7] = broadcast._WizardState(step="awaiting_confirm")
+        broadcast._wizards[7] = broadcast._WizardState(preview_message_id="m-1", step="awaiting_confirm")
         broadcast._wizards[7].text = "hi"
         create_broadcast = AsyncMock()
         get_operator = AsyncMock()
@@ -342,7 +334,7 @@ class TestHandleConfirm:
         from aemr_bot.handlers import broadcast
 
         event = _make_event(user_id=7)
-        broadcast._wizards[7] = broadcast._WizardState(step="awaiting_confirm")
+        broadcast._wizards[7] = broadcast._WizardState(preview_message_id="m-1", step="awaiting_confirm")
         broadcast._wizards[7].text = "hi"
         op = SimpleNamespace(id=10)
         create_broadcast = AsyncMock()
@@ -365,7 +357,7 @@ class TestHandleConfirm:
         from aemr_bot.handlers import broadcast
 
         event = _make_event(user_id=7)
-        broadcast._wizards[7] = broadcast._WizardState(step="awaiting_confirm")
+        broadcast._wizards[7] = broadcast._WizardState(preview_message_id="m-1", step="awaiting_confirm")
         broadcast._wizards[7].text = "ВАЖНО"
         op = SimpleNamespace(id=10)
         broadcast_obj = SimpleNamespace(id=99)
@@ -407,7 +399,7 @@ class TestHandleAbort:
         from aemr_bot.handlers import broadcast
 
         event = _make_event(user_id=7)
-        broadcast._wizards[7] = broadcast._WizardState(step="awaiting_text")
+        broadcast._wizards[7] = broadcast._WizardState(preview_message_id="m-1", step="awaiting_text")
         with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()):
             await broadcast._handle_abort(event)
         assert 7 not in broadcast._wizards
@@ -423,7 +415,7 @@ class TestHandleAbort:
         from aemr_bot.utils import menu_tracker
 
         event = _make_callback_event(user_id=7)
-        broadcast._wizards[7] = broadcast._WizardState(step="awaiting_confirm")
+        broadcast._wizards[7] = broadcast._WizardState(preview_message_id="m-1", step="awaiting_confirm")
         # «m-1» — текущая preview-карточка в админ-чате (ADMIN_GROUP_ID=123 из conftest)
         menu_tracker.set_last_menu_mid(123, "m-1")
         with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()):
@@ -455,7 +447,7 @@ class TestHandleEdit:
         from aemr_bot.handlers import broadcast
 
         event = _make_event(user_id=7)
-        state = broadcast._WizardState(step="awaiting_confirm")
+        state = broadcast._WizardState(preview_message_id="m-1", step="awaiting_confirm")
         state.text = "уже введённый текст"
         broadcast._wizards[7] = state
         with patch("aemr_bot.handlers.broadcast_wizard.ack_callback", AsyncMock()):
@@ -466,14 +458,13 @@ class TestHandleEdit:
         event.bot.send_message.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_callback_edits_preview_back_to_text_prompt(self) -> None:
-        """Callback от АКТУАЛЬНОЙ preview-карточки → edit обратно в
-        prompt-форму для нового текста (freshness-policy)."""
+    async def test_callback_creates_bound_fresh_text_prompt(self) -> None:
+        """A changed composition gets a new MID; cached old buttons stay stale."""
         from aemr_bot.handlers import broadcast
         from aemr_bot.utils import menu_tracker
 
         event = _make_callback_event(user_id=7)
-        state = broadcast._WizardState(step="awaiting_confirm")
+        state = broadcast._WizardState(preview_message_id="m-1", step="awaiting_confirm")
         state.text = "старый текст"
         broadcast._wizards[7] = state
         menu_tracker.set_last_menu_mid(123, "m-1")
@@ -481,9 +472,8 @@ class TestHandleEdit:
             await broadcast._handle_edit(event)
 
         assert broadcast._wizards[7].step == "awaiting_text"
-        event.bot.edit_message.assert_called_once()
-        assert event.bot.edit_message.call_args.kwargs["message_id"] == "m-1"
-        event.bot.send_message.assert_not_called()
+        event.bot.edit_message.assert_not_called()
+        event.bot.send_message.assert_called_once()
 
 
 # --- _handle_stop -------------------------------------------------------------

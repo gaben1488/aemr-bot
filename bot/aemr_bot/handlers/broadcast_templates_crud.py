@@ -51,6 +51,8 @@ async def _start_rename(event, template_id: int) -> None:
     if tmpl is None:
         await op_screen(event, texts.OP_TMPL_NOT_FOUND)
         return
+    from aemr_bot.handlers.operator_input import claim_composer
+    await claim_composer(actor_id)
     _drop_expired()
     _wizards[actor_id] = _TmplWizardState(
         step="rename_awaiting_name", target_id=template_id
@@ -146,6 +148,8 @@ async def _start_clone(event, template_id: int) -> None:
     if tmpl is None:
         await op_screen(event, texts.OP_TMPL_NOT_FOUND)
         return
+    from aemr_bot.handlers.operator_input import claim_composer
+    await claim_composer(actor_id)
     _drop_expired()
     _wizards[actor_id] = _TmplWizardState(
         step="clone_awaiting_name",

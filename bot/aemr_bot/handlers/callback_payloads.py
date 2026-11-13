@@ -454,3 +454,15 @@ def op_word(appeal_id: int) -> str:
 
 def op_consent(appeal_id: int, page: int) -> str:
     return f"{PREFIX_OP_CONSENT}{appeal_id}:{page}"
+
+
+PREFIX_INFO_EMERGENCY_PAGE = "info:emergency:page:"
+PREFIX_INFO_DISPATCHERS_PAGE = "info:dispatchers:page:"
+
+
+def info_emergency_page(page: int) -> str:
+    return PREFIX_INFO_EMERGENCY_PAGE + str(page)
+
+
+def info_dispatchers_page(page: int) -> str:
+    return PREFIX_INFO_DISPATCHERS_PAGE + str(page)

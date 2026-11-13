@@ -632,20 +632,14 @@ async def on_awaiting_summary(event, body, text_body, max_user_id):
         return
 
     def _merge_summary(data: dict) -> dict:
-        """Накопить chunks/attachments поверх СВЕЖЕГО dialog_data.
-
-        Вызывается внутри update_dialog_data ПОД pg_advisory_xact_lock —
-        прямой read-modify-write здесь терял одно из двух сообщений,
-        пришедших подряд (текст и фото): оба читали старый список,
-        последний writer затирал изменения первого. list() — отдельные
-        копии: append не должен мутировать list, лежащий в
-        SQLAlchemy-tracked user.dialog_data до flush.
-        """
+        """Накопить части в свежем dialog_data под блокировкой."""
         from aemr_bot.services.resident_drafts import append_part
         replacing = bool(data.get("replace_text") and chunk.strip())
         source = {**data, "summary_chunks": []} if replacing else data
         patch = append_part(source, chunk, atts, max_chars=cfg.summary_max_chars,
                             max_files=cfg.attachments_max_per_appeal)
+        if atts:
+            patch["attachments_revision"] = int(data.get("attachments_revision", 0)) + 1
         if replacing:
             patch["replace_text"] = False
         patch["draft_token"] = data.get("draft_token") or secrets.token_urlsafe(12)

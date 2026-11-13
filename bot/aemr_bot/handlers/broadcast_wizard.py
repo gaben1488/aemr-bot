@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Literal
 
 from aemr_bot import keyboards, texts
@@ -61,9 +61,7 @@ WizardStep = Literal["awaiting_text", "awaiting_confirm"]
 class _WizardState:
     step: WizardStep
     text: str = ""
-    # Картинки, приложенные оператором к шагу awaiting_text. Сериализованные
-    # dict'ы attachment'ов (тот же формат, что Appeal.attachments). Пустой
-    # список = text-only рассылка. На confirm уходит в Broadcast.attachments.
+    preview_message_id: str | None = None
     attachments: list = field(default_factory=list)
     expires_at: float = field(
         default_factory=lambda: time.monotonic() + cfg.broadcast_wizard_ttl_sec
@@ -100,9 +98,22 @@ def _schedule_persist(operator_id: int, state: _WizardState | None) -> None:
         "step": state.step,
         "text": state.text,
         "attachments": list(state.attachments),
+        "preview_message_id": state.preview_message_id,
     }
     wizard_registry.set_broadcast_wizard(operator_id, snapshot)
     wizard_registry.schedule_persist_broadcast(operator_id, snapshot)
+
+
+def bind_preview(actor_id: int, state: _WizardState, sent, event=None) -> None:
+    """Only the screen actually rendered for this composition may change it."""
+    if _wizards.get(actor_id) is state:
+        state.preview_message_id = extract_message_id(sent)
+        _schedule_persist(actor_id, state)
+
+
+def _current_preview(event, state: _WizardState | None) -> bool:
+    return bool(state and not state.expired() and state.preview_message_id
+                and get_callback_message_id(event) == state.preview_message_id)
 
 
 class _PersistingWizards(dict):
@@ -138,16 +149,9 @@ class _PersistingWizards(dict):
         return state
 
 
-# Состояние мастера для каждого оператора. Только для одного экземпляра приложения.
-# При горизонтальном масштабировании потребуется хранение в Redis или через pg_advisory_lock.
 _wizards: dict[int, _WizardState] = _PersistingWizards()
 
 
-# Локальные псевдонимы общих хелперов авторизации. Подчёркивание в начале имени
-# подчёркивает, что это служебные средства для админ-стороны, не для жителя.
-# Дублируем алиасы из broadcast.py, чтобы тесты могли патчить через
-# `patch.object(broadcast_wizard, "_ensure_role", ...)` без обращения к
-# исходному модулю.
 _get_operator = get_operator
 _ensure_role = ensure_role
 _ensure_operator = ensure_operator
@@ -174,7 +178,6 @@ async def _resolve_broadcast_max_images(session) -> int:
             exc_info=True,
         )
         value = None
-    # Защитная нормализация: если кто-то вручную записал в БД не int
     # (например, через psql), скатываемся к DEFAULTS.
     if isinstance(value, int) and not isinstance(value, bool) and value > 0:
         return value
@@ -200,19 +203,12 @@ async def _start_wizard(event) -> None:
     if actor_id is None:
         log.warning("broadcast: wizard NOT started — no user_id in event")
         return
-    # Сбрасываем чужие wizard'ы и reply-intent этого оператора — иначе
-    # текст рассылки уйдёт в wizard добавления оператора или жителю
-    # как ответ. См. F-003 в operator-аудите.
-    try:
-        from aemr_bot.handlers import admin_commands as admin_cmd_module
-        from aemr_bot.handlers import operator_reply as op_reply
+    from aemr_bot.handlers.operator_input import clear_other_consumers, pause_reply
+    await pause_reply(actor_id)
+    clear_other_consumers(actor_id)
 
-        admin_cmd_module._op_wizard_drop(actor_id)
-        op_reply.drop_reply_intent(actor_id)
-    except Exception:
-        log.exception("broadcast: cleanup чужих wizard'ов упал, продолжаем")
-
-    _wizards[actor_id] = _WizardState(step="awaiting_text")
+    state = _WizardState(step="awaiting_text")
+    _wizards[actor_id] = state
     log.info("broadcast: wizard started for operator max_user_id=%s", actor_id)
     async with session_scope() as session:
         max_images = await _resolve_broadcast_max_images(session)
@@ -220,7 +216,8 @@ async def _start_wizard(event) -> None:
         limit=cfg.broadcast_max_chars,
         max_images=max_images,
     )
-    await op_screen(event, prompt, keyboards.broadcast_cancel_keyboard())
+    sent = await op_screen(event, prompt, keyboards.broadcast_cancel_keyboard(), new=True)
+    bind_preview(actor_id, state, sent, event)
 
 
 async def _handle_wizard_text(event, text_body: str) -> bool:
@@ -255,12 +252,13 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
 
     text = text_body.strip()
     if len(text) > cfg.broadcast_max_chars:
-        await event.message.answer(
+        sent = await event.message.answer(
             texts.OP_BROADCAST_TOO_LONG.format(
                 limit=cfg.broadcast_max_chars, actual=len(text)
             ),
             attachments=[keyboards.broadcast_cancel_keyboard()],
         )
+        bind_preview(actor_id, state, sent)
         return True
     # SECURITY_REVIEW C2: URL-whitelist на текст рассылки. Симметрично
     # M3 для operator reply. Защищает от ошибки оператора (вставил
@@ -270,7 +268,7 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
     # плохие ссылки оператору в чате.
     bad_urls = settings_store.find_non_whitelisted_urls(text)
     if bad_urls:
-        await event.message.answer(
+        sent = await event.message.answer(
             "❌ В тексте рассылки найдены ссылки на сторонние сайты: "
             f"{', '.join(bad_urls[:3])}"
             f"{'…' if len(bad_urls) > 3 else ''}.\n\n"
@@ -284,6 +282,7 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
             "broadcast: blocked non-whitelisted URLs in wizard text — "
             "operator=%s count=%d", actor_id, len(bad_urls),
         )
+        bind_preview(actor_id, state, sent)
         return True
     if not text:
         # Пусто. Просим ввести ещё раз, состояние не меняем. Для re-
@@ -291,7 +290,7 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
         # session ради этого редкого пути с пустой строкой избыточно
         # (это early-return). Реальный flow ниже читает актуальное
         # значение из БД.
-        await event.message.answer(
+        sent = await event.message.answer(
             texts.OP_BROADCAST_PROMPT.format(
                 limit=cfg.broadcast_max_chars,
                 max_images=int(
@@ -300,6 +299,7 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
             ),
             attachments=[keyboards.broadcast_cancel_keyboard()],
         )
+        bind_preview(actor_id, state, sent)
         return True
 
     # Текущий лимит картинок — из настроек БД (settings_store), а не
@@ -309,6 +309,10 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
         max_images = await _resolve_broadcast_max_images(session)
         count = await broadcasts_service.count_subscribers(session)
 
+    if _wizards.get(actor_id) is not state or state.step != "awaiting_text":
+        await event.message.answer("Состав уже изменился. Проверьте текущий предпросмотр.")
+        return True
+
     if count == 0:
         _wizards.pop(actor_id, None)
         await event.message.answer(
@@ -317,6 +321,8 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
         )
         return True
 
+    state = replace(state, preview_message_id=None)
+    _wizards[actor_id] = state
     state.text = text
     # Захват картинок оператора (если в том же сообщении были). Лимит —
     # из settings_store, по умолчанию 5: афиша, схема, фото-комплект
@@ -330,12 +336,8 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
     state.attachments = all_images_in_event[:max_images]
     state.step = "awaiting_confirm"
     state.renew()
-    # Текст и картинки правились «на месте», мимо словаря — сохраняем
-    # руками, иначе рестарт потерял бы самое ценное в черновике.
+    # Persist the complete composition before showing its bound preview.
     _schedule_persist(actor_id, state)
-    # Превью включает все приложенные картинки рядом с confirm-клавой,
-    # чтобы оператор видел, что именно увидит подписчик. До этой правки
-    # preview был text-only, оператор «вслепую» подтверждал.
     preview_outbound_images = _image_attachments.build_outbound_image_attachments(
         state.attachments
     )
@@ -344,7 +346,7 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
         image_warning = texts.OP_BROADCAST_PREVIEW_TRIM_WARN.format(
             provided=provided, limit=max_images
         )
-    await event.message.answer(
+    sent = await event.message.answer(
         texts.OP_BROADCAST_PREVIEW.format(
             text=text,
             count=count,
@@ -356,12 +358,21 @@ async def _handle_wizard_text(event, text_body: str) -> bool:
             keyboards.broadcast_confirm_keyboard(),
         ],
     )
+    bind_preview(actor_id, state, sent)
     return True
 
 
 async def _handle_confirm(event) -> None:
     actor_id = get_user_id(event)
     if actor_id is None:
+        return
+    state = _wizards.get(actor_id)
+    if state is None or state.expired():
+        _wizards.pop(actor_id, None)
+        await ack_callback(event, "Мастер закрыт.")
+        return
+    if not _current_preview(event, state):
+        await ack_callback(event, "Кнопка устарела. Откройте текущий мастер рассылки.")
         return
     state = _wizards.pop(actor_id, None)
     if state is None or state.step != "awaiting_confirm" or state.expired():
@@ -500,8 +511,10 @@ async def _handle_confirm(event) -> None:
 
 async def _handle_abort(event) -> None:
     actor_id = get_user_id(event)
-    if actor_id is not None:
-        _wizards.pop(actor_id, None)
+    if actor_id is None or not _current_preview(event, _wizards.get(actor_id)):
+        await ack_callback(event, "Кнопка устарела.")
+        return
+    _wizards.pop(actor_id, None)
     await ack_callback(event, "Отменено.")
     await op_screen(event, texts.OP_BROADCAST_CANCELLED_BY_USER)
 
@@ -539,9 +552,12 @@ async def _handle_edit(event) -> None:
         await ack_callback(event)
         return
     state = _wizards.get(actor_id)
-    if state is None:
-        await ack_callback(event, "Мастер закрыт.")
+    if not _current_preview(event, state):
+        await ack_callback(event, "Кнопка устарела.")
         return
+    assert state is not None
+    state = replace(state, preview_message_id=None)
+    _wizards[actor_id] = state
     state.step = "awaiting_text"
     state.text = ""
     # Чистим картинки тоже: «Изменить текст» = новый черновик целиком.
@@ -550,10 +566,13 @@ async def _handle_edit(event) -> None:
     # Правка «на месте» — словарь про неё не знает (см. _schedule_persist).
     _schedule_persist(actor_id, state)
     await ack_callback(event)
-    await op_screen(
+    sent = await op_screen(
         event,
         texts.OP_BROADCAST_EDIT_HINT.format(
             limit=cfg.broadcast_max_chars,
         ),
         keyboards.broadcast_cancel_keyboard(),
+        new=True,
     )
+
+    bind_preview(actor_id, state, sent, event)

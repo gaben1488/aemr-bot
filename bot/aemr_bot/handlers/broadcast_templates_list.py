@@ -152,11 +152,16 @@ async def _apply(event, template_id: int) -> None:
     # Заряжаем broadcast wizard — выглядит, как если бы оператор набрал
     # этот текст и приложил картинки сейчас. Confirm/edit/abort работают
     # через тот же broadcast:* dispatcher, что и обычный flow.
+    from aemr_bot.handlers import broadcast_wizard
+    from aemr_bot.handlers.operator_input import clear_other_consumers, pause_reply
+    await pause_reply(actor_id)
+    clear_other_consumers(actor_id)
     broadcast_handler.prefill_wizard_from_template(
         actor_id,
         text=tmpl.text,
         attachments=list(tmpl.attachments),
     )
+    state = broadcast_wizard._wizards[actor_id]
     preview_images = _image_attachments.build_outbound_image_attachments(
         tmpl.attachments
     )
@@ -170,14 +175,16 @@ async def _apply(event, template_id: int) -> None:
         image_count=len(tmpl.attachments),
         image_warning="",
     )
-    await op_screen(
+    sent = await op_screen(
         event,
         body,
         [
             *preview_images,
             keyboards.broadcast_confirm_keyboard(),
         ],
+        new=True,
     )
+    broadcast_wizard.bind_preview(actor_id, state, sent, event)
     log.info(
         "broadcast_templates: applied #%s by operator=%s subscribers=%d",
         tmpl.id, actor_id, subscribers,
@@ -194,6 +201,8 @@ async def _start_search(event) -> None:
     actor_id = get_user_id(event)
     if actor_id is None:
         return
+    from aemr_bot.handlers.operator_input import claim_composer
+    await claim_composer(actor_id)
     _drop_expired()
     _wizards[actor_id] = _TmplWizardState(step="search_awaiting_query")
     await op_screen(

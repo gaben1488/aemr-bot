@@ -1,8 +1,6 @@
 """UI шаблонов рассылок — create/edit wizard с превью + навигация.
 
-Декомпозиция god-объекта `broadcast_templates.py` (DDD tactical,
-2026-06-01). Ответственность модуля — многошаговые сценарии создания и
-редактирования с обязательным preview «как увидит подписчик»:
+Создание и редактирование с обязательным предпросмотром:
 
   - создание (`op:tmpl:new`): `_start_new` → `_step_new_name` →
     `_step_new_text` → `_render_preview_new` → `_save_new`;
@@ -50,6 +48,8 @@ async def _start_new(event) -> None:
     actor_id = get_user_id(event)
     if actor_id is None:
         return
+    from aemr_bot.handlers.operator_input import claim_composer
+    await claim_composer(actor_id)
     _drop_expired()
     _wizards[actor_id] = _TmplWizardState(step="new_awaiting_name")
     await op_screen(
@@ -72,6 +72,8 @@ async def _start_edit(event, template_id: int) -> None:
     if tmpl is None:
         await op_screen(event, texts.OP_TMPL_NOT_FOUND)
         return
+    from aemr_bot.handlers.operator_input import claim_composer
+    await claim_composer(actor_id)
     _drop_expired()
     _wizards[actor_id] = _TmplWizardState(
         step="edit_awaiting_text", target_id=template_id

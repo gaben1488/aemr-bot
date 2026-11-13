@@ -59,6 +59,8 @@ async def start(event, operator_id: int, *, followup: bool = False) -> None:
     key = _FOLLOWUP_KEY if followup else _KEY
     async with session_scope() as session:
         baseline, revision = await settings_store.get_versioned(session, key)
+    from aemr_bot.handlers.operator_input import claim_composer
+    await claim_composer(operator_id)
     token = token_hex(6)
     _intent_set(operator_id, key=key, kind="sla_hours", baseline=baseline, revision=revision, token=token)
     await op_screen(event,

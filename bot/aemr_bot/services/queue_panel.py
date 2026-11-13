@@ -41,8 +41,10 @@ async def _snapshot() -> tuple[str, bool]:
     groups: dict[str, list[int]] = {
         "⚠️ Просрочен первый ответ": [], "🆕 Ожидают первого ответа": [],
         "⏱ Требуют дальнейшей работы": [], "💬 В работе после первого ответа": [],
+        "❔ Время ответа требует сверки": [],
     }
     for appeal in appeals:
+        last_intermediate = intermediate.get(appeal.id)
         if appeal.id not in first:
             overdue = sla.is_overdue(
                 getattr(appeal, "sla_anchor_at", None) or appeal.created_at, now,
@@ -50,8 +52,10 @@ async def _snapshot() -> tuple[str, bool]:
                 schedule=work_schedule.for_appeal(appeal),
             )
             label = "⚠️ Просрочен первый ответ" if overdue else "🆕 Ожидают первого ответа"
-        elif (followup > 0 and appeal.id in intermediate
-              and sla.is_overdue(intermediate[appeal.id], now, followup,
+        elif first[appeal.id] is None or (appeal.id in intermediate and intermediate[appeal.id] is None):
+            label = "❔ Время ответа требует сверки"
+        elif (followup > 0 and last_intermediate is not None
+              and sla.is_overdue(last_intermediate, now, followup,
                                  schedule=work_schedule.for_appeal(appeal))):
             label = "⏱ Требуют дальнейшей работы"
         else:

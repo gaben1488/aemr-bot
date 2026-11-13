@@ -879,17 +879,17 @@
       </tr>
       <tr>
         <td><code class="kbd">open-reminder-workhours</code></td>
-        <td>пн–пт <strong>:10</strong>, часы <code class="kbd">9–11, 13–17</code> (без обеда в 12)</td>
+        <td>ежечасно <strong>:10</strong>; окно из настроек</td>
         <td>Камчатка</td>
-        <td>Напоминает оператору обо <em>всех</em> неотвеченных обращениях (с разбивкой «в SLA / просрочено») и кнопкой «📋 Открытые обращения». Если открытых нет — молчит.</td>
+<td>Обновляет общую сохраняемую панель очереди после проверки рабочего расписания, тихих часов и переключателя уведомлений. Неизменная панель не отправляется повторно.</td>
         <td><strong>молчит</strong></td>
         <td><code class="kbd">cron.py:996</code> · <code class="kbd">_job_working_hours_open_reminder</code> <code class="kbd">:761</code></td>
       </tr>
       <tr>
         <td><code class="kbd">overdue-reminder-workhours</code></td>
-        <td>пн–пт <strong>:40</strong>, часы <code class="kbd">9–11, 13–17</code> (без обеда в 12)</td>
+        <td>ежечасно <strong>:40</strong>; окно из настроек</td>
         <td>Камчатка</td>
-        <td>Проверка очереди просроченных. Повтор неизменной сводки за те же сутки подавляется; нет просроченных — молчит.</td>
+<td>Обновляет ту же общую панель очереди. При неизвестном результате обновления останавливается до сверки MAX и явного решения IT.</td>
         <td><strong>молчит</strong></td>
         <td><code class="kbd">cron.py:1003</code> · <code class="kbd">_job_working_hours_overdue_reminder</code> <code class="kbd">:802</code></td>
       </tr>
@@ -2208,7 +2208,7 @@ DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-aemr}:${POSTGRES_PASSWORD:?.
       </tr>
       <tr>
         <td><code class="kbd">test_ledger_facts_sync.py</code></td>
-        <td>Ключевые числа супер-канона <code class="kbd">docs/site/_kb/_LEDGER.md</code> запиннены к коду. Падает, если разойдётся любое: <code class="kbd">SLA_RESPONSE_HOURS=4</code>, <code class="kbd">answer_max_chars=3000</code>, <code class="kbd">audit_log_retention_days=365</code> (диапазон 30..3650), <code class="kbd">len(SCHEMA)=26</code>, <code class="kbd">OperatorRole</code> = 4 значения, 41 миграция (непрерывно 0001..0041), 17 ORM-таблиц. Плюс content-проверка: <code class="kbd">infra/Dockerfile</code> по-прежнему ставит из <code class="kbd">uv.lock</code> с <code class="kbd">--require-hashes</code> — ловит откат образа на pip-из-диапазонов.</td>
+        <td>Ключевые числа супер-канона <code class="kbd">docs/site/_kb/_LEDGER.md</code> запиннены к коду. Падает, если разойдётся любое: <code class="kbd">SLA_RESPONSE_HOURS=4</code>, <code class="kbd">answer_max_chars=3000</code>, <code class="kbd">audit_log_retention_days=365</code> (диапазон 30..3650), <code class="kbd">len(SCHEMA)=26</code>, <code class="kbd">OperatorRole</code> = 4 значения, 42 миграции (непрерывно 0001..0042), 17 ORM-таблиц. Плюс content-проверка: <code class="kbd">infra/Dockerfile</code> по-прежнему ставит из <code class="kbd">uv.lock</code> с <code class="kbd">--require-hashes</code> — ловит откат образа на pip-из-диапазонов.</td>
       </tr>
     </tbody>
   </table>

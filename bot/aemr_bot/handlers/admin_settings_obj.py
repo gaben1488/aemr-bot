@@ -26,6 +26,13 @@ from aemr_bot.handlers.admin_settings_shared import (  # noqa: F401
 )
 from aemr_bot.services import operators as ops_svc
 from aemr_bot.services import settings_store
+from aemr_bot.utils.text_pages import split_text_units
+
+
+def _preview(value, limit: int) -> str:
+    text = str(value)
+    parts = split_text_units(text, limit)
+    return parts[0] + ("…" if len(parts) > 1 else "")
 
 
 async def _show_obj_card(event, key: str, *, notice: str = "", page: int = 0) -> None:
@@ -44,9 +51,9 @@ async def _show_obj_card(event, key: str, *, notice: str = "", page: int = 0) ->
     # без зависимости от maxapi.
     page = max(0, min(page, max(0, (len(items) - 1) // 8)))
     body = "\n".join(
-        f"{i + 1}. {item.get('name') or item.get('routes') or 'Без названия'}"
-        f" — {item.get('phone') or 'телефон не указан'}"
-        + (f" · {item['section']}" if item.get("section") else "")
+        f"{i + 1}. {_preview(item.get('name') or item.get('routes') or 'Без названия', 140)}"
+        f" — {_preview(item.get('phone') or 'телефон не указан', 60)}"
+        + (f" · {_preview(item['section'], 100)}" if item.get("section") else "")
         for i, item in enumerate(items[page * 8:page * 8 + 8], page * 8)
     ) or "(список пуст)"
     hint = ""
@@ -79,7 +86,12 @@ async def _show_obj_card(event, key: str, *, notice: str = "", page: int = 0) ->
 
 
 async def _show_obj_item(event, suffix: str) -> None:
-
+    page = 0
+    if suffix.count(":") == 3:
+        suffix, raw_page = suffix.rsplit(":", 1)
+        if not raw_page.isascii() or not raw_page.isdecimal() or len(raw_page) > 8:
+            return
+        page = int(raw_page)
     parsed = _parse_key_idx_revision(suffix)
     if parsed is None:
         return
@@ -104,15 +116,20 @@ async def _show_obj_item(event, suffix: str) -> None:
     item = items[idx]
     labels = {"name": "Название", "routes": "Маршруты", "phone": "Телефон", "section": "Раздел"}
     lines = [f"{labels.get(k, k)}: {v}" for k, v in item.items()]
+    pages = split_text_units("\n".join(lines), 3200)
+    page = max(0, min(page, len(pages) - 1))
+    suffix_text = f"\n\nСтраница {page + 1}/{len(pages)}" if len(pages) > 1 else ""
     await op_screen(
         event,
-        "\n".join(lines),
-        kbds.op_settings_obj_item_keyboard(key, idx, revision),
+        pages[page] + suffix_text,
+        kbds.op_settings_obj_item_keyboard(key, idx, revision, page=page, total=len(pages)),
     )
 
 
 async def _start_obj_add(event, operator_id: int, key: str) -> None:
 
+    from aemr_bot.handlers.operator_input import claim_composer
+    await claim_composer(operator_id)
     _intent_set(operator_id, key=key, kind="obj_add")
     if key == "emergency_contacts":
         hint = (

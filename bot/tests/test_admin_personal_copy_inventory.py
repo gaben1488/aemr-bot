@@ -9,7 +9,14 @@ from zipfile import ZipFile
 import pytest
 from sqlalchemy import select
 
-from aemr_bot.db.models import Appeal, AuditLog, Message, OperatorReplyAttempt, ResidentDataCopy, User
+from aemr_bot.db.models import (
+    Appeal,
+    AuditLog,
+    Message,
+    OperatorReplyAttempt,
+    ResidentDataCopy,
+    User,
+)
 from aemr_bot.db.session import session_scope
 from aemr_bot.services import data_erasure, users
 from tests._helpers import make_event
@@ -126,6 +133,7 @@ async def test_erased_source_cannot_republish_a_detached_operator_draft(source):
 
 async def test_begin_does_not_create_draft_or_change_erased_appeal(source, monkeypatch):
     from sqlalchemy import func
+
     from aemr_bot.db.models import OperatorReplyDraft
     from aemr_bot.handlers import operator_draft
     monkeypatch.setattr(operator_draft, "get_operator", AsyncMock(
@@ -184,6 +192,9 @@ async def test_word_upload_finishes_before_retention_can_erase_source(source, mo
         appeal.created_at = datetime.now(UTC) - timedelta(days=2200)
         appeal.closed_at = appeal.created_at
         appeal.status = "closed"
+        attempt = await session.get(OperatorReplyAttempt, source.attempt_id)
+        attempt.created_at = appeal.created_at
+        attempt.last_activity_at = appeal.created_at
         for message in (await session.scalars(select(Message).where(Message.appeal_id == appeal.id))):
             message.created_at = appeal.created_at
     cleanup = []

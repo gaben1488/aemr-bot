@@ -243,13 +243,7 @@ class TestMigration0018AgainstPostgres:
 
 
 class _CapturingSession:
-    """Фейковая AsyncSession для build_xlsx без БД.
-
-    - первый `.scalars(stmt)` — это запрос обращений; записываем stmt и
-      отдаём заранее заданные appeal-объекты.
-    - `.execute(stmt)` — запросы последних ответов и MIN(created_at)
-      первого ответа; для них разные типы строк результата.
-    """
+    """Captures bulk and streaming queries without a database."""
 
     def __init__(self, appeals, reply_rows, first_reply_rows=()):
         self._appeals = appeals
@@ -257,6 +251,7 @@ class _CapturingSession:
         self._first_reply_rows = list(first_reply_rows)
         self.scalar_statements = []
         self.execute_statements = []
+        self.stream_statements = []
 
     async def scalars(self, stmt):
         self.scalar_statements.append(stmt)
@@ -264,17 +259,22 @@ class _CapturingSession:
 
     async def execute(self, stmt):
         self.execute_statements.append(stmt)
-        if any(getattr(column, "name", None) == "min" for column in stmt.selected_columns):
-            return iter(self._first_reply_rows)
-        return iter(self._reply_rows)
+        if any(getattr(column, "name", None) == "max" for column in stmt.selected_columns):
+            return iter(())
+        return iter((appeal_id, text, datetime.now(UTC)) for appeal_id, text in self._reply_rows)
+
+    async def stream(self, stmt):
+        self.stream_statements.append(stmt)
+        async def rows():
+            for row in self._first_reply_rows:
+                yield row
+        return rows()
 
 
 class TestBuildXlsxDoesNotMaterializeMessages:
     @pytest.mark.asyncio
     async def test_appeal_query_does_not_eager_load_messages(self) -> None:
-        """Главная perf-проверка: запрос обращений тянет user, но НЕ
-        messages. Раньше было selectinload(Appeal.user, Appeal.messages)
-        — вся переписка в RAM."""
+        """Appeals eagerly load users, but never the full message history."""
         appeal = _appeal(id=42, messages=[])
         sess = _CapturingSession([appeal], reply_rows=[(42, "ответ оператора")])
 
@@ -289,15 +289,15 @@ class TestBuildXlsxDoesNotMaterializeMessages:
 
     @pytest.mark.asyncio
     async def test_last_operator_reply_query_issued(self) -> None:
-        """build_xlsx делает отдельный запрос за последними ответами
-        оператора (а не достаёт их из материализованной коллекции)."""
-        appeal = _appeal(id=7, messages=[])
-        sess = _CapturingSession([appeal], reply_rows=[(7, "финальный ответ")])
+        """Bulk queries, not N+1."""
+        appeals = [_appeal(id=i, messages=[]) for i in range(1, 11)]
+        sess = _CapturingSession(appeals, reply_rows=[(7, "финальный ответ")])
 
         await stats.build_xlsx(sess, "all")
 
-        # Two bulk queries: latest reply text and first-reply timestamps.
         assert len(sess.execute_statements) == 2
+        assert len(sess.stream_statements) == 1
+        assert "operator_reply_attempts" in str(sess.stream_statements[0])
 
     @pytest.mark.asyncio
     async def test_operator_reply_from_dict_lands_in_workbook(self) -> None:

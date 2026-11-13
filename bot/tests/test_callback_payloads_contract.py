@@ -50,6 +50,8 @@ def _registry_group(pattern: str) -> str:
 # Это единственная «ручная» таблица; её полноту против модуля и реестра
 # стерегут тесты ниже, так что забытый билдер не пройдёт молча.
 _BUILDER_CASES: tuple[tuple[object, tuple, str, bool], ...] = (
+    (cp.info_emergency_page, (2,), cp.PREFIX_INFO_EMERGENCY_PAGE, True),
+    (cp.info_dispatchers_page, (2,), cp.PREFIX_INFO_DISPATCHERS_PAGE, True),
     # CITIZEN_FLOW — числовой хвост
     (cp.locality, (3,), cp.PREFIX_LOCALITY, True),
     (cp.topic, (5,), cp.PREFIX_TOPIC, True),

@@ -54,6 +54,9 @@ async def _show_current(event, draft, *, notice: str = "", page: int = 0, new: b
     else:
         summary += "Отправка уже началась. Проверьте историю и диагностику доставки; автоматического повтора нет.\n"
         kb.row(CallbackButton(text="📬 Диагностика доставки", payload="op:reply_issues:0"))
+    if draft.state in {"editing", "paused"}:
+        kb.row(CallbackButton(text="📎 Проверить вложения",
+                              payload=f"op:replydraft:filelist:{draft.token}:0"))
     if len(pages) > 1:
         nav = []
         if page:
@@ -112,12 +115,8 @@ async def begin(event, appeal_id: int, *, is_final: bool):
                 await appeals.mark_in_progress(session, appeal_id)
         else:
             notice = "Сначала завершите или отмените сохранённый ответ. Его обращение и тип не изменены."
-    from aemr_bot.handlers import admin_operators, admin_settings, broadcast
-    from aemr_bot.services import wizard_registry
-    broadcast._wizards.pop(operator.max_user_id, None)
-    admin_operators._op_wizard_drop(operator.max_user_id)
-    admin_settings._intent_drop(operator.max_user_id)
-    wizard_registry.drop_reply_intent(operator.max_user_id)
+    from aemr_bot.handlers.operator_input import clear_other_consumers
+    clear_other_consumers(operator.max_user_id)
     await ack_callback(event)
     await show(event, draft, notice=notice, new=True)
 
@@ -152,6 +151,10 @@ async def callback(event, payload: str):
         await ack_callback(event)
         return
     parts = payload.split(":")
+    if len(parts) > 2 and parts[2] in {"filelist", "fileopen", "filedel"}:
+        from aemr_bot.handlers import operator_draft_files
+        await operator_draft_files.handle(event, operator.id, parts)
+        return
     if len(parts) != 4:
         await ack_callback(event, "Кнопка устарела.")
         return
@@ -187,7 +190,14 @@ async def callback(event, payload: str):
             page = 0
         elif action in {"edit", "files"}:
             # Editing asks for replacement; old text remains until valid input.
-            draft.data = {**draft.data, **({"replace_text": True} if action == "edit" else {"attachments": []})}
+            if action == "edit":
+                draft.data = {**draft.data, "replace_text": True}
+            else:
+                try:
+                    operator_drafts.replace_attachments(draft, [])
+                except operator_drafts.DraftConflict as exc:
+                    await ack_callback(event, str(exc))
+                    return
             page = 0
         else:
             await ack_callback(event, "Кнопка устарела.")
@@ -195,6 +205,9 @@ async def callback(event, payload: str):
         await session.flush()
         composition = {**draft.data, "token": draft.token}
         appeal_id, is_final = draft.appeal_id, draft.is_final
+    if action == "resume":
+        from aemr_bot.handlers.operator_input import clear_other_consumers
+        clear_other_consumers(operator.max_user_id)
     await ack_callback(event)
     if action != "send":
         await show(event, draft, page=page, new=action == "open",

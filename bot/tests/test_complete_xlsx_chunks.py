@@ -36,8 +36,8 @@ async def test_report_includes_all_history_and_attachment_labels(session):
     workbook = load_workbook(BytesIO(content), read_only=True, data_only=True)
     rows = list(workbook["История"].values)
     assert count == 1
-    assert len(rows) == 52  # header, original, 50 messages
-    assert rows[1][-1] == "Яма " * 3000
+    assert len({row[1] for row in rows[1:]}) == 51  # original plus 50 messages
+    assert "".join(row[-1] for row in rows[1:] if row[1] == 1) == "Яма " * 3000
     assert rows[-1][-1] == "Дополнение 49"
     attachment = list(workbook["Вложения"].values)[1]
     assert "Фото" in attachment[-1]
