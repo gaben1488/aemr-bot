@@ -25,9 +25,6 @@ from aemr_bot.services import operators as operators_service
 from aemr_bot.services import policy as policy_service
 from aemr_bot.transport import DurableDispatcher, setup_webhook
 
-# Ре-экспорт: spawn_background_task переехал в utils/background.py
-# (батч 4), но исторические вызовы `from aemr_bot.main import
-# spawn_background_task` должны продолжать работать — импортированное
 # имя становится атрибутом модуля main.
 from aemr_bot.utils.background import drain_background_tasks, spawn_background_task
 
@@ -589,6 +586,7 @@ async def _hydrate_wizards() -> None:
                 step=step,
                 text=state.get("text") or "",
                 attachments=list(state.get("attachments") or []),
+                preview_message_id=state.get("preview_message_id"),
             )
 
 

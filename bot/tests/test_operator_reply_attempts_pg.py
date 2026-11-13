@@ -73,7 +73,8 @@ async def test_human_reconciliation_never_fabricates_platform_id(session):
     messages = list(await session.scalars(select(Message).where(Message.appeal_id == appeal.id)))
     assert len(messages) == 1 and messages[0].text == "Ответ"
     assert messages[0].max_message_id is None
-    assert messages[0].delivery_source == "manual"
+    assert messages[0].delivery_source == "manual_partial"
+    assert messages[0].delivery_uncertain_until is not None
     assert not await operator_reply_attempts.resolve_unknown(
         session, attempt_id, delivered=True, actor_max_id=operator.max_user_id,
     )
@@ -171,7 +172,7 @@ async def test_handler_delivery_reserves_before_max_and_never_replays_same_event
             async with operator_reply.session_scope() as check:
                 attempt = await check.scalar(select(OperatorReplyAttempt))
                 assert attempt is not None and attempt.state == "sending"
-                assert attempt.delivery_parts == [{"index": 0, "state": "sending", "mid": None}]
+                assert attempt.delivery_parts == [{"index": 0, "state": "sending", "mid": None, "attachments": []}]
             citizen_calls.append(kwargs)
             if outcome == "unknown":
                 raise TimeoutError("MAX outcome unknown")

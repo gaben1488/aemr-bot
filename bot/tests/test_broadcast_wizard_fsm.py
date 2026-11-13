@@ -27,9 +27,6 @@ pytest.importorskip("maxapi", reason="нужен maxapi для broadcast имп�
 
 from tests._helpers import make_event
 
-# ──────────────────────────────────────────────────────────────────────
-# _WizardState — pure dataclass
-# ──────────────────────────────────────────────────────────────────────
 
 
 class TestWizardState:
@@ -39,7 +36,7 @@ class TestWizardState:
     def test_default_step_awaiting_text(self) -> None:
         from aemr_bot.handlers.broadcast import _WizardState
 
-        state = _WizardState(step="awaiting_text")
+        state = _WizardState(preview_message_id="m-1", step="awaiting_text")
         assert state.step == "awaiting_text"
         assert state.text == ""
         assert state.attachments == []
@@ -48,37 +45,34 @@ class TestWizardState:
         """Default factory не должна шарить одну list между instance'ами."""
         from aemr_bot.handlers.broadcast import _WizardState
 
-        a = _WizardState(step="awaiting_text")
-        b = _WizardState(step="awaiting_text")
+        a = _WizardState(preview_message_id="m-1", step="awaiting_text")
+        b = _WizardState(preview_message_id="m-1", step="awaiting_text")
         a.attachments.append({"x": 1})
         assert b.attachments == []
 
     def test_expired_returns_false_for_fresh(self) -> None:
         from aemr_bot.handlers.broadcast import _WizardState
 
-        state = _WizardState(step="awaiting_text")
+        state = _WizardState(preview_message_id="m-1", step="awaiting_text")
         assert state.expired() is False
 
     def test_expired_returns_true_for_past_expires_at(self) -> None:
         from aemr_bot.handlers.broadcast import _WizardState
 
-        state = _WizardState(step="awaiting_text")
+        state = _WizardState(preview_message_id="m-1", step="awaiting_text")
         state.expires_at = _time.monotonic() - 1.0
         assert state.expired() is True
 
     def test_renew_bumps_expires_at(self) -> None:
         from aemr_bot.handlers.broadcast import _WizardState
 
-        state = _WizardState(step="awaiting_text")
+        state = _WizardState(preview_message_id="m-1", step="awaiting_text")
         state.expires_at = _time.monotonic() - 1.0
         assert state.expired() is True
         state.renew()
         assert state.expired() is False
 
 
-# ──────────────────────────────────────────────────────────────────────
-# _drop_expired_wizards
-# ──────────────────────────────────────────────────────────────────────
 
 
 class TestDropExpiredWizards:
@@ -97,7 +91,6 @@ class TestDropExpiredWizards:
         from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _drop_expired_wizards
 
-        # Пустой dict → no-op без побочек: чистка ничего не добавляет и
         # не падает.
         result = _drop_expired_wizards()
         assert result is None
@@ -110,7 +103,7 @@ class TestDropExpiredWizards:
             _WizardState,
         )
 
-        state = _WizardState(step="awaiting_text")
+        state = _WizardState(preview_message_id="m-1", step="awaiting_text")
         state.expires_at = _time.monotonic() - 1.0
         mod._wizards[42] = state
         _drop_expired_wizards()
@@ -123,7 +116,7 @@ class TestDropExpiredWizards:
             _WizardState,
         )
 
-        mod._wizards[42] = _WizardState(step="awaiting_text")
+        mod._wizards[42] = _WizardState(preview_message_id="m-1", step="awaiting_text")
         _drop_expired_wizards()
         assert 42 in mod._wizards
 
@@ -134,8 +127,8 @@ class TestDropExpiredWizards:
             _WizardState,
         )
 
-        fresh = _WizardState(step="awaiting_text")
-        expired = _WizardState(step="awaiting_text")
+        fresh = _WizardState(preview_message_id="m-1", step="awaiting_text")
+        expired = _WizardState(preview_message_id="m-1", step="awaiting_text")
         expired.expires_at = _time.monotonic() - 1.0
         mod._wizards[10] = fresh
         mod._wizards[20] = expired
@@ -213,7 +206,7 @@ class TestStartWizard:
              patch.object(mod, "session_scope") as scope, \
              patch.object(mod, "_resolve_broadcast_max_images",
                           AsyncMock(return_value=5)), \
-             patch.object(operator_reply, "drop_reply_intent") as drop, \
+             patch("aemr_bot.services.wizard_registry.drop_reply_intent") as drop, \
              patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
             scope.return_value.__aenter__ = AsyncMock(return_value=MagicMock())
             scope.return_value.__aexit__ = AsyncMock(return_value=False)
@@ -262,7 +255,7 @@ class TestHandleWizardText:
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
-        mod._wizards[42] = _WizardState(step="awaiting_confirm")
+        mod._wizards[42] = _WizardState(preview_message_id="m-1", step="awaiting_confirm")
         result = await mod._handle_wizard_text(event, "text")
         assert result is False
 
@@ -272,7 +265,7 @@ class TestHandleWizardText:
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
-        state = _WizardState(step="awaiting_text")
+        state = _WizardState(preview_message_id="m-1", step="awaiting_text")
         state.expires_at = _time.monotonic() - 1.0
         mod._wizards[42] = state
         result = await mod._handle_wizard_text(event, "any text")
@@ -286,7 +279,7 @@ class TestHandleWizardText:
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
-        mod._wizards[42] = _WizardState(step="awaiting_text")
+        mod._wizards[42] = _WizardState(preview_message_id="m-1", step="awaiting_text")
         result = await mod._handle_wizard_text(event, "/cancel")
         assert result is True
         assert 42 not in mod._wizards
@@ -298,7 +291,7 @@ class TestHandleWizardText:
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
-        mod._wizards[42] = _WizardState(step="awaiting_text")
+        mod._wizards[42] = _WizardState(preview_message_id="m-1", step="awaiting_text")
         long_text = "x" * (cfg.broadcast_max_chars + 100)
         result = await mod._handle_wizard_text(event, long_text)
         assert result is True
@@ -313,7 +306,7 @@ class TestHandleWizardText:
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
-        mod._wizards[42] = _WizardState(step="awaiting_text")
+        mod._wizards[42] = _WizardState(preview_message_id="m-1", step="awaiting_text")
         with patch.object(mod.settings_store, "find_non_whitelisted_urls",
                           return_value=["http://evil.example"]):
             result = await mod._handle_wizard_text(
@@ -334,7 +327,7 @@ class TestHandleWizardText:
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
-        mod._wizards[42] = _WizardState(step="awaiting_text")
+        mod._wizards[42] = _WizardState(preview_message_id="m-1", step="awaiting_text")
         with patch.object(mod.settings_store, "find_non_whitelisted_urls",
                           return_value=[]), \
              patch.object(mod, "session_scope") as scope, \
@@ -357,7 +350,7 @@ class TestHandleWizardText:
         from aemr_bot.handlers.broadcast import _WizardState
 
         event = make_event(user_id=42)
-        mod._wizards[42] = _WizardState(step="awaiting_text")
+        mod._wizards[42] = _WizardState(preview_message_id="m-1", step="awaiting_text")
         with patch.object(mod.settings_store, "find_non_whitelisted_urls",
                           return_value=[]), \
              patch.object(mod, "session_scope") as scope, \
@@ -403,7 +396,7 @@ class TestHandleConfirmBase:
     async def test_no_actor_id_no_op(self) -> None:
         from aemr_bot.handlers import broadcast_wizard as mod
 
-        event = make_event(user_id=42)
+        event = make_event(user_id=42, with_callback=True)
         with patch.object(mod, "get_user_id", return_value=None), \
              patch.object(mod, "ack_callback", AsyncMock()) as ack:
             result = await mod._handle_confirm(event)
@@ -417,7 +410,7 @@ class TestHandleConfirmBase:
     async def test_no_wizard_acks_closed(self) -> None:
         from aemr_bot.handlers import broadcast_wizard as mod
 
-        event = make_event(user_id=42)
+        event = make_event(user_id=42, with_callback=True)
         with patch.object(mod, "ack_callback", AsyncMock()) as ack:
             await mod._handle_confirm(event)
         ack.assert_awaited_once()
@@ -430,9 +423,9 @@ class TestHandleConfirmBase:
         from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
-        event = make_event(user_id=42)
+        event = make_event(user_id=42, with_callback=True)
         # State не в awaiting_confirm.
-        mod._wizards[42] = _WizardState(step="awaiting_text")
+        mod._wizards[42] = _WizardState(preview_message_id="m-1", step="awaiting_text")
         with patch.object(mod, "ack_callback", AsyncMock()) as ack:
             await mod._handle_confirm(event)
         # Pop'нули.
@@ -444,8 +437,8 @@ class TestHandleConfirmBase:
         from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
-        event = make_event(user_id=42)
-        state = _WizardState(step="awaiting_confirm")
+        event = make_event(user_id=42, with_callback=True)
+        state = _WizardState(preview_message_id="m-1", step="awaiting_confirm")
         state.expires_at = _time.monotonic() - 1.0
         mod._wizards[42] = state
         with patch.object(mod, "ack_callback", AsyncMock()) as ack:
@@ -467,8 +460,8 @@ class TestHandleAbort:
         from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
-        event = make_event(user_id=42)
-        mod._wizards[42] = _WizardState(step="awaiting_text")
+        event = make_event(user_id=42, with_callback=True)
+        mod._wizards[42] = _WizardState(preview_message_id="m-1", step="awaiting_text")
         with patch.object(mod, "ack_callback", AsyncMock()) as ack, \
              patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()) as send:
             await mod._handle_abort(event)
@@ -480,7 +473,7 @@ class TestHandleAbort:
     async def test_no_actor_id_still_acks(self) -> None:
         from aemr_bot.handlers import broadcast_wizard as mod
 
-        event = make_event(user_id=42)
+        event = make_event(user_id=42, with_callback=True)
         with patch.object(mod, "get_user_id", return_value=None), \
              patch.object(mod, "ack_callback", AsyncMock()) as ack, \
              patch("aemr_bot.handlers._common.send_or_edit_screen", AsyncMock()):
@@ -504,7 +497,7 @@ class TestHandleEdit:
     async def test_no_wizard_acks_closed(self) -> None:
         from aemr_bot.handlers import broadcast_wizard as mod
 
-        event = make_event(user_id=42)
+        event = make_event(user_id=42, with_callback=True)
         with patch.object(mod, "ack_callback", AsyncMock()) as ack:
             await mod._handle_edit(event)
         ack.assert_awaited_once()
@@ -514,8 +507,9 @@ class TestHandleEdit:
         from aemr_bot.handlers import broadcast_wizard as mod
         from aemr_bot.handlers.broadcast import _WizardState
 
-        event = make_event(user_id=42)
+        event = make_event(user_id=42, with_callback=True)
         state = _WizardState(
+            preview_message_id="m-1",
             step="awaiting_confirm",
             text="Previous text",
             attachments=[{"image": "x"}, {"image": "y"}],
@@ -568,6 +562,7 @@ class TestPrefillWizardFromTemplate:
         )
 
         mod._wizards[42] = _WizardState(
+            preview_message_id="m-1",
             step="awaiting_text", text="Old draft",
         )
         prefill_wizard_from_template(

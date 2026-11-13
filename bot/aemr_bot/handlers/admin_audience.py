@@ -1,12 +1,7 @@
 """Меню «📊 Аудитория и согласия» — IT-выборки + точечные действия
 над жителем (block / unblock / erase).
 
-После UX-редизайна 2026-05-28 (PR audience-paginated-master) listing
-стал master-pattern'ом: одно сообщение со списком 10 жителей на
-странице, clickable rows, pagination кнопки. Заменили flood из 20
-отдельных сообщений (жалоба owner).
-
-Выделено из handlers/admin_commands.py (рефакторинг 2026-05-10).
+Список: 10 жителей на странице, кнопки карточек и пагинации.
 """
 from __future__ import annotations
 
@@ -242,6 +237,8 @@ async def _start_search_intent(event, category: str | None) -> None:
     operator_id = get_user_id(event)
     if operator_id is None:
         return
+    from aemr_bot.handlers.operator_input import claim_composer
+    await claim_composer(operator_id)
     _search_intent_set(operator_id, category)
     await op_screen(
         event,

@@ -39,18 +39,7 @@ def main_menu(
     subscribed: bool = False,
     has_draft: bool = False,
 ):
-    """Главное меню жителя.
-
-    Структура (вариант 3, утверждено 2026-05-09):
-    - Написать обращение, Мои обращения — горячие действия первыми тапами
-    - Подписка/отписка — динамическая кнопка-toggle, текст зависит
-      от текущего статуса подписки
-    - Приём граждан, Полезная информация, Настройки — три подменю
-
-    Кнопка подписки динамическая: «🔔 Подписаться на рассылку» если
-    ещё не подписан, «🔕 Не хочу получать рассылку» если подписан.
-    Электронная приёмная (LinkButton) переехала в подменю «Приём
-    граждан». Главное меню содержит 7 кнопок, включая защиту от мошенников."""
+    """Главное меню жителя с идемпотентной подпиской."""
     kb = InlineKeyboardBuilder()
     if has_draft:
         kb.row(CallbackButton(text="📝 Продолжить черновик", payload="draft:resume"))
@@ -93,6 +82,7 @@ def appeal_draft_keyboard(token: str, *, has_content: bool = True, followup: boo
         kb.row(CallbackButton(text=label, payload=f"draft:submit:{token}"))
         kb.row(CallbackButton(text="📖 Полный текст", payload=f"draft:view:{token}:0"),
                CallbackButton(text="✏️ Изменить текст", payload=f"draft:edit:{token}"))
+    kb.row(CallbackButton(text="📎 Вложения", payload=f"draft:files:{token}"))
     kb.row(CallbackButton(text="🗑 Отменить черновик", payload=f"draft:cancel:{token}"))
     kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
     return kb.as_markup()
@@ -116,6 +106,7 @@ def closed_followup_draft_keyboard(token: str):
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="📝 Создать новое", payload=f"draft:new_related:{token}"))
     kb.row(CallbackButton(text="📖 Полный текст", payload=f"draft:view:{token}:0"))
+    kb.row(CallbackButton(text="📎 Вложения", payload=f"draft:files:{token}"))
     kb.row(CallbackButton(text="🗑 Отменить", payload=f"draft:cancel:{token}"))
     kb.row(CallbackButton(text="↩️ В меню", payload="menu:main"))
     return kb.as_markup()

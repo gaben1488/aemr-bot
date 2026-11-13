@@ -1,43 +1,8 @@
-"""Иерархическое меню «⚙️ Настройки бота» — ФАСАД.
+"""IT-only settings facade: routes callbacks and captures editor input.
 
-Покрывает все ключи settings_store через структурированную навигацию:
-- Тексты для жителей (welcome_text, consent_text, appointment_text)
-- Внешние ссылки (4 URL)
-- Списки (topics, localities) — CRUD по строкам
-- Объекты (emergency_contacts, transport_dispatcher_contacts) — CRUD
-- Автор коммитов от бота
-- Создание PR с изменениями (через services/repo_sync)
-
-Команда /setting сохраняется как fallback для экспертных случаев
-(длинные JSON-структуры, ключи без UI), но через меню больше не
-требуется.
-
-Inline-редактирование текстов и URL идёт через TTL-кэш ожидаемого
-ввода (_edit_intents). Когда IT-админ присылает следующее текстовое
-сообщение в админ-группе — оно перехватывается и применяется как
-новое значение указанного ключа.
-
-──────────────────────────────────────────────────────────────────────
-ДЕКОМПОЗИЦИЯ (DDD tactical). Прикладной слой разнесён по
-ответственности на подмодули рядом; здесь остаётся ФАСАД — точка
-входа, диспетчер callback'ов, перехватчик текста и re-export
-перенесённых функций (внешние импорты `from .admin_settings import X`
-не ломаются):
-
-- admin_settings_shared  — intent-кэш + `_clip_audit_value`/`_render_value`
-- admin_settings_text    — карточки/правка текстов и URL (+ commit_author_*)
-- admin_settings_author  — карточка автора коммитов
-- admin_settings_list    — списки строк (topics, localities)
-- admin_settings_obj     — списки объектов (emergency/transport контакты)
-- admin_settings_quiet   — wizard тихого режима
-- admin_settings_notify  — модульные тумблеры служебных уведомлений
-- admin_settings_pr      — создание PR / diff с репозиторием
-
-Диспетчер `_route_set_action` и перехватчик `handle_settings_edit_text`
-зовут перенесённые функции через ЭТОТ фасадный namespace (re-export
-ниже), поэтому характеризационные тесты, патчащие `mod.<handler>`,
-продолжают работать без репойнта. Тесты прикладных функций патчат уже
-на соответствующем подмодуле (см. их docstring).
+Resident text/URL changes use a token-bound preview before applying; commit
+metadata and expert commands retain their existing flow. The application
+handlers below are re-exported for existing callers and focused tests.
 """
 from __future__ import annotations
 
@@ -173,6 +138,11 @@ async def run_settings_action(event, payload: str) -> None:
 
 async def _route_set_action(event, operator_id: int, rest: str) -> None:
 
+    if rest.startswith("textpreview:"):
+        from aemr_bot.handlers import admin_settings_text_preview
+        await admin_settings_text_preview.callback(event, operator_id, rest.removeprefix("textpreview:"))
+        return
+
     if rest.startswith(("list_page:", "obj_page:")):
         try:
             kind, key, page = rest.split(":")
@@ -230,6 +200,10 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
         await _show_text_card(event, key)
         return
     if rest.startswith("editview:"):
+        intent = _intent_get(operator_id)
+        if intent and "proposed_text" in intent:
+            await op_screen(event, "Используйте страницы актуального предпросмотра.")
+            return
         parts = rest.removeprefix("editview:").rsplit(":", 1)
         if len(parts) == 2 and parts[1].isdigit():
             await _show_edit_page(event, operator_id, parts[0], int(parts[1]))
@@ -240,6 +214,10 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
         return
     if rest.startswith("cancel:"):
         key = rest.removeprefix("cancel:")
+        intent = _intent_get(operator_id)
+        if intent and "proposed_text" in intent:
+            await op_screen(event, "Используйте кнопку отмены в актуальном предпросмотре.")
+            return
         _intent_drop(operator_id)
         if key in {"commit_author_name", "commit_author_email"}:
             await _show_author_card(event)
@@ -253,6 +231,8 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
         return
     if rest.startswith("list_add:"):
         key = rest.removeprefix("list_add:")
+        from aemr_bot.handlers.operator_input import claim_composer
+        await claim_composer(operator_id)
         _intent_set(operator_id, key=key, kind="list_add")
         await op_screen(
             event,
@@ -271,9 +251,8 @@ async def _route_set_action(event, operator_id: int, rest: str) -> None:
         key = rest.removeprefix("obj:")
         await _show_obj_card(event, key)
         return
-    if rest.startswith("obj_view:"):
-        rest2 = rest.removeprefix("obj_view:")
-        await _show_obj_item(event, rest2)
+    if rest.startswith(("obj_view:", "obj_itempage:")):
+        await _show_obj_item(event, rest.split(":", 1)[1])
         return
     if rest.startswith("obj_add:"):
         key = rest.removeprefix("obj_add:")
@@ -447,6 +426,10 @@ async def handle_settings_edit_text(event, text: str) -> bool:
     # «🌙 Час начала» → `99` → ошибка → `18` уходил бы в пустоту). В обоих
     # случаях сообщение поглощено (return True) — оно адресовано wizard'у.
     if kind == "single":
+        if key not in {"commit_author_name", "commit_author_email"}:
+            from aemr_bot.handlers import admin_settings_text_preview
+            await admin_settings_text_preview.prepare(event, operator_id, key, new_text)
+            return True
         if await _apply_single_edit(event, operator_id, key, new_text):
             _intent_drop(operator_id)
         return True

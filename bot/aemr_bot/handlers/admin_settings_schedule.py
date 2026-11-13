@@ -51,6 +51,8 @@ async def start(event, operator_id: int) -> None:
     async with session_scope() as session:
         _, revision = await settings_store.get_versioned(session, work_schedule.KEY)
         baseline = await work_schedule.snapshot(session)
+    from aemr_bot.handlers.operator_input import claim_composer
+    await claim_composer(operator_id)
     token = token_hex(6)
     _intent_set(operator_id, key=work_schedule.KEY, kind="work_schedule",
                 baseline=baseline, revision=revision, token=token)

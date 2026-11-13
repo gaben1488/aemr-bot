@@ -15,22 +15,21 @@ from aemr_bot.db.models import Appeal, Message
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import privacy_epoch, sla, stats, work_schedule
 from aemr_bot.services.content_status import content_notice
+from aemr_bot.services.export_layout import readable_chunks, row_height
 from aemr_bot.utils.pii_mask import mask_phone
-from aemr_bot.utils.text_pages import split_text_units
 
 _BATCH_SIZE = 100
 _SHEET_LIMIT = 1_048_576
 
 
-def cell_chunks(value: str) -> list[str]:
+def cell_chunks(value: str, width: int = 75) -> list[str]:
     """Keep all text, explicitly represent XML-incompatible control characters."""
     safe = "".join(c if c in "\t\n\r" or 0x20 <= ord(c) <= 0xD7FF
                    or 0xE000 <= ord(c) <= 0xFFFD
                    or 0x10000 <= ord(c) <= 0x10FFFF
                    else f"⟦U+{ord(c):04X}⟧" for c in value)
-    # Conservative for Excel's cell limit even if non-BMP characters count
-    # as two UTF-16 units; allow room for a formula-protection apostrophe.
-    return split_text_units(safe, 32000)
+    # Visible rows must fit too; 32K stored characters exceed Excel row height.
+    return readable_chunks(safe, width)
 
 
 def _cell(value):
@@ -80,23 +79,29 @@ class _Sheet:
         for title in self.headers:
             cell = WriteOnlyCell(self.ws, value=title)
             cell.font = Font(bold=True)
+            cell.alignment = Alignment(vertical="top", wrap_text=True)
             cells.append(cell)
+        self.ws.row_dimensions[1].height = max(48, row_height(self.headers, self.widths))
         self.ws.append(cells)
         self.rows = 1
 
     def append(self, values: list) -> None:
-        columns = [cell_chunks(value) if isinstance(value, str) else [value] for value in values]
+        columns = [cell_chunks(value, width) if isinstance(value, str) else [value]
+                   for value, width in zip(values, self.widths, strict=True)]
         for part in range(max(len(column) for column in columns)):
             if self.rows >= _SHEET_LIMIT:
                 self._new()
             cells = []
+            row_values = []
             for column in columns:
                 value = column[part] if part < len(column) else column[0] if len(column) == 1 else ""
+                row_values.append(value)
                 cell = WriteOnlyCell(self.ws, value=_cell(value))
                 if isinstance(value, datetime):
                     cell.number_format = "DD.MM.YYYY HH:MM"
                 cell.alignment = Alignment(vertical="top", wrap_text=True)
                 cells.append(cell)
+            self.ws.row_dimensions[self.rows + 1].height = row_height(row_values, self.widths)
             self.ws.append(cells)
             self.rows += 1
 
@@ -153,6 +158,7 @@ async def build_xlsx_with_epoch(
 
     count, after_id = 0, 0
     first_answered = 0
+    first_unknown = 0
     response_counts = {"intermediate": 0, "final": 0, "unknown": 0}
     status_counts: dict[str, int] = {}
     while True:
@@ -167,7 +173,7 @@ async def build_xlsx_with_epoch(
         after_id = appeals[-1].id
         first_replies = await appeals_service.first_operator_reply_times(session, [a.id for a in appeals])
         latest_rows = await session.execute(
-            select(Message.appeal_id, func.max(Message.created_at))
+            select(Message.appeal_id, func.max(func.coalesce(Message.delivery_uncertain_until, Message.created_at)))
             .where(Message.appeal_id.in_([a.id for a in appeals]))
             .group_by(Message.appeal_id)
         )
@@ -177,6 +183,9 @@ async def build_xlsx_with_epoch(
             elapsed: float | str = ""
             on_time = ""
             first_reply = first_replies.get(appeal.id)
+            time_unknown = appeal.id in first_replies and first_reply is None
+            if time_unknown:
+                first_unknown += 1
             if first_reply is not None:
                 first_answered += 1
             status_label = stats._status_label(appeal.status)
@@ -191,11 +200,13 @@ async def build_xlsx_with_epoch(
                     on_time = "Нет снимка срока или календаря"
                 else:
                     on_time = "нет" if sla.is_overdue(anchor, first_reply, appeal.sla_hours_at_start, schedule=work_schedule.for_appeal(appeal)) else "да"
+            elif time_unknown:
+                on_time = "Время или период ответа неизвестен"
             overview.append([appeal.id, appeal.related_appeal_id or "", _date(appeal.created_at), getattr(user, "first_name", "") or "",
                              mask_phone(getattr(user, "phone", None)), appeal.locality or "",
                              appeal.address or "", appeal.topic or "", _summary_preview(appeal.summary or content_notice(appeal)),
                              stats._status_label(appeal.status), latest_action,
-                             _date(first_reply), _date(appeal.answered_at), _date(appeal.closed_at), elapsed,
+                             "Неизвестно" if time_unknown else _date(first_reply), _date(appeal.answered_at), _date(appeal.closed_at), elapsed,
                              appeal.sla_hours_at_start if appeal.sla_hours_at_start is not None else "Не сохранился", on_time,
                              _date(getattr(user, "consent_pdn_at", None)),
                              _date(getattr(user, "consent_revoked_at", None)),
@@ -210,8 +221,9 @@ async def build_xlsx_with_epoch(
                         return _date(datetime.fromisoformat(record[field]))
                     except (ValueError, KeyError, TypeError):
                         return ""
-                known = (period_record.get("assessment") == "at_reopen"
-                         and bool(period_record.get("first_response"))
+                unanswered = period_record.get("assessment") == "unanswered_at_close"
+                known = (((period_record.get("assessment") == "at_reopen"
+                           and bool(period_record.get("first_response"))) or unanswered)
                          and isinstance(period_record.get("overdue"), bool))
                 legacy = period_record.get("assessment") == "at_reopen_legacy"
                 periods.append([appeal.id, period_date("start"), period_date("first_response"),
@@ -219,6 +231,7 @@ async def build_xlsx_with_epoch(
                                 ("да" if period_record["overdue"] else "нет") if known else "Нет данных",
                                 "Исходный норматив неизвестен" if legacy else
                                 "Нет достоверной оценки первого ответа" if not known else
+                                "Ответа не было; срок оценён на момент закрытия" if unanswered else
                                 "Оценка рассчитана при возобновлении обращения"])
             records = getattr(user, "consent_records", None) or []
             if not records:
@@ -282,7 +295,9 @@ async def build_xlsx_with_epoch(
     for label, total in sorted(status_counts.items()):
         summary.append([f"Статус: {label}", total, "Текущее состояние выбранных обращений."])
     summary.append(["Обращений с первым ответом в текущем периоде", first_answered,
-                    "Первый ответ после начала текущего периода работы обращения; не число ответов."])
+                    "Учтены ответы с известным временем; неопределённые случаи указаны отдельно."])
+    summary.append(["Время или период первого ответа неизвестен", first_unknown,
+                    "Требуется сверка; эти обращения не считаются отсутствием ответа."])
     summary.append(["Промежуточных ответов (сообщений)", response_counts["intermediate"],
                     "Количество сохранённых сообщений этого типа за всю историю выбранных обращений."])
     summary.append(["Итоговых ответов (сообщений)", response_counts["final"],

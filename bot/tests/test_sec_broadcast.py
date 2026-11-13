@@ -69,6 +69,7 @@ class TestConfirmWhitelistGate:
         )
         assert mod._wizards[42].step == "awaiting_confirm"
 
+        mod._wizards[42].preview_message_id = "m-1"
         event = make_event(user_id=42, with_callback=True)
         create_broadcast = AsyncMock()
         with patch.object(mod, "_ensure_role", AsyncMock(return_value=True)), \
@@ -105,6 +106,7 @@ class TestConfirmWhitelistGate:
             text="Расписание автобусов: https://elizovomr.ru/schedule",
             attachments=[],
         )
+        mod._wizards[42].preview_message_id = "m-1"
         event = make_event(user_id=42, with_callback=True, send_returns_mid=True)
         created = SimpleNamespace(id=777)
         with patch.object(mod, "_ensure_role", AsyncMock(return_value=True)), \

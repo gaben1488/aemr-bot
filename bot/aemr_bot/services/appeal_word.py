@@ -107,7 +107,7 @@ def build_appeal_docx(appeal) -> bytes:
               'w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>'
               '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style>'
               + ''.join(f'<w:style w:type="paragraph" w:styleId="{name}"><w:name w:val="{name}"/>'
-                        f'<w:basedOn w:val="Normal"/><w:rPr><w:b/><w:sz w:val="{size}"/></w:rPr>'
+                        f'<w:basedOn w:val="Normal"/><w:pPr><w:keepNext/></w:pPr><w:rPr><w:b/><w:sz w:val="{size}"/></w:rPr>'
                         '</w:style>' for name, size in (("Title", 34), ("Subtitle", 22),
                                                        ("Heading1", 28), ("Heading2", 24)))
               + '</w:styles>')

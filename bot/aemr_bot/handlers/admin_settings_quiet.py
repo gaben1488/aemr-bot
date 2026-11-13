@@ -113,6 +113,8 @@ async def _start_quiet_hour_intent(
     label = "начала" if which == "start" else "конца"
     async with session_scope() as session:
         baseline, revision = await settings_store.get_versioned(session, f"admin_quiet_hours_{which}")
+    from aemr_bot.handlers.operator_input import claim_composer
+    await claim_composer(operator_id)
     _intent_set(
         operator_id,
         key=f"admin_quiet_hours_{which}",

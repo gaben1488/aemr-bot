@@ -116,3 +116,60 @@ async def test_begin_failure_releases_lock_and_keeps_existing_parts(session, mon
         assert restored.token == token and restored.is_final is False
         assert restored.data["summary_chunks"] == ["First", "Second"]
         assert restored.data["attachments"] == files
+
+
+@pytest.mark.asyncio
+async def test_cancel_while_waiting_for_appeal_lock_allows_retry(session, monkeypatch):
+    from sqlalchemy import text
+
+    user = User(max_user_id=90321, consent_pdn_at=datetime.now(UTC))
+    operator = Operator(max_user_id=90322, full_name="Operator", role="aemr")
+    session.add_all([user, operator])
+    await session.flush()
+    appeal = Appeal(user_id=user.id, status="new", summary="Test", attachments=[])
+    session.add(appeal)
+    await session.commit()
+    monkeypatch.setattr(operator_draft, "get_operator", AsyncMock(return_value=operator))
+    monkeypatch.setattr(operator_draft, "is_admin_chat", lambda _: True)
+    monkeypatch.setattr(operator_draft, "ack_callback", AsyncMock())
+    monkeypatch.setattr(operator_draft, "show", AsyncMock())
+    original_hold = appeal_locks.hold
+    waiting = asyncio.Event()
+    pid = None
+
+    async def observe_hold(db, appeal_id):
+        nonlocal pid
+        if asyncio.current_task().get_name() == "waiting-draft":
+            pid = await db.scalar(text("SELECT pg_backend_pid()"))
+            waiting.set()
+        await original_hold(db, appeal_id)
+
+    monkeypatch.setattr(appeal_locks, "hold", observe_hold)
+    event = make_event(chat_id=123, user_id=operator.max_user_id)
+    async with session_scope() as holder:
+        await original_hold(holder, appeal.id)
+        task = asyncio.create_task(operator_draft.begin(event, appeal.id, is_final=False),
+                                   name="waiting-draft")
+        try:
+            await asyncio.wait_for(waiting.wait(), 5)
+            async with session_scope() as probe:
+                async def wait_for_pg_lock():
+                    while not await probe.scalar(text(
+                        "SELECT EXISTS (SELECT 1 FROM pg_locks WHERE pid = :pid "
+                        "AND locktype = 'advisory' AND NOT granted)"), {"pid": pid}):
+                        await asyncio.sleep(0.01)
+                await asyncio.wait_for(wait_for_pg_lock(), 5)
+            task.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await task
+            async with session_scope() as probe:
+                assert await operator_drafts.get(probe, operator.id) is None
+                assert await probe.scalar(select(Appeal.id).where(
+                    Appeal.id == appeal.id).with_for_update(nowait=True)) == appeal.id
+        finally:
+            if not task.done():
+                task.cancel()
+                await asyncio.gather(task, return_exceptions=True)
+    await asyncio.wait_for(operator_draft.begin(event, appeal.id, is_final=False), 5)
+    async with session_scope() as probe:
+        assert (await operator_drafts.get(probe, operator.id)).appeal_id == appeal.id

@@ -79,9 +79,13 @@ async def replay_restore_tombstones(session) -> int:
             .where(OperatorReplyDraft.appeal_id == appeal_id).limit(1)))
         has_payload = has_payload or bool(await session.scalar(select(OperatorReplyAttempt.id)
             .where(OperatorReplyAttempt.appeal_id == appeal_id).limit(1)))
-        if not has_payload:
+        if not has_payload and source.content_erased_at is not None:
             continue
-        await erasure.request_appeal_cleanup(session, [appeal_id])
+        token = erasure._restore_cutoff.set(cutoff)
+        try:
+            await erasure.request_appeal_cleanup(session, [appeal_id])
+        finally:
+            erasure._restore_cutoff.reset(token)
         await session.execute(delete(OperatorReplyAttempt).where(OperatorReplyAttempt.appeal_id == appeal_id))
         await session.execute(delete(OperatorReplyDraft).where(OperatorReplyDraft.appeal_id == appeal_id))
         await session.execute(update(Appeal).where(Appeal.id == appeal_id)

@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -174,7 +174,7 @@ async def _load_last_operator_replies(
         .label("rn")
     )
     ranked = (
-        select(Message.appeal_id, Message.text, rn)
+        select(Message.appeal_id, Message.text, Message.created_at, rn)
         .where(
             Message.appeal_id.in_(appeal_ids),
             Message.direction == MessageDirection.FROM_OPERATOR.value,
@@ -182,15 +182,23 @@ async def _load_last_operator_replies(
         .subquery()
     )
     rows = await session.execute(
-        select(ranked.c.appeal_id, ranked.c.text).where(ranked.c.rn == 1)
+        select(ranked.c.appeal_id, ranked.c.text, ranked.c.created_at).where(ranked.c.rn == 1)
     )
-    return {appeal_id: text for appeal_id, text in rows}
+    uncertain = await session.execute(select(
+        Message.appeal_id, func.max(func.coalesce(Message.delivery_uncertain_until, Message.created_at))
+    ).where(Message.appeal_id.in_(appeal_ids), Message.direction == MessageDirection.FROM_OPERATOR.value,
+            or_(Message.delivery_uncertain_until.is_not(None), Message.delivery_source == "manual")
+    ).group_by(Message.appeal_id))
+    upper: dict[int, datetime] = {appeal_id: value for appeal_id, value in uncertain if value is not None}
+    return {appeal_id: (("Порядок ответов требует сверки. Возможный последний ответ: " + (text or ""))
+                       if appeal_id in upper and upper[appeal_id] >= created else text)
+            for appeal_id, text, created in rows}
 
 
 def _render_workbook(
     appeals: list[Appeal],
     operator_replies: dict[int, str | None] | None = None,
-    first_replies: dict[int, datetime] | None = None,
+    first_replies: dict[int, datetime | None] | None = None,
 ) -> bytes:
     """Синхронная сборка XLSX. Работает только с уже загруженными
     данными (selectinload отработал в build_xlsx) — сессию не трогает,
@@ -203,7 +211,8 @@ def _render_workbook(
     вызовы _render_workbook (например, security-тесты formula-injection,
         собирающие appeal со списком .messages вручную).
     `first_replies` содержит времена первых ответов текущего периода,
-    выбранные одним агрегатным запросом. Без словаря используются только
+    выбранные одним запросом; None означает неизвестное время или период.
+    Без словаря используются только
     уже загруженные сообщения; answered_at не заменяет время первого ответа.
     """
     wb = Workbook()
@@ -247,13 +256,20 @@ def _render_workbook(
             operator_reply = operator_replies.get(a.id)
         else:
             # Fallback для прямых вызовов (messages загружены целиком).
-            operator_reply = next(
-                (m.text for m in reversed(a.messages) if m.direction == "from_operator"),
-                None,
-            )
+            candidate = next((m for m in reversed(a.messages) if m.direction == "from_operator"), None)
+            operator_reply = candidate.text if candidate is not None else None
+            if candidate is not None and any(
+                m.direction == "from_operator" and (
+                    ((until := getattr(m, "delivery_uncertain_until", None)) is not None
+                     and until >= candidate.created_at) or
+                    (getattr(m, "delivery_source", None) == "manual" and m.created_at >= candidate.created_at))
+                for m in a.messages
+            ):
+                operator_reply = "Порядок ответов требует сверки. Возможный последний ответ: " + (operator_reply or "")
         anchor = getattr(a, "sla_anchor_at", None) or a.created_at
         if first_replies is not None:
             first_reply = first_replies.get(a.id)
+            time_unknown = a.id in first_replies and first_reply is None
         else:
             # Only loaded messages are evidence; never lazy-load from this
             # worker thread or infer a first reply from the final answered_at.
@@ -261,6 +277,15 @@ def _render_workbook(
                                if getattr(m, "direction", None) == "from_operator"
                                and getattr(m, "created_at", None) is not None
                                and anchor is not None and m.created_at >= anchor), default=None)
+            time_unknown = any(
+                getattr(m, "direction", None) == "from_operator" and anchor is not None and (
+                    (getattr(m, "delivery_uncertain_until", None) is not None
+                     and m.delivery_uncertain_until >= anchor) or
+                    (getattr(m, "delivery_source", None) == "manual" and m.created_at >= anchor))
+                for m in getattr(a, "__dict__", {}).get("messages", [])
+            )
+            if time_unknown:
+                first_reply = None
         if first_reply is not None and anchor is not None:
             elapsed = (first_reply - anchor).total_seconds()
             elapsed_hours = round(elapsed / 3600, 2)
@@ -277,7 +302,7 @@ def _render_workbook(
                 in_sla = "нет" if overdue else "да"
         else:
             elapsed_hours = None
-            in_sla = ""
+            in_sla = "Время или период ответа неизвестен" if time_unknown else ""
         u = a.user
         # _sanitize_cell — на всех ячейках с текстом жителя/оператора
         # (formula-injection guard, см. _sanitize_cell). Числа и

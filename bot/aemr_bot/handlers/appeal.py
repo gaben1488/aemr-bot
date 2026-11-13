@@ -57,12 +57,9 @@ from aemr_bot.utils.event import (
 log = logging.getLogger(__name__)
 
 
-# Re-export для обратной совместимости с main.py.
 __all__ = ["recover_stuck_funnels", "register"]
 
 
-# State-таблица: какой handler вызывать в каком DialogState когда
-# житель прислал что-то нерелевантное (текст вместо кнопки и т.п.).
 _STATE_HANDLERS = {
     DialogState.AWAITING_CONSENT: appeal_funnel.on_awaiting_consent,
     DialogState.AWAITING_CONTACT: appeal_funnel.on_awaiting_contact,
@@ -108,8 +105,6 @@ def _expected_funnel_callback_states(payload: str) -> tuple[DialogState, ...]:
     if payload in {"consent:yes", "consent:no"}:
         return (DialogState.AWAITING_CONSENT,)
     if payload in {"addr:reuse", "addr:new"}:
-        # reuse-prompt может быть показан после AWAITING_NAME или после
-        # ask_contact_or_skip(), где состояние уже AWAITING_LOCALITY.
         return (DialogState.AWAITING_NAME, DialogState.AWAITING_LOCALITY)
     if payload.startswith("locality:"):
         return (DialogState.AWAITING_LOCALITY,)
@@ -131,8 +126,6 @@ async def _ensure_funnel_callback_state(
     if not expected:
         return True
 
-    # Storage errors must reach the dispatcher error path before any callback
-    # mutation. Test doubles must supply state, not weaken the production guard.
     async with current_user(max_user_id) as (_, user):
         current = _state_value(getattr(user, "dialog_state", None))
 
@@ -179,8 +172,6 @@ def _clear_geo_detected(
     if drop_locality:
         cleaned.pop("locality", None)
     if drop_progress_message:
-        # После geo-confirm старый progress_message_id обычно указывает
-        # на карточку выбора населённого пункта выше по чату. Если его
         # оставить, следующий шаг редактируется в старом сообщении, а
         # житель продолжает видеть активную geo-карточку как «зависшую».
         cleaned.pop("progress_message_id", None)
@@ -290,12 +281,22 @@ async def _cb_cancel(event, max_user_id: int, payload: str) -> None:
     не пересоздаём «Отменено».
     """
     async with session_scope() as session:
-        user = await users_service.find_by_max_id(session, max_user_id)
+        user = await users_service.find_by_max_id(session, max_user_id, for_update=True)
+        data = (user.dialog_data or {}) if user is not None else {}
+        # A related draft keeps its parts while collecting fresh address data.
+        # Its early cancel is valid only on that draft's current progress screen.
+        related_screen = bool(
+            user is not None and user.dialog_state in {
+                DialogState.AWAITING_LOCALITY.value, DialogState.AWAITING_ADDRESS.value,
+                DialogState.AWAITING_TOPIC.value, DialogState.AWAITING_GEO_CONFIRM.value,
+            } and data.get("progress_message_id")
+            and get_callback_message_id(event) == data["progress_message_id"]
+        )
         # Snap state до сброса — нужен для stale-detection.
         is_stale = (
             user is None
             or user.dialog_state == DialogState.IDLE.value
-            or bool((user.dialog_data or {}).get("draft_token"))
+            or (bool(data.get("draft_token")) and not related_screen)
         )
         if not is_stale:
             await users_service.reset_state(session, max_user_id)
@@ -469,13 +470,15 @@ async def _cb_topic(event, max_user_id: int, payload: str) -> None:
 
 
 async def _cb_appeal_submit(event, max_user_id: int, payload: str) -> None:
-    # Кнопка «Отправить» осталась в старых сообщениях клиента, которые
-    # ещё могут крутиться у жителя в чате. Финализируем только если
-    # пользователь всё ещё на шаге описания сути.
+    # Старая кнопка не отправляет черновик.
     await ack_callback(event, "Эта кнопка устарела. Откройте текущий черновик.")
 
 
 async def _cb_draft(event, max_user_id: int, payload: str) -> None:
+    if payload.startswith(("draft:files:", "draft:filedel:", "draft:fileopen:", "draft:filesback:")):
+        from aemr_bot.handlers import resident_draft_files
+        await resident_draft_files.handle(event, max_user_id, payload)
+        return
     from maxapi.types import CallbackButton
     from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 

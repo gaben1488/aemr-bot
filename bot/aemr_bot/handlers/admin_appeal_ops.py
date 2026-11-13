@@ -19,7 +19,7 @@ from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator, ensure_role
 from aemr_bot.handlers._common import op_screen
 from aemr_bot.services import admin_card as admin_card_service
-from aemr_bot.services import admin_relay, wizard_registry
+from aemr_bot.services import admin_relay, data_erasure, wizard_registry
 from aemr_bot.services import appeals as appeals_service
 from aemr_bot.services import operators as operators_service
 from aemr_bot.services import users as users_service
@@ -161,11 +161,12 @@ _REOPEN_FALLBACK_TEXT = {
 async def run_reopen(event, appeal_id: int) -> None:
     """Кнопочный аналог /reopen N — возобновить обращение.
 
-    Различает в UX четыре исхода (см. appeals_service.reopen):
+    Различает в UX пять исходов (см. appeals_service.reopen):
     - reopened → перерисовываем карточку с обновлённым статусом;
     - already_open → no-op, говорим «уже в работе»;
     - blocked_by_revoke → информативное сообщение про ПДн-гард,
       карточку не трогаем (всё равно бот не доставит ответ);
+    - content_erased → предлагаем создать новое обращение;
     - not_found → стандартное «Обращение не найдено».
 
     Audit пишем только при реальной смене статуса (reopened).
@@ -186,6 +187,7 @@ async def run_reopen(event, appeal_id: int) -> None:
         notice = {
             "already_open": "Обращение уже в работе",
             "blocked_by_revoke": "Нельзя возобновить: данные жителя удалены или согласие отозвано",
+            "content_erased": "Содержание обращения очищено. Создайте новое обращение.",
             "not_found": "Обращение не найдено",
         }[result]
         await ack_callback(event, notice)
@@ -272,22 +274,25 @@ async def run_show_attachments(event, appeal_id: int) -> None:
     if not await ensure_operator(event):
         await ack_callback(event)
         return
-    async with session_scope() as session:
-        appeal = await appeals_service.get_by_id_with_messages(
-            session, appeal_id
-        )
-    await ack_callback(event)
-    if appeal is None:
-        await _op_appeal_not_found(event, appeal_id)
-        return
-    await admin_relay.render_appeal_attachments(
-        event.bot,
-        chat_id=cfg.admin_group_id,
-        user_id=None,
-        appeal=appeal,
-        header_template="📎 Вложения к обращению #{appeal_id}",
-        reply_to_mid=getattr(appeal, "admin_message_id", None),
-    )
+    try:
+        async with data_erasure.personal_view() as view:
+            async with session_scope() as session:
+                appeal = await appeals_service.get_by_id_with_messages(session, appeal_id)
+            await ack_callback(event)
+            if appeal is None:
+                await _op_appeal_not_found(event, appeal_id)
+                return
+            await view.include(appeal_id=appeal_id)
+            await admin_relay.render_appeal_attachments(
+                event.bot,
+                chat_id=cfg.admin_group_id,
+                user_id=None,
+                appeal=appeal,
+                header_template="📎 Вложения к обращению #{appeal_id}",
+                reply_to_mid=getattr(appeal, "admin_message_id", None),
+            )
+    except data_erasure.PersonalDataErasedError:
+        await op_screen(event, "Вложения недоступны.")
 
 
 async def run_erase_for_appeal(event, appeal_id: int) -> None:

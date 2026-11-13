@@ -17,6 +17,7 @@ from aemr_bot.db.models import (
 )
 from aemr_bot.services import sla as sla_service
 from aemr_bot.services import work_schedule
+from aemr_bot.services.reply_time_evidence import pending_in_period
 
 
 async def current_first_response_hours(session: AsyncSession) -> int:
@@ -110,6 +111,7 @@ async def add_operator_message(
     apply_status: bool = True,
     created_at: datetime | None = None,
     delivery_source: str | None = None,
+    delivery_uncertain_until: datetime | None = None,
 ) -> Message:
     """Сохранить ответ оператора. Поведение статуса зависит от is_final.
 
@@ -136,6 +138,7 @@ async def add_operator_message(
         direction=MessageDirection.FROM_OPERATOR.value,
         response_kind="final" if is_final else "intermediate",
         delivery_source=delivery_source,
+        delivery_uncertain_until=delivery_uncertain_until,
         text=text,
         max_message_id=max_message_id,
         operator_id=operator_id,
@@ -147,7 +150,7 @@ async def add_operator_message(
     if apply_status and appeal.status != AppealStatus.CLOSED.value:
         if is_final:
             appeal.status = AppealStatus.ANSWERED.value
-            appeal.answered_at = created_at or datetime.now(UTC)
+            appeal.answered_at = None if delivery_uncertain_until else (created_at or datetime.now(UTC))
         else:
             # Промежуточный: NEW → IN_PROGRESS, остальные оставляем
             # как есть (IN_PROGRESS остаётся IN_PROGRESS; ANSWERED не
@@ -406,24 +409,13 @@ async def reopen(session: AsyncSession, appeal_id: int) -> ReopenResult:
       Оператор видит понятное сообщение вместо «Не найдено».
     - `"not_found"` — обращения с таким id нет в БД.
 
-    Раньше возвращал bool — все три negative-case схлопывались в False,
-    оператор для closed_due_to_revoke видел «Обращение не найдено», что
-    дезориентировало. См. P1 #21.
     """
-    # Гард — прямо в UPDATE WHERE (как в close/mark_in_progress), а не
-    # read-then-write: статус-предикат ANSWERED/CLOSED + флаг
-    # closed_due_to_revoke=False делают запись безопасной под гонкой с
-    # /forget. Раньше UPDATE был безусловным (WHERE только по id) поверх
-    # предварительного SELECT'а — между чтением и записью конкурентный
-    # отзыв согласия мог выставить closed_due_to_revoke=True, а reopen
-    # всё равно воскрешал стёртое обращение (status=IN_PROGRESS при
-    # closed_due_to_revoke=True). Теперь такое обновление не сматчит.
+    # Lock the row and retain the guarded UPDATE: concurrent erase/revoke
+    # must never resurrect a closed or erased appeal.
     from aemr_bot.services import appeal_locks
     await appeal_locks.hold(session, appeal_id)
 
-    # Capture the previous response period under the same row lock as the
-    # reopen. Only the saved historical setting supports an assessment;
-    # the current setting must not be projected backwards.
+    # Assess history under the row lock, using its saved calendar and target.
     previous = await session.scalar(select(Appeal).where(Appeal.id == appeal_id).with_for_update())
     if previous is not None and getattr(previous, "content_erased_at", None) is not None:
         return "content_erased"
@@ -433,13 +425,13 @@ async def reopen(session: AsyncSession, appeal_id: int) -> ReopenResult:
             return "not_found"
         return "blocked_by_revoke" if previous.closed_due_to_revoke else "already_open"
     anchor = previous.sla_anchor_at or previous.created_at
-    first_response = await session.scalar(
-        select(func.min(Message.created_at)).where(
-            Message.appeal_id == appeal_id, Message.direction == MessageDirection.FROM_OPERATOR.value,
-            Message.created_at >= anchor,
-        )
-    )
+    evidence = await first_operator_reply_times(session, [appeal_id])
+    first_response = evidence.get(appeal_id)
+    uncertain_response = appeal_id in evidence and first_response is None
     period_end = first_response or previous.closed_at or previous.answered_at or datetime.now(UTC)
+    # A known unanswered closure can prove a missed deadline without inventing
+    # a first-response time. An uncertain delivered answer cannot.
+    assessed_at = first_response or (previous.closed_at if not uncertain_response else None)
     history = list(previous.sla_history or [])
     previous_hours = previous.sla_hours_at_start
     next_hours = await current_first_response_hours(session)
@@ -448,11 +440,13 @@ async def reopen(session: AsyncSession, appeal_id: int) -> ReopenResult:
         "first_response": first_response.isoformat() if first_response else None,
         "sla_hours": previous_hours,
         "schedule": previous.sla_schedule_at_start,
-        "overdue": (sla_service.is_overdue(anchor, first_response, previous_hours,
+        "overdue": (sla_service.is_overdue(anchor, assessed_at, previous_hours,
                                                schedule=previous.sla_schedule_at_start)
-                    if first_response is not None and previous_hours is not None
+                    if assessed_at is not None and previous_hours is not None
                     and previous.sla_schedule_at_start is not None else None),
-        "assessment": ("at_reopen_legacy" if previous_hours is None or previous.sla_schedule_at_start is None else
+        "assessment": ("unknown_response_time" if uncertain_response else
+                       "at_reopen_legacy" if previous_hours is None or previous.sla_schedule_at_start is None else
+                       "unanswered_at_close" if first_response is None and assessed_at is not None else
                        "no_first_response" if first_response is None else "at_reopen"),
     })
     result = await session.execute(
@@ -663,7 +657,11 @@ async def find_overdue_unanswered(
                 ~select(Message.id).where(
                     Message.appeal_id == Appeal.id,
                     Message.direction == MessageDirection.FROM_OPERATOR.value,
-                    Message.created_at >= anchor,
+                    or_(Message.created_at >= anchor, Message.delivery_uncertain_until >= anchor),
+                ).exists(),
+                ~select(OperatorReplyAttempt.id).where(
+                    OperatorReplyAttempt.appeal_id == Appeal.id,
+                    pending_in_period(anchor),
                 ).exists(),
             )
             .order_by(anchor, Appeal.id)
@@ -686,39 +684,19 @@ async def find_overdue_unanswered(
     return overdue
 
 
-async def first_operator_reply_times(session: AsyncSession, appeal_ids: list[int]) -> dict[int, datetime]:
-    if not appeal_ids:
-        return {}
-    rows = await session.execute(
-        select(Message.appeal_id, func.min(Message.created_at))
-        .join(Appeal, Appeal.id == Message.appeal_id)
-        .where(Message.appeal_id.in_(appeal_ids), Message.direction == MessageDirection.FROM_OPERATOR.value,
-               Message.created_at >= func.coalesce(Appeal.sla_anchor_at, Appeal.created_at))
-        .group_by(Message.appeal_id)
-    )
-    return {appeal_id: first_at for appeal_id, first_at in rows if first_at is not None}
+async def first_operator_reply_times(session: AsyncSession, appeal_ids: list[int]) -> dict[int, datetime | None]:
+    from aemr_bot.services.reply_time_evidence import first_reply_times
+    return await first_reply_times(session, appeal_ids)
 
 
-async def latest_intermediate_reply_times(session: AsyncSession, appeal_ids: list[int]) -> dict[int, datetime]:
+async def latest_intermediate_reply_times(session: AsyncSession, appeal_ids: list[int]) -> dict[int, datetime | None]:
     """Return the last operator response only when its stored type is intermediate.
 
     The current reopen anchor prevents an earlier period being treated as
     current. Old responses without a stored type are never guessed.
     """
-    if not appeal_ids:
-        return {}
-    ranked = (select(
-        Message.appeal_id.label("appeal_id"), Message.created_at.label("created_at"),
-        Message.response_kind.label("response_kind"),
-        func.row_number().over(partition_by=Message.appeal_id,
-                               order_by=(Message.created_at.desc(), Message.id.desc())).label("rank"),
-    ).join(Appeal, Appeal.id == Message.appeal_id).where(
-        Message.appeal_id.in_(appeal_ids), Message.direction == MessageDirection.FROM_OPERATOR.value,
-        Message.created_at >= func.coalesce(Appeal.sla_anchor_at, Appeal.created_at),
-    ).subquery())
-    rows = await session.execute(select(ranked.c.appeal_id, ranked.c.created_at).where(
-        ranked.c.rank == 1, ranked.c.response_kind == "intermediate"))
-    return {appeal_id: created_at for appeal_id, created_at in rows if created_at is not None}
+    from aemr_bot.services.reply_time_evidence import latest_intermediate_times
+    return await latest_intermediate_times(session, appeal_ids)
 
 
 async def count_open(session: AsyncSession) -> int:
@@ -778,21 +756,8 @@ async def purge_old_appeals_content(
     # Старое открытое обращение тоже не хранится бессрочно. При этом
     # недавнее дополнение или ответ означают, что работа продолжалась:
     # не удаляем их вместе с текстом старой карточки по дате её создания.
-    completed_or_created = func.coalesce(Appeal.closed_at, Appeal.answered_at, Appeal.created_at)
-    period_started = func.coalesce(Appeal.sla_anchor_at, Appeal.created_at)
-    work_started = func.coalesce(Appeal.work_started_at, Appeal.created_at)
-    # A reopened case can have old creation/completion timestamps but a
-    # brand-new operational period. Taking NEW into work is activity too;
-    # keep that clock separate so it never postpones the first-response SLA.
-    latest_period = case((period_started > completed_or_created, period_started), else_=completed_or_created)
-    retention_anchor = case((work_started > latest_period, work_started), else_=latest_period)
-    closed_old_appeals = select(Appeal.id).where(
-        retention_anchor.isnot(None),
-        retention_anchor <= threshold,
-        ~select(Message.id).where(
-            Message.appeal_id == Appeal.id, Message.created_at > threshold,
-        ).exists(),
-    )
+    from aemr_bot.services.retention_candidates import old_content_candidates
+    closed_old_appeals = old_content_candidates(threshold)
     # address — тоже ПДн (адрес обращения жителя). При erase по отзыву
     # согласия (services/users.py::_redact_appeal_payloads_for_user)
     # address уже чистится вместе с summary/attachments; здесь этой же

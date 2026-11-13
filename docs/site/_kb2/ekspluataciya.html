@@ -128,7 +128,7 @@ cd ~/aemr-bot/infra &amp;&amp; docker compose down</code></pre>
 
 <p><strong>Astra Linux / РЕД ОС (гос-Linux).</strong> Стек запускается, две тонкости. При включённом мандатном доступе (SELinux/PARSEC) тома могут ловить «permission denied» из-за меток контекста — лечится суффиксом <code class="kbd">:Z</code> на bind-mount'ах или настройкой контекста; смотреть <code class="kbd">ausearch -m avc</code>. И если штатно стоит podman вместо docker — он понимает <code class="kbd">docker-compose.yml</code>, но автозапуск и скрипты страховок завязаны на <code class="kbd">docker compose</code> и их пришлось бы править; часто проще поставить docker-ce из совместимого репозитория.</p>
 
-<p><strong>Windows / macOS — только разработка</strong>, для прода исключено архитектурно. Локально тесты гоняются на SQLite без Postgres. Категорически нельзя запускать локального бота с боевым токеном — это мгновенно устроит гонку с продом.</p>
+<p>Быстрые проверки используют моки и SQLite; транзакционные — PostgreSQL. SQLite не заменяет проверку PostgreSQL-блокировок и миграций. Не запускайте локального бота с боевым токеном: это создаёт конкурирующую polling-сессию.</p>
 
 <p>Запуск за российским межсетевым экраном (UserGate, Континент, ALTELL, Рубикон, ИКС, Ideco), вопросы администратору и рецепт sidecar cntlm — отдельно в <a href="#admin-firewall" data-go="admin-firewall">«За корпоративным межсетевым экраном»</a>.</p>
 

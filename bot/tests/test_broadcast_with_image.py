@@ -8,9 +8,6 @@
   (а не на каждого подписчика — деривалидация pydantic стоит ресурсов),
   передать результат в send-loop.
 
-RED → GREEN: текущий `_send_one` принимает только три позиционных
-параметра без attachments; тесты должны падать до правки.
-
 Regression-guard: text-only рассылка (broadcast.attachments=[])
 продолжает работать ровно как раньше — никаких лишних объектов в
 attachments сверх клавиатуры.
@@ -426,7 +423,7 @@ class TestConfirmPassesAttachmentsToCreate:
 
         # State уже на confirm-шаге, с картинкой
         bc._wizards.clear()
-        bc._wizards[7] = bc._WizardState(step="awaiting_confirm")
+        bc._wizards[7] = bc._WizardState(step="awaiting_confirm", preview_message_id="m-1")
         bc._wizards[7].text = "ВАЖНО"
         bc._wizards[7].attachments = [
             {"type": "image", "payload": {"url": "https://cdn/img.jpg"}}

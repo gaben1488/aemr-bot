@@ -186,14 +186,10 @@ async def _show_from_group(event, operator_id: int) -> None:
     )
 
 
-def _prepare_add(operator_id: int) -> None:
-    """Start a registration without carrying over another input flow."""
-    from aemr_bot.handlers import broadcast as broadcast_handler
-    from aemr_bot.handlers import operator_reply as op_reply
-
-    broadcast_handler._wizards.pop(operator_id, None)
-    op_reply.drop_reply_intent(operator_id)
-    _op_wizards.pop(operator_id, None)
+async def _prepare_add(operator_id: int) -> None:
+    """Start registration with exclusive input ownership."""
+    from aemr_bot.handlers.operator_input import claim_composer
+    await claim_composer(operator_id)
 
 
 async def _start_add_with_picked(
@@ -221,7 +217,7 @@ async def _start_add_with_picked(
     except Exception as exc:
         log.warning("get_chat_member failed for %s: %s", picked_user_id, exc)
 
-    _prepare_add(operator_id)
+    await _prepare_add(operator_id)
     _op_wizard_set(
         operator_id,
         step="awaiting_role",
@@ -252,7 +248,7 @@ async def _start_add_with_picked(
 
 async def _start_manual_add(event, operator_id: int) -> None:
 
-    _prepare_add(operator_id)
+    await _prepare_add(operator_id)
     _op_wizard_set(operator_id, step="awaiting_id", source="manual")
     await op_screen(
         event,

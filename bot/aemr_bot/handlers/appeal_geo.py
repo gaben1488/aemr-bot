@@ -60,6 +60,12 @@ async def on_awaiting_locality(event, body, text_body, max_user_id):
         await handle_location_for_locality(event, max_user_id, location)
         return
 
+    async with current_user(max_user_id) as (_, user):
+        has_draft = bool((user.dialog_data or {}).get("draft_token"))
+    if has_draft:
+        from aemr_bot.handlers.appeal_funnel import ask_locality
+        await ask_locality(event, max_user_id, force_new_message=True)
+        return
     async with session_scope() as session:
         localities = await settings_store.get(session, "localities") or [
             "Елизовское ГП"
@@ -175,6 +181,17 @@ async def on_awaiting_geo_confirm(event, body, text_body, max_user_id):
         text = texts.GEO_DETECTED_FULL.format(locality=locality, address=street)
     else:
         text = texts.GEO_DETECTED_LOCALITY_ONLY.format(locality=locality)
-    await event.message.answer(
+    sent = await event.message.answer(
         text, attachments=[keyboards.geo_confirm_keyboard()]
     )
+    from aemr_bot.utils.event import extract_message_id
+    progress_mid = extract_message_id(sent)
+    if progress_mid:
+        try:
+            async with session_scope() as session:
+                await users_service.update_dialog_data(
+                    session, max_user_id, {"progress_message_id": progress_mid},
+                    expected_states={DialogState.AWAITING_GEO_CONFIRM.value},
+                )
+        except users_service.StaleDialogStateError:
+            log.debug("geo confirmation arrived after its dialog step ended")

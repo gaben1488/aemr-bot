@@ -90,6 +90,8 @@ async def _start_edit_intent(event, operator_id: int, key: str) -> None:
         return
     async with session_scope() as session:
         baseline, revision = await settings_store.get_versioned(session, key)
+    from aemr_bot.handlers.operator_input import claim_composer
+    await claim_composer(operator_id)
     _intent_set(operator_id, key=key, kind="single", baseline=baseline, revision=revision)
     rule = settings_store.SCHEMA[key]
     if rule.get("type") is str:
@@ -137,7 +139,7 @@ async def _show_edit_page(event, operator_id: int, key: str, page: int) -> None:
 
 
 async def _apply_single_edit(
-    event, operator_id: int, key: str, new_text: str
+    event, operator_id: int, key: str, new_text: str, *, edit_intent: dict | None = None
 ) -> bool:
     """Применить новое значение текст/URL-ключа (и commit_author_*) с
     записью before→after в audit_log.
@@ -154,7 +156,7 @@ async def _apply_single_edit(
         return False
     try:
         async with session_scope() as session:
-            intent = _intent_get(operator_id)
+            intent = edit_intent if edit_intent is not None else _intent_get(operator_id)
             if intent and intent.get("kind") == "single" and intent.get("key") == key and "baseline" in intent:
                 old_value = intent["baseline"]
                 revision = intent.get("revision")

@@ -129,6 +129,7 @@ class TestIntentSurvivesValidationError:
         останется в настройках после «ошибки»."""
         from aemr_bot.handlers import admin_settings as facade
         from aemr_bot.handlers import admin_settings_text as txt
+        from aemr_bot.handlers import admin_settings_text_preview as preview
 
         event = make_event(user_id=503)
         facade._intent_set(503, key="policy_url", kind="single",
@@ -137,7 +138,7 @@ class TestIntentSurvivesValidationError:
         # validate: отказ на первый ввод, согласие на второй — без
         # зависимости от точного состава whitelist.
         validate = MagicMock(
-            side_effect=[(False, "ссылка вне whitelist"), (True, "")]
+            side_effect=[(False, "ссылка вне whitelist"), (True, ""), (True, "")]
         )
         with patch.object(facade, "ensure_role", AsyncMock(return_value=True)), \
              scope_patch, \
@@ -158,6 +159,9 @@ class TestIntentSurvivesValidationError:
                 event, "https://kamgov.ru/policy"
             )
             assert consumed2 is True
+            set_value.assert_not_awaited()
+            token = facade._intent_get(503)["preview_token"]
+            await preview.callback(event, 503, "confirm:" + token)
             set_value.assert_awaited_once()
             assert set_value.await_args.kwargs == {"expected_revision": 7}
             assert facade._intent_get(503) is None

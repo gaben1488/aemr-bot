@@ -39,7 +39,7 @@ log = logging.getLogger(__name__)
 
 # mid сообщения, на котором нажали кнопку. Локальная копия разъехалась бы
 # с каноном незаметно, поэтому это просто имя для общей функции —
-# `_callback_mid` зовут ~десяток мест в menu.py, start.py и тесты.
+# `_callback_mid` нужен start.py и тестам.
 _callback_mid = get_callback_message_id
 
 
@@ -1030,53 +1030,20 @@ async def open_appointment(event):
     )
 
 
-async def open_emergency(event):
+async def open_emergency(event, page: int = 0):
+    from aemr_bot.handlers import useful_contacts
     async with session_scope() as session:
         contacts = await settings_store.get(session, "emergency_contacts") or []
-    if not contacts:
-        body = "Список контактов скоро появится."
-    else:
-        # Группируем по полю 'section', если оно есть; элементы без секции
-        # попадают в «Прочее», чтобы старые seed-данные без секций
-        # продолжали отображаться.
-        grouped: dict[str, list[dict]] = {}
-        order: list[str] = []
-        for item in contacts:
-            section = item.get("section") or "Прочее"
-            if section not in grouped:
-                grouped[section] = []
-                order.append(section)
-            grouped[section].append(item)
-        blocks: list[str] = ["☎️ Телефоны экстренных и аварийных служб"]
-        for section in order:
-            blocks.append(f"\n{section}:")
-            for item in grouped[section]:
-                name = item.get("name", "—")
-                phone = item.get("phone", "—")
-                blocks.append(f"• {name} — {phone}")
-        body = "\n".join(blocks)
-    await _send_or_edit_menu(
-        event,
-        text=body,
-        attachments=[keyboards.back_to_useful_info_keyboard()],
-    )
+    text, keyboard = useful_contacts.screen("emergency", useful_contacts.render("emergency", contacts), page)
+    await _send_or_edit_menu(event, text=text, attachments=[keyboard])
 
 
-async def open_dispatchers(event):
+async def open_dispatchers(event, page: int = 0):
+    from aemr_bot.handlers import useful_contacts
     async with session_scope() as session:
         items = await settings_store.get(session, "transport_dispatcher_contacts") or []
-    if not items:
-        body = "Список диспетчерских скоро появится."
-    else:
-        body = "📞 Диспетчерские автотранспорта:\n\n" + "\n\n".join(
-            f"• {item.get('routes', '—')}\n  {item.get('phone', '—')}"
-            for item in items
-        )
-    await _send_or_edit_menu(
-        event,
-        text=body,
-        attachments=[keyboards.back_to_useful_info_keyboard()],
-    )
+    text, keyboard = useful_contacts.screen("dispatchers", useful_contacts.render("dispatchers", items), page)
+    await _send_or_edit_menu(event, text=text, attachments=[keyboard])
 
 
 # ============================================================================
@@ -1325,6 +1292,15 @@ async def handle_callback(event, payload: str, max_user_id: int | None) -> bool:
     route = _EXACT.get(payload)
     if route is not None:
         return await _run_exact_route(event, route, max_user_id)
+
+    for prefix, handler in (("info:emergency:page:", open_emergency),
+                            ("info:dispatchers:page:", open_dispatchers)):
+        if payload.startswith(prefix):
+            await ack_callback(event)
+            suffix = payload.removeprefix(prefix)
+            if suffix.isascii() and suffix.isdecimal() and len(suffix) <= 8:
+                await handler(event, page=int(suffix))
+            return True
 
     if payload.startswith("appeal:history:") and max_user_id is not None:
         await ack_callback(event)

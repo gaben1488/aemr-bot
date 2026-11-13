@@ -57,7 +57,7 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `dp.bot_started` — `bot/aemr_bot/handlers/start.py:667`
 - `dp.bot_stopped` — `bot/aemr_bot/handlers/start.py:673`
 - `dp.handle` — `bot/aemr_bot/services/inbox.py:181`
-- `dp.message_callback` — `bot/aemr_bot/handlers/appeal.py:764`
+- `dp.message_callback` — `bot/aemr_bot/handlers/appeal.py:767`
 - `dp.message_created` — `bot/aemr_bot/handlers/admin_commands.py:140`
 - `dp.message_created` — `bot/aemr_bot/handlers/admin_commands.py:153`
 - `dp.message_created` — `bot/aemr_bot/handlers/admin_commands.py:168`
@@ -70,7 +70,7 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `dp.message_created` — `bot/aemr_bot/handlers/admin_commands.py:388`
 - `dp.message_created` — `bot/aemr_bot/handlers/admin_commands.py:394`
 - `dp.message_created` — `bot/aemr_bot/handlers/admin_resident_search.py:238`
-- `dp.message_created` — `bot/aemr_bot/handlers/appeal.py:816`
+- `dp.message_created` — `bot/aemr_bot/handlers/appeal.py:819`
 - `dp.message_created` — `bot/aemr_bot/handlers/broadcast.py:920`
 - `dp.message_created` — `bot/aemr_bot/handlers/start.py:714`
 - `dp.message_created` — `bot/aemr_bot/handlers/start.py:723`
@@ -83,8 +83,8 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `dp.message_created` — `bot/aemr_bot/handlers/start.py:784`
 - `dp.message_created` — `bot/aemr_bot/handlers/start.py:791`
 - `dp.message_created` — `bot/aemr_bot/handlers/start.py:798`
-- `dp.start_polling` — `bot/aemr_bot/main.py:893`
-- `dp.startup` — `bot/aemr_bot/main.py:887`
+- `dp.start_polling` — `bot/aemr_bot/main.py:891`
+- `dp.startup` — `bot/aemr_bot/main.py:885`
 - `start.register` — `bot/aemr_bot/handlers/__init__.py:154`
 
 ## Маршруты callback
@@ -144,54 +144,56 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `CallbackRoute('op:help_security', CallbackGroup.OPERATOR_ADMIN, True, 'памятка: безопасность и антифишинг')` — `bot/aemr_bot/handlers/callback_router.py:90`
 - `CallbackRoute('op:audience', CallbackGroup.OPERATOR_ADMIN, True, 'аудитория')` — `bot/aemr_bot/handlers/callback_router.py:91`
 - `CallbackRoute('op:reply_cancel', CallbackGroup.OPERATOR_ADMIN, True, 'отмена ответа')` — `bot/aemr_bot/handlers/callback_router.py:92`
-- `CallbackRoute('op:replydraft:', CallbackGroup.OPERATOR_ADMIN, True, 'многочастный черновик ответа')` — `bot/aemr_bot/handlers/callback_router.py:96`
-- `CallbackRoute('op:reply_cancel:', CallbackGroup.OPERATOR_ADMIN, True, 'отмена выбранного ответа')` — `bot/aemr_bot/handlers/callback_router.py:97`
-- `CallbackRoute('locality:', CallbackGroup.CITIZEN_FLOW, False, 'выбор населённого пункта')` — `bot/aemr_bot/handlers/callback_router.py:99`
-- `CallbackRoute('topic:', CallbackGroup.CITIZEN_FLOW, False, 'выбор темы')` — `bot/aemr_bot/handlers/callback_router.py:100`
-- `CallbackRoute('appeal:show:', CallbackGroup.CITIZEN_FLOW, False, 'показать карточку обращения жителя')` — `bot/aemr_bot/handlers/callback_router.py:102`
-- `CallbackRoute('appeal:followup:', CallbackGroup.CITIZEN_FLOW, False, 'дополнить обращение')` — `bot/aemr_bot/handlers/callback_router.py:103`
-- `CallbackRoute('appeal:repeat:', CallbackGroup.CITIZEN_FLOW, False, 'подать похожее обращение')` — `bot/aemr_bot/handlers/callback_router.py:104`
-- `CallbackRoute('appeal:atts:', CallbackGroup.CITIZEN_FLOW, False, 'посмотреть свои вложения')` — `bot/aemr_bot/handlers/callback_router.py:105`
-- `CallbackRoute('appeal:history:', CallbackGroup.CITIZEN_FLOW, False, 'история обращения жителя')` — `bot/aemr_bot/handlers/callback_router.py:106`
-- `CallbackRoute('appeal:record_atts:', CallbackGroup.CITIZEN_FLOW, False, 'вложения записи обращения')` — `bot/aemr_bot/handlers/callback_router.py:107`
-- `CallbackRoute('appeals:page:', CallbackGroup.CITIZEN_FLOW, False, 'пагинация списка обращений')` — `bot/aemr_bot/handlers/callback_router.py:108`
-- `CallbackRoute('draft:', CallbackGroup.CITIZEN_FLOW, False, 'черновик обращения')` — `bot/aemr_bot/handlers/callback_router.py:109`
-- `CallbackRoute('broadcast:stop:', CallbackGroup.BROADCAST_ADMIN, True, 'остановить рассылку')` — `bot/aemr_bot/handlers/callback_router.py:111`
-- `CallbackRoute('broadcast:cancel-cooldown:', CallbackGroup.BROADCAST_ADMIN, True, 'отменить рассылку до отправки')` — `bot/aemr_bot/handlers/callback_router.py:112`
-- `CallbackRoute('op:aud:', CallbackGroup.OPERATOR_ADMIN, True, 'действие с аудиторией')` — `bot/aemr_bot/handlers/callback_router.py:113`
-- `CallbackRoute('op:reply:', CallbackGroup.OPERATOR_ADMIN, True, 'ответ по обращению (финальный)')` — `bot/aemr_bot/handlers/callback_router.py:114`
-- `CallbackRoute('op:replyint:', CallbackGroup.OPERATOR_ADMIN, True, 'промежуточный ответ')` — `bot/aemr_bot/handlers/callback_router.py:115`
-- `CallbackRoute('op:reopen:', CallbackGroup.OPERATOR_ADMIN, True, 'вернуть в работу')` — `bot/aemr_bot/handlers/callback_router.py:116`
-- `CallbackRoute('op:close:', CallbackGroup.OPERATOR_ADMIN, True, 'закрыть обращение')` — `bot/aemr_bot/handlers/callback_router.py:117`
-- `CallbackRoute('op:erase:', CallbackGroup.OPERATOR_ADMIN, True, 'стереть ПДн по обращению')` — `bot/aemr_bot/handlers/callback_router.py:118`
-- `CallbackRoute('op:block:', CallbackGroup.OPERATOR_ADMIN, True, 'заблокировать жителя')` — `bot/aemr_bot/handlers/callback_router.py:119`
-- `CallbackRoute('op:unblock:', CallbackGroup.OPERATOR_ADMIN, True, 'разблокировать жителя')` — `bot/aemr_bot/handlers/callback_router.py:120`
-- `CallbackRoute('op:atts:', CallbackGroup.OPERATOR_ADMIN, True, 'показать вложения обращения')` — `bot/aemr_bot/handlers/callback_router.py:121`
-- `CallbackRoute('op:queue_recreate:', CallbackGroup.OPERATOR_ADMIN, True, 'восстановить панель после проверки MAX')` — `bot/aemr_bot/handlers/callback_router.py:122`
-- `CallbackRoute('op:open_card:', CallbackGroup.OPERATOR_ADMIN, True, 'открыть полную карточку с историей')` — `bot/aemr_bot/handlers/callback_router.py:123`
-- `CallbackRoute('op:open_page:', CallbackGroup.OPERATOR_ADMIN, True, 'страница открытых обращений')` — `bot/aemr_bot/handlers/callback_router.py:124`
-- `CallbackRoute('op:delivery_issues:', CallbackGroup.OPERATOR_ADMIN, True, 'неподтверждённая доставка дополнений')` — `bot/aemr_bot/handlers/callback_router.py:125`
-- `CallbackRoute('op:reply_issues:', CallbackGroup.OPERATOR_ADMIN, True, 'неподтверждённые ответы')` — `bot/aemr_bot/handlers/callback_router.py:126`
-- `CallbackRoute('op:reply_attempt:', CallbackGroup.OPERATOR_ADMIN, True, 'сохранённый ответ')` — `bot/aemr_bot/handlers/callback_router.py:127`
-- `CallbackRoute('op:reply_resolve:', CallbackGroup.OPERATOR_ADMIN, True, 'проверить исход ответа')` — `bot/aemr_bot/handlers/callback_router.py:128`
-- `CallbackRoute('op:reply_confirm:', CallbackGroup.OPERATOR_ADMIN, True, 'подтвердить исход ответа')` — `bot/aemr_bot/handlers/callback_router.py:129`
-- `CallbackRoute('op:reply_attempt_atts:', CallbackGroup.OPERATOR_ADMIN, True, 'вложения сохранённого ответа')` — `bot/aemr_bot/handlers/callback_router.py:130`
-- `CallbackRoute('op:history:', CallbackGroup.OPERATOR_ADMIN, True, 'история обращения оператора')` — `bot/aemr_bot/handlers/callback_router.py:131`
-- `CallbackRoute('op:word:', CallbackGroup.OPERATOR_ADMIN, True, 'история обращения в Word')` — `bot/aemr_bot/handlers/callback_router.py:132`
-- `CallbackRoute('op:consent:', CallbackGroup.OPERATOR_ADMIN, True, 'редакции согласия жителя')` — `bot/aemr_bot/handlers/callback_router.py:133`
-- `CallbackRoute('op:record_atts:', CallbackGroup.OPERATOR_ADMIN, True, 'вложения записи обращения')` — `bot/aemr_bot/handlers/callback_router.py:134`
-- `CallbackRoute('op:opadd:', CallbackGroup.OPERATOR_ADMIN, True, 'мастер операторов: добавление')` — `bot/aemr_bot/handlers/callback_router.py:135`
-- `CallbackRoute('op:opcard:', CallbackGroup.OPERATOR_ADMIN, True, 'карточка оператора')` — `bot/aemr_bot/handlers/callback_router.py:136`
-- `CallbackRoute('op:oprole:', CallbackGroup.OPERATOR_ADMIN, True, 'смена роли — открыть picker')` — `bot/aemr_bot/handlers/callback_router.py:137`
-- `CallbackRoute('op:opchrole:', CallbackGroup.OPERATOR_ADMIN, True, 'смена роли — применить')` — `bot/aemr_bot/handlers/callback_router.py:138`
-- `CallbackRoute('op:opdeact:', CallbackGroup.OPERATOR_ADMIN, True, 'деактивация — подтверждение')` — `bot/aemr_bot/handlers/callback_router.py:139`
-- `CallbackRoute('op:opdeact_ok:', CallbackGroup.OPERATOR_ADMIN, True, 'деактивация — применить')` — `bot/aemr_bot/handlers/callback_router.py:140`
-- `CallbackRoute('op:opreact:', CallbackGroup.OPERATOR_ADMIN, True, 'реактивация оператора')` — `bot/aemr_bot/handlers/callback_router.py:141`
-- `CallbackRoute('op:setkey:', CallbackGroup.OPERATOR_ADMIN, True, 'экспертный wizard ключа')` — `bot/aemr_bot/handlers/callback_router.py:142`
-- `CallbackRoute('op:set:', CallbackGroup.OPERATOR_ADMIN, True, 'иерархическое меню настроек')` — `bot/aemr_bot/handlers/callback_router.py:143`
-- `CallbackRoute('op:tmpl:', CallbackGroup.BROADCAST_ADMIN, True, 'шаблоны рассылок')` — `bot/aemr_bot/handlers/callback_router.py:144`
-- `CallbackRoute('op:bc:', CallbackGroup.BROADCAST_ADMIN, True, 'история рассылок: карточка / клон / failed')` — `bot/aemr_bot/handlers/callback_router.py:145`
-- `CallbackRoute(payload, CallbackGroup.MENU_FALLBACK, False, 'fallback в меню')` — `bot/aemr_bot/handlers/callback_router.py:162`
+- `CallbackRoute('info:emergency:page:', CallbackGroup.CITIZEN_FLOW, False, 'страница экстренных контактов')` — `bot/aemr_bot/handlers/callback_router.py:96`
+- `CallbackRoute('info:dispatchers:page:', CallbackGroup.CITIZEN_FLOW, False, 'страница диспетчеров')` — `bot/aemr_bot/handlers/callback_router.py:97`
+- `CallbackRoute('op:replydraft:', CallbackGroup.OPERATOR_ADMIN, True, 'многочастный черновик ответа')` — `bot/aemr_bot/handlers/callback_router.py:98`
+- `CallbackRoute('op:reply_cancel:', CallbackGroup.OPERATOR_ADMIN, True, 'отмена выбранного ответа')` — `bot/aemr_bot/handlers/callback_router.py:99`
+- `CallbackRoute('locality:', CallbackGroup.CITIZEN_FLOW, False, 'выбор населённого пункта')` — `bot/aemr_bot/handlers/callback_router.py:101`
+- `CallbackRoute('topic:', CallbackGroup.CITIZEN_FLOW, False, 'выбор темы')` — `bot/aemr_bot/handlers/callback_router.py:102`
+- `CallbackRoute('appeal:show:', CallbackGroup.CITIZEN_FLOW, False, 'показать карточку обращения жителя')` — `bot/aemr_bot/handlers/callback_router.py:104`
+- `CallbackRoute('appeal:followup:', CallbackGroup.CITIZEN_FLOW, False, 'дополнить обращение')` — `bot/aemr_bot/handlers/callback_router.py:105`
+- `CallbackRoute('appeal:repeat:', CallbackGroup.CITIZEN_FLOW, False, 'подать похожее обращение')` — `bot/aemr_bot/handlers/callback_router.py:106`
+- `CallbackRoute('appeal:atts:', CallbackGroup.CITIZEN_FLOW, False, 'посмотреть свои вложения')` — `bot/aemr_bot/handlers/callback_router.py:107`
+- `CallbackRoute('appeal:history:', CallbackGroup.CITIZEN_FLOW, False, 'история обращения жителя')` — `bot/aemr_bot/handlers/callback_router.py:108`
+- `CallbackRoute('appeal:record_atts:', CallbackGroup.CITIZEN_FLOW, False, 'вложения записи обращения')` — `bot/aemr_bot/handlers/callback_router.py:109`
+- `CallbackRoute('appeals:page:', CallbackGroup.CITIZEN_FLOW, False, 'пагинация списка обращений')` — `bot/aemr_bot/handlers/callback_router.py:110`
+- `CallbackRoute('draft:', CallbackGroup.CITIZEN_FLOW, False, 'черновик обращения')` — `bot/aemr_bot/handlers/callback_router.py:111`
+- `CallbackRoute('broadcast:stop:', CallbackGroup.BROADCAST_ADMIN, True, 'остановить рассылку')` — `bot/aemr_bot/handlers/callback_router.py:113`
+- `CallbackRoute('broadcast:cancel-cooldown:', CallbackGroup.BROADCAST_ADMIN, True, 'отменить рассылку до отправки')` — `bot/aemr_bot/handlers/callback_router.py:114`
+- `CallbackRoute('op:aud:', CallbackGroup.OPERATOR_ADMIN, True, 'действие с аудиторией')` — `bot/aemr_bot/handlers/callback_router.py:115`
+- `CallbackRoute('op:reply:', CallbackGroup.OPERATOR_ADMIN, True, 'ответ по обращению (финальный)')` — `bot/aemr_bot/handlers/callback_router.py:116`
+- `CallbackRoute('op:replyint:', CallbackGroup.OPERATOR_ADMIN, True, 'промежуточный ответ')` — `bot/aemr_bot/handlers/callback_router.py:117`
+- `CallbackRoute('op:reopen:', CallbackGroup.OPERATOR_ADMIN, True, 'вернуть в работу')` — `bot/aemr_bot/handlers/callback_router.py:118`
+- `CallbackRoute('op:close:', CallbackGroup.OPERATOR_ADMIN, True, 'закрыть обращение')` — `bot/aemr_bot/handlers/callback_router.py:119`
+- `CallbackRoute('op:erase:', CallbackGroup.OPERATOR_ADMIN, True, 'стереть ПДн по обращению')` — `bot/aemr_bot/handlers/callback_router.py:120`
+- `CallbackRoute('op:block:', CallbackGroup.OPERATOR_ADMIN, True, 'заблокировать жителя')` — `bot/aemr_bot/handlers/callback_router.py:121`
+- `CallbackRoute('op:unblock:', CallbackGroup.OPERATOR_ADMIN, True, 'разблокировать жителя')` — `bot/aemr_bot/handlers/callback_router.py:122`
+- `CallbackRoute('op:atts:', CallbackGroup.OPERATOR_ADMIN, True, 'показать вложения обращения')` — `bot/aemr_bot/handlers/callback_router.py:123`
+- `CallbackRoute('op:queue_recreate:', CallbackGroup.OPERATOR_ADMIN, True, 'восстановить панель после проверки MAX')` — `bot/aemr_bot/handlers/callback_router.py:124`
+- `CallbackRoute('op:open_card:', CallbackGroup.OPERATOR_ADMIN, True, 'открыть полную карточку с историей')` — `bot/aemr_bot/handlers/callback_router.py:125`
+- `CallbackRoute('op:open_page:', CallbackGroup.OPERATOR_ADMIN, True, 'страница открытых обращений')` — `bot/aemr_bot/handlers/callback_router.py:126`
+- `CallbackRoute('op:delivery_issues:', CallbackGroup.OPERATOR_ADMIN, True, 'неподтверждённая доставка дополнений')` — `bot/aemr_bot/handlers/callback_router.py:127`
+- `CallbackRoute('op:reply_issues:', CallbackGroup.OPERATOR_ADMIN, True, 'неподтверждённые ответы')` — `bot/aemr_bot/handlers/callback_router.py:128`
+- `CallbackRoute('op:reply_attempt:', CallbackGroup.OPERATOR_ADMIN, True, 'сохранённый ответ')` — `bot/aemr_bot/handlers/callback_router.py:129`
+- `CallbackRoute('op:reply_resolve:', CallbackGroup.OPERATOR_ADMIN, True, 'проверить исход ответа')` — `bot/aemr_bot/handlers/callback_router.py:130`
+- `CallbackRoute('op:reply_confirm:', CallbackGroup.OPERATOR_ADMIN, True, 'подтвердить исход ответа')` — `bot/aemr_bot/handlers/callback_router.py:131`
+- `CallbackRoute('op:reply_attempt_atts:', CallbackGroup.OPERATOR_ADMIN, True, 'вложения сохранённого ответа')` — `bot/aemr_bot/handlers/callback_router.py:132`
+- `CallbackRoute('op:history:', CallbackGroup.OPERATOR_ADMIN, True, 'история обращения оператора')` — `bot/aemr_bot/handlers/callback_router.py:133`
+- `CallbackRoute('op:word:', CallbackGroup.OPERATOR_ADMIN, True, 'история обращения в Word')` — `bot/aemr_bot/handlers/callback_router.py:134`
+- `CallbackRoute('op:consent:', CallbackGroup.OPERATOR_ADMIN, True, 'редакции согласия жителя')` — `bot/aemr_bot/handlers/callback_router.py:135`
+- `CallbackRoute('op:record_atts:', CallbackGroup.OPERATOR_ADMIN, True, 'вложения записи обращения')` — `bot/aemr_bot/handlers/callback_router.py:136`
+- `CallbackRoute('op:opadd:', CallbackGroup.OPERATOR_ADMIN, True, 'мастер операторов: добавление')` — `bot/aemr_bot/handlers/callback_router.py:137`
+- `CallbackRoute('op:opcard:', CallbackGroup.OPERATOR_ADMIN, True, 'карточка оператора')` — `bot/aemr_bot/handlers/callback_router.py:138`
+- `CallbackRoute('op:oprole:', CallbackGroup.OPERATOR_ADMIN, True, 'смена роли — открыть picker')` — `bot/aemr_bot/handlers/callback_router.py:139`
+- `CallbackRoute('op:opchrole:', CallbackGroup.OPERATOR_ADMIN, True, 'смена роли — применить')` — `bot/aemr_bot/handlers/callback_router.py:140`
+- `CallbackRoute('op:opdeact:', CallbackGroup.OPERATOR_ADMIN, True, 'деактивация — подтверждение')` — `bot/aemr_bot/handlers/callback_router.py:141`
+- `CallbackRoute('op:opdeact_ok:', CallbackGroup.OPERATOR_ADMIN, True, 'деактивация — применить')` — `bot/aemr_bot/handlers/callback_router.py:142`
+- `CallbackRoute('op:opreact:', CallbackGroup.OPERATOR_ADMIN, True, 'реактивация оператора')` — `bot/aemr_bot/handlers/callback_router.py:143`
+- `CallbackRoute('op:setkey:', CallbackGroup.OPERATOR_ADMIN, True, 'экспертный wizard ключа')` — `bot/aemr_bot/handlers/callback_router.py:144`
+- `CallbackRoute('op:set:', CallbackGroup.OPERATOR_ADMIN, True, 'иерархическое меню настроек')` — `bot/aemr_bot/handlers/callback_router.py:145`
+- `CallbackRoute('op:tmpl:', CallbackGroup.BROADCAST_ADMIN, True, 'шаблоны рассылок')` — `bot/aemr_bot/handlers/callback_router.py:146`
+- `CallbackRoute('op:bc:', CallbackGroup.BROADCAST_ADMIN, True, 'история рассылок: карточка / клон / failed')` — `bot/aemr_bot/handlers/callback_router.py:147`
+- `CallbackRoute(payload, CallbackGroup.MENU_FALLBACK, False, 'fallback в меню')` — `bot/aemr_bot/handlers/callback_router.py:164`
 
 ## Настройки и окружение
 
@@ -352,7 +354,7 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 
 ## Прочитанные исходники приложения
 
-Всего 180 Python-файлов; SHA256 каждого исходника:
+Всего 191 Python-файлов; SHA256 каждого исходника:
 
 - `bot/aemr_bot/__init__.py:1` — `48197610f156fa5b4fbd0eef6d5588b7202ccf768a608a633bbbdc7ebf381a45`
 - `bot/aemr_bot/config.py:1` — `70ec0aadbd38e244586f4fc53078e309cce5425f0ce359ea8ba1f75c70714a07`
@@ -410,106 +412,117 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `bot/aemr_bot/db/alembic/versions/0039_operator_reply_drafts.py:1` — `68d9e389cf69533387c07eec7c20632042c23074eb0ff0d147b96abb888b2c82`
 - `bot/aemr_bot/db/alembic/versions/0040_work_schedule.py:1` — `10006049d83e7bd0b14d4e855206b9282bd0d912926965582b6cacea160be0e7`
 - `bot/aemr_bot/db/alembic/versions/0041_data_erasure.py:1` — `d3d7735362a1a634bed24326c176888d72abe90e619d6bb61ef646262db79ac4`
-- `bot/aemr_bot/db/models.py:1` — `7fd7067fd610ed1d933a3df0a4637a01ac74767dc6d01556c89b3f74dcfba9d3`
+- `bot/aemr_bot/db/alembic/versions/0042_reply_uncertain_time.py:1` — `1eda21f2c38a7b740e2e8c3e7c726d4fc49acc40d208f27113194a5314a4c0e7`
+- `bot/aemr_bot/db/models.py:1` — `07304186704af58e7a0444f5cec03401db41245e18f71688b219146e0db5329b`
 - `bot/aemr_bot/db/session.py:1` — `d490c939cde1b84bd2324151f4faf9918344de72ef8f5db53a2c3129a20b94b8`
 - `bot/aemr_bot/db/single_instance.py:1` — `608a7b027c69bac843eedc94326a9cf54bb7e29e8ca919599ed2f10d9ac2c69b`
 - `bot/aemr_bot/handlers/__init__.py:1` — `81410d47f20ef239c1f354356312058fe52be1b420664534d2246e6709745511`
 - `bot/aemr_bot/handlers/_auth.py:1` — `ac0400be43eeceb68b522b69840c068c4c124c7bf451e970e90167d131366231`
 - `bot/aemr_bot/handlers/_common.py:1` — `660b14bb2ec951721b07f6741c2aa96851dd66ef7c60f261e4410ebc8017dd36`
-- `bot/aemr_bot/handlers/admin_appeal_ops.py:1` — `742e066d184e49acfa35196be54c1ae7e4cff99287ba48e3a878eb328019707b`
-- `bot/aemr_bot/handlers/admin_audience.py:1` — `af7826a664278d3f62a107cfcf9bda65005f65ef5b5a4daa4187daee0d8102dc`
-- `bot/aemr_bot/handlers/admin_callback_dispatch.py:1` — `b64a1511e40fcacf862b231cec95530a2b659e1f86893fa31d1da8fda06cb395`
+- `bot/aemr_bot/handlers/admin_appeal_ops.py:1` — `729e8722da476af93065281b06461880b0cb17e77172f3546d64d4a2b840cab5`
+- `bot/aemr_bot/handlers/admin_audience.py:1` — `c7034a00ae273da0973ff16efac0fa38b9e68f9bb5cdfd57cd8f0b362bdb7dd4`
+- `bot/aemr_bot/handlers/admin_callback_dispatch.py:1` — `6a165c3fd257424eb74f0cac740344e472f85b2219f86716ed7e5312f1bcff61`
 - `bot/aemr_bot/handlers/admin_commands.py:1` — `338f04193dad1b1afe96f96898f3207b7dcd4abc673c1e527c8120d41a257216`
 - `bot/aemr_bot/handlers/admin_data_erasure.py:1` — `2430682e563f881da34bf9f1907bc88be0e1cc18c856e3d081d01c50680bbfe2`
 - `bot/aemr_bot/handlers/admin_operators.py:1` — `e31cc9a07ba4374eaf14b157f9f980fb289ca6f2148d2ead23989566d3126007`
 - `bot/aemr_bot/handlers/admin_operators_list.py:1` — `4372a26e2de714ce2507805512d53e96396cddd23efa5e8997d509b333ae345d`
 - `bot/aemr_bot/handlers/admin_operators_roles.py:1` — `431e96a8bdadc9869cfca47dc94e439c4fe1291878da5031a8d1904df78a5e01`
-- `bot/aemr_bot/handlers/admin_operators_wizard.py:1` — `9e9fd8dbf200401d1cd2876928105efa8c1cd97d8989d82067771f5cba6e01ba`
+- `bot/aemr_bot/handlers/admin_operators_wizard.py:1` — `a2bd57894c40e4e22ca25440c8576e9f6f09f20ceb8462a9f3349f113a2876bb`
 - `bot/aemr_bot/handlers/admin_panel.py:1` — `2638c7169b896d5f640e5f96fa98513a7c0b04c218e6717d549d8efc70bd5548`
+- `bot/aemr_bot/handlers/admin_reply_attachments.py:1` — `1792180306a24b49c26c9d3b2669a7d7be5bc440422864d6a2d2cddb2e14af30`
+- `bot/aemr_bot/handlers/admin_reply_reconciliation.py:1` — `5226d0ffff22d056bc0dbfe87e582cc5e10ad1cb5868cb1971cde80b314adc5a`
 - `bot/aemr_bot/handlers/admin_resident_search.py:1` — `e36444e13ed3c6ef64dcf6134b0444a097cd50424625cbc2023ccedec4a751dd`
-- `bot/aemr_bot/handlers/admin_settings.py:1` — `bd625c8ffeb515c6c1ec4b69552bd8e8eaea7886534a272b38aebb105532a11f`
+- `bot/aemr_bot/handlers/admin_settings.py:1` — `70a7ec2850c50d66dca3933339382f4bf85b48420123035f8ccafb51417a3223`
 - `bot/aemr_bot/handlers/admin_settings_author.py:1` — `9bda48412b3e901df398c3d7065e53a48429cb8f69ff2b18722a07ce144e4078`
 - `bot/aemr_bot/handlers/admin_settings_list.py:1` — `8e2013f4a2ce39a32c23eed73f6ecf8b185b73d2be8485ce33a293ee0612cf0e`
 - `bot/aemr_bot/handlers/admin_settings_notify.py:1` — `b81d7ae44c949ab0019e1f2ee878fd48cde0f9901b350e82c4c458416aa395b4`
-- `bot/aemr_bot/handlers/admin_settings_obj.py:1` — `2b5a5025165e7e83b0525bd6d46f0e86f362f9ed242f3550e89932438fe86aaf`
+- `bot/aemr_bot/handlers/admin_settings_obj.py:1` — `fdb7ea4125bc5b5816b06f43314ee516da0e8fe22de420abf2e10fc4dfc9dbc6`
 - `bot/aemr_bot/handlers/admin_settings_pr.py:1` — `1959217a98db17ae9b7ef3d1ea433cf7808e8f6439c7991c982c68997ea3c233`
-- `bot/aemr_bot/handlers/admin_settings_quiet.py:1` — `6d4100cecd47b6003d2f44884a9cd76e85320d4e4e5238430cb468649549f4f5`
-- `bot/aemr_bot/handlers/admin_settings_schedule.py:1` — `aa158958ad8d8a2386a8a172d36b4f9098195f328029c6ebb2cf269b00cdfc8e`
+- `bot/aemr_bot/handlers/admin_settings_quiet.py:1` — `30524aa7ff70c4503e18fb05415fce8f1dc719568aedff5e0a7818fea74ebdd6`
+- `bot/aemr_bot/handlers/admin_settings_schedule.py:1` — `8f1294392fbfb4ccd4995480ed943cc12f91802838ad82f897da922dd3d1d0f4`
 - `bot/aemr_bot/handlers/admin_settings_shared.py:1` — `da94a620dd8ac81a0ccca93f2ba05e0a2202abce34a8ebf07019da971cee102e`
-- `bot/aemr_bot/handlers/admin_settings_sla.py:1` — `75efe12b9397ef0a6420b224f5c9d8c1282db67f7b031afac977091528271534`
-- `bot/aemr_bot/handlers/admin_settings_text.py:1` — `24088843a4955ace02645e4fc00483f82b9515255656d0e2ccb1bac89d5ebe61`
+- `bot/aemr_bot/handlers/admin_settings_sla.py:1` — `9069bca27afa703707da4c179ccd2978d2758131d82c66dbe3146c9ccdf0faeb`
+- `bot/aemr_bot/handlers/admin_settings_text.py:1` — `f73c4e30eb52a79d5d0793b049b6217b985fb40b7e2cbcd91df5fb9c700f1ef6`
+- `bot/aemr_bot/handlers/admin_settings_text_preview.py:1` — `13d3828835a76c4bb6a234a2dcf86393ba2e70b40a9ad21769beebd9d368142d`
 - `bot/aemr_bot/handlers/admin_stats.py:1` — `dc5558ae7e88f71a30b398849f46ca9538f59d6f48208c2a1b406eafdaa20ff9`
-- `bot/aemr_bot/handlers/appeal.py:1` — `97a55f467404857b83d9fc7ac92ab00b5d11d04894f24ae209142a5de11db2a8`
-- `bot/aemr_bot/handlers/appeal_funnel.py:1` — `df7ed6776b9f5a31bdbb1346d0de655b2aca9a8b968314b8aa272a4c2323d37e`
-- `bot/aemr_bot/handlers/appeal_geo.py:1` — `98883857e4bb963b0a2297edbbea3e3cdf6d8d0524dc52d4157cb78c52bc5046`
+- `bot/aemr_bot/handlers/appeal.py:1` — `28123408b5e518aea7d9f71e8b58eab690a6df08c30c7db16df6ebbbcf032044`
+- `bot/aemr_bot/handlers/appeal_funnel.py:1` — `4ccb2059463c578c40b679280c3140ecc196e2731339735e05ce58b0207ce751`
+- `bot/aemr_bot/handlers/appeal_geo.py:1` — `a136b1adf9c57b16f37a408d918389a0fa17f1050c596a37e2745eca3d6068cc`
 - `bot/aemr_bot/handlers/appeal_runtime.py:1` — `b751e6c30ee42885aaad6fd58b139c380047aff05f19ff6c0fe0de4811765122`
-- `bot/aemr_bot/handlers/broadcast.py:1` — `82161f0f6dd454fa6e18863e410c42f3471442981bb544c3926d49e53d9aff5f`
+- `bot/aemr_bot/handlers/broadcast.py:1` — `abf3b9a5021f6c5d58066d6957b51a3f589bd76d3e47f8db4df629184c8d701d`
 - `bot/aemr_bot/handlers/broadcast_templates.py:1` — `ae280918d63391c4b9b3fcdf91edffc076e0099e44a705fa45990191b6621575`
-- `bot/aemr_bot/handlers/broadcast_templates_crud.py:1` — `e75a9d7ad23458937a2b51c01303c03abf953891009c2ad84cbd2584029c6c3f`
-- `bot/aemr_bot/handlers/broadcast_templates_list.py:1` — `f3c4537c079022e3e8ff36e696934533d073f5b8ed38f3ebd21deaa0ef86dce7`
+- `bot/aemr_bot/handlers/broadcast_templates_crud.py:1` — `713da1f15c17337fefceb7ce72461125092eabea308361f3d89c866fccdc8448`
+- `bot/aemr_bot/handlers/broadcast_templates_list.py:1` — `4b253705f2c8d1e0c252c533997a64ba3a146a81619c96af2c419128bb1b1869`
 - `bot/aemr_bot/handlers/broadcast_templates_state.py:1` — `2d6d4d2890e5432885a8628f337d79d1cd843822707c77451537019dc9dc17b3`
-- `bot/aemr_bot/handlers/broadcast_templates_wizard.py:1` — `c5d88cbce8147cbdc6791c10156e3c05cdbeb22b90d2e5857c2d5fb51d10bb13`
-- `bot/aemr_bot/handlers/broadcast_wizard.py:1` — `f1651a4f01d6b92dbe6f31d8deb680c76aed85f918c61b26a57ba4b1bebe7d62`
-- `bot/aemr_bot/handlers/callback_payloads.py:1` — `42daf5a8aa8815b45ddfac0c89fdbf42e03140c1804f1af44c5adff9f4c0fd06`
-- `bot/aemr_bot/handlers/callback_router.py:1` — `8df42126f3bd3d46249f91b01dfceae47b50af037bca50732009c95a39d9e1d7`
-- `bot/aemr_bot/handlers/menu.py:1` — `5b5f3bdbb49456e2faa33c1e1103c989ebb910572b9f2218653a292cc4237dcc`
-- `bot/aemr_bot/handlers/operator_draft.py:1` — `77ccb3d8de1c49ca72c30a3a298819218a07abe60fc7b33dd485cff3d324b174`
-- `bot/aemr_bot/handlers/operator_reply.py:1` — `f111a7110f7249bb7714738300a374dfb5e5c2561e5b232f2c5f46b88cac5a78`
+- `bot/aemr_bot/handlers/broadcast_templates_wizard.py:1` — `640da36153dfbc7fc307b7b39a78bf9ee8780146b94b734bf72792a752a5c789`
+- `bot/aemr_bot/handlers/broadcast_wizard.py:1` — `a8f0788f26ff0adf60994b40e2d724bd69c1dbafd3dfecdf9e30563f252c07a6`
+- `bot/aemr_bot/handlers/callback_payloads.py:1` — `c30f480aa6acc0a46767989133f60729efbef41d2a851465bb9a9112bd1de04d`
+- `bot/aemr_bot/handlers/callback_router.py:1` — `8a79db1dd08d01f1791674f148e486010bb39d1b997d2245fb8372156bbc951d`
+- `bot/aemr_bot/handlers/menu.py:1` — `c6cddb2b864aa5ff5dda7c8fe404b7fdf1d0fc6de2bf2cdf5399f85ad1eea576`
+- `bot/aemr_bot/handlers/operator_draft.py:1` — `f0e6de3a997fe5527d6b39a876e1e08609a6292d22a073d069993800d01db107`
+- `bot/aemr_bot/handlers/operator_draft_files.py:1` — `eb07c57c7e9a9523df98dba318c2297210e249fc1475a05760b52552cf18631a`
+- `bot/aemr_bot/handlers/operator_input.py:1` — `79002f90c276cb67e427498cd5492098ed27708602f7207fcce22f0611107382`
+- `bot/aemr_bot/handlers/operator_reply.py:1` — `7fd9cec306d2b539819e2168b899ec403b46ef5bc8f4acc8a6966d1ee596e74d`
+- `bot/aemr_bot/handlers/resident_draft_files.py:1` — `ade64b33e08d83f57bb0804e98cf3f3603f707a8b3838bc91077a425491195b4`
 - `bot/aemr_bot/handlers/resident_name_gate.py:1` — `fd825ba5e981c0893c4dcaa979ad7c782105e2a5a524ca1e9c571f72c39c845e`
 - `bot/aemr_bot/handlers/start.py:1` — `6d192c889aba058d088ca9db126d07dbb4eb0b18f7315019dc47649a27a72feb`
+- `bot/aemr_bot/handlers/useful_contacts.py:1` — `ebbcd95c68d23ae2d7a2d090abd3a1c18849b62e31dc440ecc1a623f327ff9b9`
 - `bot/aemr_bot/health.py:1` — `2f95cf0cdecd3fe6c6cd34011f7fcdfe10f712874b3e06f285c1a68f791fab85`
 - `bot/aemr_bot/keyboards.py:1` — `db84ebdc392b48eed2557510bc288f5165b977259a80285cb5cb445e489a6a60`
 - `bot/aemr_bot/logging_setup.py:1` — `0137b44569e599ea2d3476b26070fba145e2eb3f92f86bae1bd494ac79c4798e`
-- `bot/aemr_bot/main.py:1` — `ac6b0bd49951dc94fcec254cc68b8532f85428f9c4043af49ec9ebede15c473a`
+- `bot/aemr_bot/main.py:1` — `6c3ed74328386c535f438b785fb2afac5d777664140ddbb831e2d503668a09df`
 - `bot/aemr_bot/network.py:1` — `35bc7413b8f9fae04464b112f7e671ba81e00bf2e1eb4d74fa321cd4bf26a679`
 - `bot/aemr_bot/services/__init__.py:1` — `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 - `bot/aemr_bot/services/admin_bus.py:1` — `3e000e9397ecb4d6558237d3de935e50692c3b6d151c0e3ab7884db369083c21`
 - `bot/aemr_bot/services/admin_card.py:1` — `9879c2bf89a66fdc3b6bdb7f97ffe9e53202387a251f98103b774e8e745337e7`
 - `bot/aemr_bot/services/admin_events.py:1` — `e36ae0bd8f1b0e80d075d39ba022da96123b56272c102b7cee55047f102f9ced`
-- `bot/aemr_bot/services/admin_relay.py:1` — `3a3491d62b0601e0437e4227a4f8af756dd0eb272e2d00ca2cdb928f3b1ba60e`
+- `bot/aemr_bot/services/admin_relay.py:1` — `16e0a77674a64ebb329867c98279e4dc1c66827f2d9f7ba6bc68f913d45dca7b`
 - `bot/aemr_bot/services/alert_state.py:1` — `a09efe1bf79da36b8d887d778367675077e0de55c480f57a26bd355a86dfdf49`
 - `bot/aemr_bot/services/appeal_history.py:1` — `4faa3cd7f10cce7e100e6a14f63c0906315fc8ee6abc5c2f3bd413b6bb9fcba8`
 - `bot/aemr_bot/services/appeal_locks.py:1` — `45968c7c532daf6e3a74f012d649edc5cf4e8959414b7a8e8e563edbc4011d5c`
-- `bot/aemr_bot/services/appeal_word.py:1` — `5ce6db15366fe47bb85db149c716cadc6f29efa31428b148f5729cb48688924e`
-- `bot/aemr_bot/services/appeals.py:1` — `a4ec0d3479037ff37eda503fd702501f30a305e999a2f3befe863e36a4ca00a4`
+- `bot/aemr_bot/services/appeal_word.py:1` — `2cb5a35bdd753e7cb25edd209d83c500bf845ac50dbd101e66cf87d4f5c5a2c6`
+- `bot/aemr_bot/services/appeals.py:1` — `2197f4d38032dab5b3868605d2f24a20846d4eed3e3bd2ec7c51714a7cf45d86`
 - `bot/aemr_bot/services/backup_verify.py:1` — `90740609557cf492018e9dcd9ca9b94df955511c7005004d7916d4f54d94bbee`
 - `bot/aemr_bot/services/broadcast_templates.py:1` — `5d227ba4bd897612544f30d0ce2ed9543878297c2e5f105b6406d781b69cd296`
 - `bot/aemr_bot/services/broadcast_utils.py:1` — `15300e68906d49f69282d29d44724d4857f979d57d4af0ee991d2846296cb9c1`
 - `bot/aemr_bot/services/broadcasts.py:1` — `ab80365473f407d5a2b5c69079196df23f26af2c656a960ada770122a26f6358`
 - `bot/aemr_bot/services/calendar_ru.py:1` — `73793987226666ac81b302c3046f736e240e6f614ad14680e0fbe0cebd931a1e`
-- `bot/aemr_bot/services/card_format.py:1` — `66ea23e091134fee0b80076ab0a35fbf0d59e605e9f2496d0d40906bded7a92b`
-- `bot/aemr_bot/services/complete_stats.py:1` — `321750df5126b9e8579c900b048592c64c932775301765c5cc2d044c7001b8fe`
+- `bot/aemr_bot/services/card_format.py:1` — `9b160b74bd5e88e3035c84696b02f368379745641531a992fcca864399e1d946`
+- `bot/aemr_bot/services/complete_stats.py:1` — `1050d74dcae3e908cb07e068f2ec19d1283f464f863a12da4ce47b2c21a35ca9`
 - `bot/aemr_bot/services/consent_history.py:1` — `a75889b2ff304e41f683c080412ee0a6773fb3a4ff66001c24c201f3acd3c081`
 - `bot/aemr_bot/services/content_status.py:1` — `368caf4743e7f132853890f6d3bf9c3ab5553a0d83caa2c31ad090c4ba8a9658`
 - `bot/aemr_bot/services/cron.py:1` — `e4fbe4b0524a2b090cd16c64f4a3e444ad4021df71690b98c39a9cf0c050e8ee`
 - `bot/aemr_bot/services/cron_registry.py:1` — `878ff066481e84c1fda8e2c563f037912f2e0db29e3b2c66d98b13547819252e`
-- `bot/aemr_bot/services/data_erasure.py:1` — `094c65b72d6ea8d676236196e6715c5606b3a30fde1966cdcd7545baf8071a5b`
+- `bot/aemr_bot/services/data_erasure.py:1` — `cafbee86b5c1f8cf42f1656e917b534611638ebc1897f2d41a3bc11929ba2f2e`
 - `bot/aemr_bot/services/data_erasure_delivery.py:1` — `8b7b856b71fc9b6f819c3908c1b73be82346b748674a05455d40e691a7d700fa`
 - `bot/aemr_bot/services/data_erasure_journal.py:1` — `2b57bdbbe7423ce46c583f134357b5ef06654bf443cc7d0810822ab927ece9e2`
-- `bot/aemr_bot/services/data_erasure_restore.py:1` — `f02d1ff285efd7e6f8b3e0ff15df8fc3136612c8b38403a6a92cd520e8287212`
+- `bot/aemr_bot/services/data_erasure_restore.py:1` — `6ae1ab45c21d0131db6eb9c823e029a4702b64baecee3e25492dfc936027a4fd`
 - `bot/aemr_bot/services/db_backup.py:1` — `1c89a88b3c9b988fc57052164ae71715a20811cd1d338fca80ad2000e3ebeacf`
+- `bot/aemr_bot/services/export_layout.py:1` — `3d3d7c3506b5a7a3dd6f674d74fe5e2fb6af5175c1a38dac6f5250f6ab19ac54`
 - `bot/aemr_bot/services/followup_delivery.py:1` — `3e7444a44921f4052e5f62660f69028ef39e669458155d4b5d84acc9835792c8`
 - `bot/aemr_bot/services/geo.py:1` — `f975cc0fd72a42efdefd1e5ea349f2f51d7c725ad68cf4142dac5179451f17c8`
 - `bot/aemr_bot/services/idempotency.py:1` — `03ddbc5443b1a9cedf0e23b7504e6d6487cced3728dd41055909a38f1f7cef37`
 - `bot/aemr_bot/services/inbox.py:1` — `b6c00f6caf0c10e4ee825dc55322f4e7eba7f9a2cadfc6cdeb00f3e5a720dff0`
-- `bot/aemr_bot/services/message_labels.py:1` — `a3a9c91d5e95ee90e8294517b79c294587b3a85e7979b6740a3770fa1cc61146`
+- `bot/aemr_bot/services/message_labels.py:1` — `3e74e10010c222fa40727d564d308f2f7a5e0b525a0c663aa7af5e9237b8c430`
 - `bot/aemr_bot/services/notify_toggles.py:1` — `9ef4f39df424734563027fb29777e43be51249d8fdccb11a92f8425f75f6581e`
-- `bot/aemr_bot/services/operator_drafts.py:1` — `bb9fbab034d2b1bf95c098e69f68b258fd1e3749bdffaa5b363c0ff6f018d038`
-- `bot/aemr_bot/services/operator_reply_attempts.py:1` — `b3325f61d820e19c5848b4487ceed55b4a523327c2088f0e15a8d7bbf7157ff7`
+- `bot/aemr_bot/services/operator_drafts.py:1` — `296837c9ba0d035bdd7557af482b781daa3f1c1fa687b72957094cfc2ad150be`
+- `bot/aemr_bot/services/operator_reply_attempts.py:1` — `bd451eefa4c80d3b35ca266af3eb05a2fd4e70cfdc2d54cf82f6460163950102`
 - `bot/aemr_bot/services/operators.py:1` — `3f9c578b66a16f0facca4e2611d3507eaec43d712d0ef6fd88066d9d689c6634`
 - `bot/aemr_bot/services/policy.py:1` — `c12274fae363444ce962571bea2cd1e4126406659cebe75a021bed1aabe008f6`
 - `bot/aemr_bot/services/privacy_epoch.py:1` — `31b0c48f2b1e525281d835b13fe4aca54e7ff0021c8797ac8f67c5551bd8bced`
 - `bot/aemr_bot/services/progress.py:1` — `b8fcfdb8309b827815b02d265f982850ef0cd883998f3829ee77510cc87622ae`
-- `bot/aemr_bot/services/queue_panel.py:1` — `5e8f68898f495dc2c09df5140d2e91102c606a73dd0eefb1cee73d1342fef77b`
+- `bot/aemr_bot/services/queue_panel.py:1` — `aa3176b2563f65f58435389eb746cde48658635d838f12b17b3a6e7440592d73`
 - `bot/aemr_bot/services/quiet_hours.py:1` — `ffc3785eb78c735b2d2db33bb635f88bb1bda168a4ffece378d18fe7318adf6b`
+- `bot/aemr_bot/services/reply_time_evidence.py:1` — `79566bb1cf61706ae06255c992e9a0e29f71b9bf8b7b80edf4e9b8162996ec52`
 - `bot/aemr_bot/services/repo_sync.py:1` — `078afc8b465b33e2c03e7fdb4c8aeceea65d76aab7ae014b5ad31167a534b7c9`
 - `bot/aemr_bot/services/resident_drafts.py:1` — `c8206da5601918406d0030bb926cd2bd328fb11cea023ec3a00f2491a9668428`
-- `bot/aemr_bot/services/settings_store.py:1` — `6b3e1f5e1af6dc83259d6461a82db0f7c402061324cff8ad9085bfcd6355b63b`
+- `bot/aemr_bot/services/retention_candidates.py:1` — `5413f97c1fc62817b6bbb71dfed3ad6bfc319c69ef427dfb2ea7072960e9931d`
+- `bot/aemr_bot/services/settings_store.py:1` — `94d900a8838477d56cce21d4cff351762c4151bfb457cdb9a7a3678fcfc247ab`
 - `bot/aemr_bot/services/sla.py:1` — `268c1dbebff5843997a64b6f16e50cb85760578500ab3d9d1a406be34a6e2019`
-- `bot/aemr_bot/services/stats.py:1` — `3bcfa54e5dab07b30a2a13a36b4a6d5ebfe8dbfea554e4f8c1a054229adab789`
+- `bot/aemr_bot/services/stats.py:1` — `9dee76e7eccf224f14c9cffb864856b0cdd165b3866806cf75976a3857b47361`
 - `bot/aemr_bot/services/threat_intel.py:1` — `0495ec5d951639ec74f785f0ad07ac8ed38969471e110bf22146fc3586085ccf`
 - `bot/aemr_bot/services/uploads.py:1` — `7532fedc2eaffebb13668770c3bf4d4ccadd0c462be83a7de7766dcdfa083881`
-- `bot/aemr_bot/services/users.py:1` — `f0111f9a4a55ee595da9e68169ca6462552acebf7173b036b0d6e945de77aeee`
+- `bot/aemr_bot/services/users.py:1` — `7ec038c71298d35d44fdb6c87a85009fcb4f20084c38575b0487175ad01c104f`
 - `bot/aemr_bot/services/wizard_persist.py:1` — `8c5a43e226bd7d0de545ce41c8e1920389d0d341944f7a5bdef14313f832c231`
 - `bot/aemr_bot/services/wizard_registry.py:1` — `f9c46634552c9703e4b46fb06917e4e79ed8f8eb1cbaa7d013dc5f8ed09ceab5`
 - `bot/aemr_bot/services/work_schedule.py:1` — `b21600bd6ba4c35aaed5b345af6e702cbd0f5f1d13fa3c489d53f489b1a4b9ad`
@@ -517,9 +530,9 @@ AST не раскрывает все вычисляемые payload, getattr, mo
 - `bot/aemr_bot/transport.py:1` — `0245e6af7ccb231b47eb6c3b0b5288dbad7990e0354acf59ded9ecd96603ac30`
 - `bot/aemr_bot/ui/__init__.py:1` — `65e166158c8ec1c74a5b8e3677f1ef6d7d1b07caa0043e238011e4075871f14a`
 - `bot/aemr_bot/ui/broadcast_keyboards.py:1` — `386afd9084a3de9e223a3c488505c6c1eddaaf815e206c21ddf6ea585c135b99`
-- `bot/aemr_bot/ui/citizen_keyboards.py:1` — `d712a517c94b9a06727c82882b8b4a4457c95bdf7484a2dc4021e11d2883ad77`
+- `bot/aemr_bot/ui/citizen_keyboards.py:1` — `1771febce0b81df72bcfd05f679ada2141882101eb51a83b881f3031e033fdc0`
 - `bot/aemr_bot/ui/operator_keyboards.py:1` — `4a79880a0800b916a92d7fb118dcd6ae4e2543e5a95bb4f3cbd9854a526aebf1`
-- `bot/aemr_bot/ui/settings_keyboards.py:1` — `30379b246a8a526687672d2d06f03b823526e08f3cede0892bed53f1f45ecf02`
+- `bot/aemr_bot/ui/settings_keyboards.py:1` — `cc56b395531cddbd546409693493054662e2f1b5239fd98123341b5107954818`
 - `bot/aemr_bot/ui/wizard_keyboards.py:1` — `4ac8fb03e5948fcd6f1441e45ab04329ba7342185b9ca69ee53c7292554d94ea`
 - `bot/aemr_bot/utils/__init__.py:1` — `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 - `bot/aemr_bot/utils/attachments.py:1` — `eb8f0676c836ca74cb7bbf96b4b54402de43bf3f7937d685767bd814e48ec648`

@@ -45,12 +45,6 @@ from aemr_bot.db.models import BroadcastStatus, OperatorRole
 from aemr_bot.db.session import session_scope
 from aemr_bot.handlers._auth import ensure_operator, ensure_role, get_operator
 from aemr_bot.handlers._common import op_screen
-
-# Cluster C wave 2 (Codex PR 7): wizard FSM физически живёт в
-# broadcast_wizard. Re-export нужен, чтобы существующие импорты
-# `from aemr_bot.handlers.broadcast import _wizards` продолжали
-# работать без правок (12 файлов тестов + broadcast_templates.py +
-# admin_callback_dispatch.py + admin_operators.py + admin_appeal_ops.py).
 from aemr_bot.handlers.broadcast_wizard import (  # noqa: F401
     WizardStep,
     _drop_expired_wizards,
@@ -66,7 +60,6 @@ from aemr_bot.handlers.broadcast_wizard import (  # noqa: F401
 )
 from aemr_bot.services import broadcasts as broadcasts_service
 
-# Cluster C (Codex PR 7): pure utility функции вынесены в
 # `services/broadcast_utils`. Re-export через `import` чтобы старые
 # тестовые импорты `from aemr_bot.handlers.broadcast import _format_progress`
 # продолжали работать без правок (см. test_broadcast_handlers.py,
@@ -822,15 +815,20 @@ async def _clone_broadcast(event, broadcast_id: int) -> None:
     if subscribers == 0:
         await op_screen(event, texts.OP_BROADCAST_CLONE_NO_SUBSCRIBERS)
         return
+    from aemr_bot.handlers import broadcast_wizard
+    from aemr_bot.handlers.operator_input import clear_other_consumers, pause_reply
+    await pause_reply(actor_id)
+    clear_other_consumers(actor_id)
     prefill_wizard_from_template(
         actor_id,
         text=bc.text,
         attachments=list(bc.attachments or []),
     )
+    state = broadcast_wizard._wizards[actor_id]
     preview_images = _image_attachments.build_outbound_image_attachments(
         bc.attachments or []
     )
-    await op_screen(
+    sent = await op_screen(
         event,
         texts.OP_BROADCAST_PREVIEW.format(
             text=bc.text,
@@ -842,7 +840,9 @@ async def _clone_broadcast(event, broadcast_id: int) -> None:
             *preview_images,
             keyboards.broadcast_confirm_keyboard(),
         ],
+        new=True,
     )
+    broadcast_wizard.bind_preview(actor_id, state, sent, event)
     log.info(
         "broadcast: clone from #%s by operator=%s — wizard pre-filled "
         "(subscribers=%d)",

@@ -271,14 +271,11 @@ class TestCallbackCancel:
     async def test_cancel_stale_after_finalize_no_reset(
         self, captured_handlers
     ) -> None:
-        """A2 (2026-05-27): тап на старой 5/5 после finalize_appeal —
-        state уже IDLE. Не вызываем reset_state (state и так чистый),
-        не вводим в заблуждение «Действие отменено». Отдаём явный
-        stale-feedback `CANCEL_ALREADY_DONE`."""
+        """После отправки старая отмена не сбрасывает данные и не сообщает об отмене."""
         on_callback, _ = captured_handlers
         event = _make_callback_event(payload="cancel")
         reset = AsyncMock()
-        idle_user = SimpleNamespace(dialog_state="idle")
+        idle_user = SimpleNamespace(dialog_state="idle", dialog_data={})
         with patch("aemr_bot.handlers.appeal.cfg.admin_group_id", 999), \
              patch("aemr_bot.handlers.appeal.session_scope", _fake_session_scope), \
              patch("aemr_bot.handlers.appeal.users_service.find_by_max_id",

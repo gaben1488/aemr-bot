@@ -347,7 +347,7 @@ async def _send_reply_to_citizen(
     """
     target_user_id = fresh_appeal.user.max_user_id
 
-    # SECURITY_REVIEW M3: блокируем исходящие фишинг-ссылки в ответе
+    # Блокируем фишинг-ссылки в ответе
     # оператора. Допустимы только гос-домены (SEC #4 whitelist).
     # Если оператор (или скомпрометированный аккаунт) вписал ссылку
     # на сторонний сайт — отказываем в доставке и пишем причину в
@@ -397,11 +397,11 @@ async def _send_reply_to_citizen(
     if len(outbound_attachments) != len(operator_attachments):
         await _safe_admin_notice(event, "Ответ не отправлен: часть вложений недоступна. Приложите их заново.")
         return False, None, []
-    from aemr_bot.services.admin_relay import _chunk_relayable
+    from aemr_bot.services.admin_relay import _chunk_relayable, attachment_part_indices
     batches = _chunk_relayable(outbound_attachments, media_limit=11) or [[]]
     if before_send is not None:
         try:
-            reserved = await before_send(operator_attachments)
+            reserved = await before_send(operator_attachments, attachment_part_indices(batches))
         except Exception as exc:
             log.warning("operator reply could not be reserved (%s)", type(exc).__name__)
             await _safe_admin_notice(event, f"⚠️ Ответ по обращению #{appeal_id} не отправлен: не удалось сохранить попытку. Попробуйте позже.")
@@ -412,8 +412,7 @@ async def _send_reply_to_citizen(
     first_mid = None
     for index, batch in enumerate(batches):
         try:
-            # Commit the part claim before MAX. A timeout or crash must leave
-            # the exact uncertain part visible, without sending later parts.
+            # Claim before MAX; uncertain parts stop later sends.
             if on_part is not None:
                 await on_part(index, "sending", None)
             from aemr_bot.services import data_erasure
@@ -642,11 +641,11 @@ async def _deliver_operator_reply_guarded(
     from aemr_bot.services import operator_reply_attempts
     attempt_id = None
 
-    async def reserve_attempt(attachments):
+    async def reserve_attempt(attachments, part_plan):
         nonlocal attempt_id
         attempt_id = await operator_reply_attempts.reserve(
             appeal_id=appeal.id, operator_id=operator.id, source_key=success_key,
-            text=text, attachments=attachments, is_final=is_final,
+            text=text, attachments=attachments, is_final=is_final, part_plan=part_plan,
         )
         return attempt_id is not None
 

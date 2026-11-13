@@ -93,6 +93,8 @@ EXACT_ROUTES: tuple[CallbackRoute, ...] = (
 )
 
 PREFIX_ROUTES: tuple[CallbackRoute, ...] = (
+    CallbackRoute("info:emergency:page:", CallbackGroup.CITIZEN_FLOW, False, "страница экстренных контактов"),
+    CallbackRoute("info:dispatchers:page:", CallbackGroup.CITIZEN_FLOW, False, "страница диспетчеров"),
     CallbackRoute("op:replydraft:", CallbackGroup.OPERATOR_ADMIN, True, "многочастный черновик ответа"),
     CallbackRoute("op:reply_cancel:", CallbackGroup.OPERATOR_ADMIN, True, "отмена выбранного ответа"),
     # ── Citizen воронка ──

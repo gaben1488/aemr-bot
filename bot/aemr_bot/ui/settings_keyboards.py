@@ -148,9 +148,16 @@ def op_settings_obj_keyboard(key: str, items: list[dict], version: int = 0, page
     return kb.as_markup()
 
 
-def op_settings_obj_item_keyboard(key: str, index: int, revision: str):
+def op_settings_obj_item_keyboard(key: str, index: int, revision: str, *, page: int = 0, total: int = 1):
     """Карточка одного объекта — удалить / назад."""
     kb = InlineKeyboardBuilder()
+    nav = []
+    if page:
+        nav.append(CallbackButton(text="◀️ Назад", payload=cp.op_set(f"obj_itempage:{key}:{index}:{revision}:{page - 1}")))
+    if page + 1 < total:
+        nav.append(CallbackButton(text="Далее ▶️", payload=cp.op_set(f"obj_itempage:{key}:{index}:{revision}:{page + 1}")))
+    if nav:
+        kb.row(*nav)
     kb.row(CallbackButton(
         text="🗑 Удалить запись", payload=cp.op_set(f"obj_del:{key}:{index}:{revision}"),
     ))
